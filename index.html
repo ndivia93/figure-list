@@ -4787,9 +4787,11 @@ function autoSave(){
 
 const _origRenderOrder=typeof renderOrder==='function'?renderOrder:null;
 
+// 저장 직렬화: blob: 임시 URL(업로드 사진)은 저장하지 않되 imgFileId/imgThumbId는 보존. URL 방식은 그대로.
+function stripBlob(list){return (list||[]).map(o=>(o&&o.imageUrl&&o.imageUrl.indexOf('blob:')===0)?{...o,imageUrl:''}:o);}
 function saveData(){
   try{
-    const payload=JSON.stringify({orders,wishes,sells,makers,stores,nextStoreId,bundleCoupons,savedAt:new Date().toISOString(),exchangeRates});
+    const payload=JSON.stringify({orders:stripBlob(orders),wishes:stripBlob(wishes),sells,makers,stores,nextStoreId,bundleCoupons,savedAt:new Date().toISOString(),exchangeRates});
     // 구매목록 개수 변화 감지 → 히스토리 저장
     try{
       const prev=localStorage.getItem(STORAGE_KEY);
@@ -4834,6 +4836,7 @@ function loadData(){
     nW=Math.max(400,...wishes.map(w=>w.id+1));
     nS=Math.max(400,...sells.map(s=>s.id+1));
     openRows={};setSort('pdate');renderWish();renderSell();renderStore();
+    if(typeof resolveDriveImages==='function')resolveDriveImages();
     showToast('📂 불러오기 완료!','success');updateSaveStatus(true,d.savedAt);
   }
 }
@@ -4900,6 +4903,7 @@ function gdApplyData(d){
   if(d.makers)makers=d.makers;if(d.stores)stores=d.stores;if(d.bundleCoupons)bundleCoupons=d.bundleCoupons;if(d.nextStoreId)nextStoreId=d.nextStoreId;if(d.exchangeRates)exchangeRates=d.exchangeRates;
   nO=Math.max(400,...orders.map(o=>o.id+1));nW=Math.max(400,...wishes.map(w=>w.id+1));nS=Math.max(400,...sells.map(s=>s.id+1));
   openRows={};setSort('pdate');renderWish();renderSell();if(typeof renderStore==='function')renderStore();if(typeof renderManage==='function')renderManage();
+  if(typeof resolveDriveImages==='function')resolveDriveImages();
 }
 async function gdLoadFromDrive(){
   try{
@@ -4922,13 +4926,59 @@ async function gdFlush(silent){
   if(!gdToken)return;
   try{
     if(!silent)gdSetStatus('동기화 중…','var(--yellow)');
-    const obj=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||{orders,wishes,sells,makers,stores,nextStoreId,bundleCoupons,exchangeRates,savedAt:new Date().toISOString()};
+    const obj=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||{orders:stripBlob(orders),wishes:stripBlob(wishes),sells,makers,stores,nextStoreId,bundleCoupons,exchangeRates,savedAt:new Date().toISOString()};
     if(!obj.savedAt)obj.savedAt=new Date().toISOString();
     let id=await gdFind();if(!id)id=await gdCreate();
     await gdUploadMedia(id,new Blob([JSON.stringify(obj)],{type:'application/json'}));
     gdSetStatus('동기화됨 '+gdHH(),'var(--green)');
   }catch(e){gdSetStatus('동기화 실패: '+(e.message||e),'var(--red)');}
 }
+// ── 사진 업로드/표시 (드라이브 저장 · URL 방식과 병행) ──────────────
+// imageUrl은 표시용(런타임). 업로드 사진은 imgFileId/imgThumbId를 저장하고,
+// 로드 때 드라이브에서 받아 imageUrl(blob)로 자동 해석. URL 방식은 그대로 유지.
+let _imgdb=null;
+function imgdb(){return new Promise((res,rej)=>{if(_imgdb)return res(_imgdb);const q=indexedDB.open('fig-img',1);q.onupgradeneeded=()=>q.result.createObjectStore('img');q.onsuccess=()=>{_imgdb=q.result;res(_imgdb);};q.onerror=()=>rej(q.error);});}
+async function imgCacheGet(k){try{const db=await imgdb();return await new Promise(r=>{const t=db.transaction('img').objectStore('img').get(k);t.onsuccess=()=>r(t.result||null);t.onerror=()=>r(null);});}catch(e){return null;}}
+async function imgCachePut(k,v){try{const db=await imgdb();await new Promise(r=>{const t=db.transaction('img','readwrite').objectStore('img').put(v,k);t.onsuccess=()=>r();t.onerror=()=>r();});}catch(e){}}
+function imgResize(file,maxEdge,q){return new Promise(async(res,rej)=>{try{const bmp=await createImageBitmap(file);let w=bmp.width,h=bmp.height;const s=Math.min(1,maxEdge/Math.max(w,h));w=Math.max(1,Math.round(w*s));h=Math.max(1,Math.round(h*s));const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(bmp,0,0,w,h);cv.toBlob(b=>b?res(b):rej(new Error('encode')),'image/jpeg',q);}catch(e){rej(e);}});}
+async function gdImgCreate(name){const r=await fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:{...gdH(),'Content-Type':'application/json'},body:JSON.stringify({name,mimeType:'image/jpeg',parents:['appDataFolder']})});const j=await r.json();return j.id;}
+async function gdUploadOne(blob){const id=await gdImgCreate('img_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)+'.jpg');await gdUploadMedia(id,blob);return id;}
+async function uploadPhotoForTarget(file){
+  if(!gdToken){showToast('구글 동기화 로그인 후 업로드할 수 있어요 (관리탭)','warn');return;}
+  const o=imgFind(_imgTargetId);if(!o){showToast('대상을 찾을 수 없어요','error');return;}
+  showToast('사진 업로드 중…','success');
+  try{
+    const [disp,thumb]=await Promise.all([imgResize(file,2000,0.9),imgResize(file,400,0.8)]);   // 표시용·썸네일 동시 리사이즈
+    const [dispId,thId]=await Promise.all([gdUploadOne(disp),gdUploadOne(thumb)]);               // 두 장 동시 업로드
+    await Promise.all([imgCachePut(dispId,disp),imgCachePut(thId,thumb)]);
+    o.imgFileId=dispId;o.imgThumbId=thId;
+    try{o.imageUrl=URL.createObjectURL(thumb);}catch(e){}
+    delete o.imgFocus;
+    const k=_imgKind;closeImgUrlModal();imgRerender(k);autoSave();
+    showToast('🖼 사진 업로드 완료','success');
+  }catch(e){showToast('업로드 실패: '+(e.message||e),'error');}
+}
+async function imgUrlFromId(fileId){
+  if(!fileId)return '';
+  let blob=await imgCacheGet(fileId);
+  if(!blob){ if(!gdToken)return ''; try{blob=await gdDownload(fileId);await imgCachePut(fileId,blob);}catch(e){return '';} }
+  try{return URL.createObjectURL(blob);}catch(e){return '';}
+}
+async function resolveDriveImages(){
+  let changed=false;
+  for(const o of [...orders,...wishes]){
+    if(!o.imgThumbId)continue;
+    if(o.imageUrl&&o.imageUrl.indexOf('blob:')===0)continue; // 이미 해석됨
+    const u=await imgUrlFromId(o.imgThumbId);
+    if(u){o.imageUrl=u;changed=true;}
+  }
+  if(changed){
+    if(typeof renderOrder==='function')renderOrder();
+    if(typeof renderWish==='function')renderWish();
+    if(typeof renderCards==='function'&&document.getElementById('panel-cards')&&document.getElementById('panel-cards').classList.contains('active'))renderCards();
+  }
+}
+
 // GIS 로드 대기 → 이전에 로그인했으면 조용히 재연결 시도
 window.addEventListener('load',()=>{
   let n=0;const t=setInterval(()=>{
@@ -4936,6 +4986,7 @@ window.addEventListener('load',()=>{
       if(localStorage.getItem('gd_on')==='1'&&gdTokenClient){gdSetStatus('자동 로그인 중…','var(--text3)');try{gdTokenClient.requestAccessToken({prompt:''});}catch(e){}}
     } else if(++n>40){clearInterval(t);}
   },300);
+  setTimeout(()=>{if(typeof resolveDriveImages==='function')resolveDriveImages();},1200); // 시작 시 캐시된 사진 해석
 });
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>{t.className='toast';},2800);}
 
@@ -6893,14 +6944,18 @@ function imgRerender(kind){
 
 function openImgViewer(id,kind){
   kind=kind||'order';
-  const o=imgFind(id,kind);if(!o||!o.imageUrl)return;
+  const o=imgFind(id,kind);if(!o||(!o.imageUrl&&!o.imgFileId))return;
   document.getElementById('img-viewer-title').textContent=o.charName+(o.maker?` — ${o.maker}`:'');
   const img=document.getElementById('img-viewer-img');
-  img.src=o.imageUrl;
+  img.src=o.imageUrl||'';
   img.onerror=()=>{img.src='';img.alt='이미지를 불러올 수 없어요';};
   document.getElementById('img-viewer-search').onclick=()=>openGoogleSearch(o);
   document.getElementById('img-viewer-edit').onclick=()=>{closeImgViewer();openImgUrlModal(id,kind);};
   document.getElementById('img-viewer').classList.add('show');
+  // 업로드된 사진이면 고해상도 표시본을 드라이브/캐시에서 로드
+  if(o.imgFileId&&typeof imgUrlFromId==='function'){
+    imgUrlFromId(o.imgFileId).then(u=>{if(u&&document.getElementById('img-viewer').classList.contains('show'))img.src=u;});
+  }
 }
 function closeImgViewer(){document.getElementById('img-viewer').classList.remove('show');}
 
@@ -6908,10 +6963,12 @@ function openImgUrlModal(id,kind){
   closePayDatePop();
   _imgTargetId=id;_imgKind=kind||'order';
   const o=imgFind(id,_imgKind);if(!o)return;
-  const title=`🖼 ${o.charName} — 이미지 URL`;
+  const title=`🖼 ${o.charName} — 이미지 등록`;
   document.getElementById('img-url-title').textContent=title;
   const inp=document.getElementById('img-url-input');
-  inp.value=o.imageUrl||'';
+  // 업로드 사진(blob:/imgThumbId)은 URL 칸을 비워, 저장 시 URL 방식으로 오인되지 않게 함
+  const isUploaded=!!o.imgThumbId||(o.imageUrl&&o.imageUrl.indexOf('blob:')===0);
+  inp.value=isUploaded?'':(o.imageUrl||'');
   updateImgPreview(o.imageUrl||'');
   _cropState=focusOf(o);
   initCropEditor();renderCrop();
@@ -6952,12 +7009,18 @@ async function pasteFromClipboard(silent=false){
 
 function saveImgUrl(){
   const o=imgFind(_imgTargetId);if(!o)return;
-  o.imageUrl=document.getElementById('img-url-input').value.trim();
-  if(o.imageUrl){
+  const url=document.getElementById('img-url-input').value.trim();
+  if(url){
+    // URL 방식으로 지정 → 기존 업로드 사진 연결은 해제
+    o.imageUrl=url; delete o.imgFileId; delete o.imgThumbId;
     const f=_cropState;
     if(f.x===50&&f.y===50&&f.z===1)delete o.imgFocus;
     else o.imgFocus={x:f.x,y:f.y,z:f.z};
-  } else delete o.imgFocus;
+  } else if(o.imgThumbId){
+    // 업로드된 사진 유지 (URL 칸을 비운 것은 무시)
+  } else {
+    o.imageUrl=''; delete o.imgFocus;
+  }
   syncAddModalImg(o);
   const k=_imgKind;closeImgUrlModal();imgRerender(k);
   showToast('🖼 이미지 저장됐어요','success');autoSave();
@@ -7020,8 +7083,8 @@ function initCropEditor(){
 }
 function removeImgUrl(){
   const o=imgFind(_imgTargetId);if(!o)return;
-  if(!confirm('이미지 URL을 제거할까요?'))return;
-  o.imageUrl='';delete o.imgFocus;
+  if(!confirm('이미지를 제거할까요?'))return;
+  o.imageUrl='';delete o.imgFocus;delete o.imgFileId;delete o.imgThumbId;
   syncAddModalImg(o);
   const k=_imgKind;closeImgUrlModal();imgRerender(k);autoSave();
 }
@@ -7184,7 +7247,7 @@ function importMakers(input){
 }
 
 function exportJSON(){
-  const payload=JSON.stringify({orders,wishes,sells,makers,stores,nextStoreId,bundleCoupons,savedAt:new Date().toISOString()},null,2);
+  const payload=JSON.stringify({orders:stripBlob(orders),wishes:stripBlob(wishes),sells,makers,stores,nextStoreId,bundleCoupons,savedAt:new Date().toISOString()},null,2);
   const blob=new Blob([payload],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -7378,7 +7441,14 @@ document.addEventListener('mousemove', function(e){
     <div style="margin-bottom:8px;font-size:12px;color:var(--text2);">
       아미아미, 굿스마일 등 공식 샵에서 이미지 우클릭 → 이미지 주소 복사 후 붙여넣으세요.
     </div>
-    <input id="img-url-input" type="text" class="form-input" placeholder="https://..." style="margin-bottom:8px;">
+    <input type="file" id="img-file-input" accept="image/*" style="display:none;" onchange="if(this.files&&this.files[0]){uploadPhotoForTarget(this.files[0]);this.value='';}">
+    <div style="display:flex;gap:8px;margin-bottom:6px;">
+      <button class="btn primary" onclick="document.getElementById('img-file-input').click()" style="font-size:12px;flex:1;">📁 사진 파일 업로드</button>
+    </div>
+    <div style="margin-bottom:10px;font-size:11px;color:var(--text3);line-height:1.5;">
+      사진 업로드는 <b>관리탭 → 구글 동기화</b> 로그인 후 사용할 수 있어요. 업로드한 사진은 본인 구글 드라이브에 저장됩니다.<br>URL 방식은 로그인 없이 계속 쓸 수 있어요.
+    </div>
+    <input id="img-url-input" type="text" class="form-input" placeholder="또는 이미지 URL 붙여넣기 (https://...)" style="margin-bottom:8px;">
 
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <button class="btn export" id="img-search-google" onclick="" style="font-size:12px;">🔍 구글 이미지 검색</button>
