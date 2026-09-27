@@ -4859,7 +4859,15 @@ function updateSaveStatus(saved,iso){const el=document.getElementById('save-info
 let GD_CID=localStorage.getItem('gd_cid')||'49227677211-jnadp2g1404gjbofbgahhg85u4k5bk9r.apps.googleusercontent.com';
 const GD_FILE='figurelist_data.json';
 const GD_SCOPE='https://www.googleapis.com/auth/drive.appdata';
-let gdToken=null, gdEmail='', gdTokenClient=null, gdFlushTimer=null;
+let gdToken=null, gdEmail='', gdTokenClient=null, gdFlushTimer=null, gdRefreshTimer=null;
+const GD_OWNER_KEY=STORAGE_KEY+'_owner';   // 현재 localStorage 데이터의 소유 계정(이메일)
+// 액세스 토큰(약 1시간)이 만료되기 전에 조용히 갱신 → 로그인 상태 유지
+function gdScheduleTokenRefresh(){
+  clearTimeout(gdRefreshTimer);
+  gdRefreshTimer=setTimeout(()=>{
+    if(gdToken&&gdTokenClient){try{gdTokenClient.requestAccessToken({prompt:''});}catch(e){}}
+  }, 50*60*1000);
+}
 function gdHH(){const d=new Date();return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');}
 function gdSetStatus(t,color){const el=document.getElementById('gd-status');if(el){el.textContent=t||'';if(color)el.style.color=color;}}
 function gdSetBtn(loggedIn){const b=document.getElementById('gd-btn');if(!b)return;b.textContent=loggedIn?'☁ 로그아웃':'☁ 구글 동기화';b.style.background=loggedIn?'var(--adim)':'var(--surface2)';b.style.color=loggedIn?'var(--accent)':'var(--text2)';b.style.borderColor=loggedIn?'var(--aborder)':'var(--border2)';}
@@ -4867,13 +4875,13 @@ function gdInit(){
   if(gdTokenClient||!GD_CID||!(window.google&&google.accounts&&google.accounts.oauth2))return;
   gdTokenClient=google.accounts.oauth2.initTokenClient({client_id:GD_CID,scope:GD_SCOPE,callback:(r)=>{
     if(r.error){gdSetStatus('로그인 취소/오류',(''));return;}
-    gdToken=r.access_token; localStorage.setItem('gd_on','1'); gdSignedIn();
+    gdToken=r.access_token; localStorage.setItem('gd_on','1'); gdScheduleTokenRefresh(); gdSignedIn();
   }});
 }
 function gdToggle(){
   if(gdToken){ // 로그아웃
     try{google.accounts.oauth2.revoke(gdToken,()=>{});}catch(e){}
-    gdToken=null;gdEmail='';localStorage.removeItem('gd_on');gdSetBtn(false);gdSetStatus('로그아웃됨','var(--text3)');return;
+    gdToken=null;gdEmail='';clearTimeout(gdRefreshTimer);localStorage.removeItem('gd_on');gdSetBtn(false);gdSetStatus('로그아웃됨','var(--text3)');return;
   }
   if(!GD_CID){const v=prompt('구글 OAuth 클라이언트 ID를 입력하세요');if(!v)return;GD_CID=v.trim();localStorage.setItem('gd_cid',GD_CID);}
   gdInit(); if(!gdTokenClient){gdSetStatus('로그인 준비 중… 잠시 후 다시','var(--yellow)');return;}
@@ -4888,13 +4896,15 @@ const gdH=()=>({Authorization:'Bearer '+gdToken});
 async function gdFind(){
   const q=encodeURIComponent(`name='${GD_FILE}'`);
   const r=await fetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name)&q=${q}`,{headers:gdH()});
+  if(!r.ok)throw new Error('find '+r.status);
   const j=await r.json();return(j.files&&j.files[0])?j.files[0].id:null;
 }
 async function gdCreate(){
   const r=await fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:{...gdH(),'Content-Type':'application/json'},body:JSON.stringify({name:GD_FILE,mimeType:'application/json',parents:['appDataFolder']})});
+  if(!r.ok)throw new Error('create '+r.status);
   const j=await r.json();return j.id;
 }
-async function gdUploadMedia(id,blob){await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,{method:'PATCH',headers:gdH(),body:blob});}
+async function gdUploadMedia(id,blob){const r=await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,{method:'PATCH',headers:gdH(),body:blob});if(!r.ok)throw new Error('upload '+r.status);}
 async function gdDownload(id){const r=await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`,{headers:gdH()});if(!r.ok)throw new Error('dl '+r.status);return await r.blob();}
 function gdApplyData(d){
   orders=(d.orders||[]).map(o=>({imageUrl:'',localPrice:null,costDates:{},costGroups:{},subName:'',...o}));
@@ -4907,13 +4917,35 @@ function gdApplyData(d){
 }
 async function gdLoadFromDrive(){
   try{
+    const acct=gdEmail||'';
+    const localOwner=localStorage.getItem(GD_OWNER_KEY);
+    // 지금 브라우저의 로컬 데이터가 '다른 계정' 소유이면, 로컬을 최신으로 취급하지 않는다(계정 오염 방지)
+    const differentAcct=!!(localOwner&&acct&&localOwner!==acct);
     const id=await gdFind();
-    if(!id){await gdFlush(true);gdSetStatus('동기화됨 '+gdHH(),'var(--green)');return;}
+    if(!id){
+      // 이 계정은 드라이브에 데이터가 없음
+      if(differentAcct){
+        // 다른 계정 데이터를 올리지 않고, 이 계정은 빈 데이터로 시작
+        const empty={orders:[],wishes:[],sells:[],makers,stores,nextStoreId,bundleCoupons:{},exchangeRates,savedAt:new Date().toISOString()};
+        gdApplyData(empty);localStorage.setItem(STORAGE_KEY,JSON.stringify(empty));localStorage.setItem(GD_OWNER_KEY,acct);
+        updateSaveStatus(true,empty.savedAt);await gdFlush(true);
+        gdSetStatus('새 계정 · 빈 데이터로 시작 '+gdHH(),'var(--green)');return;
+      }
+      // 내 계정 첫 동기화(또는 오프라인 데이터 클레임) → 로컬을 올림
+      localStorage.setItem(GD_OWNER_KEY,acct);await gdFlush(true);
+      gdSetStatus('동기화됨 '+gdHH(),'var(--green)');return;
+    }
     const blob=await gdDownload(id);const d=JSON.parse(await blob.text());
+    if(differentAcct){
+      // 계정 전환 → 드라이브(그 계정) 데이터를 우선 적용, 로컬은 무시
+      gdApplyData(d);localStorage.setItem(STORAGE_KEY,JSON.stringify(d));localStorage.setItem(GD_OWNER_KEY,acct);
+      updateSaveStatus(true,d.savedAt);gdSetStatus('계정 전환 · 드라이브에서 불러옴 '+gdHH(),'var(--green)');return;
+    }
+    // 같은 계정(또는 최초) → 최신 시각이 이김
     const localRaw=localStorage.getItem(STORAGE_KEY);const local=localRaw?JSON.parse(localRaw):null;
     const dT=Date.parse(d.savedAt||0)||0, lT=local?(Date.parse(local.savedAt||0)||0):0;
-    if(dT>=lT){gdApplyData(d);localStorage.setItem(STORAGE_KEY,JSON.stringify(d));updateSaveStatus(true,d.savedAt);gdSetStatus('드라이브에서 불러옴 '+gdHH(),'var(--green)');}
-    else{await gdFlush(true);gdSetStatus('동기화됨(로컬 최신) '+gdHH(),'var(--green)');}
+    if(dT>=lT){gdApplyData(d);localStorage.setItem(STORAGE_KEY,JSON.stringify(d));localStorage.setItem(GD_OWNER_KEY,acct);updateSaveStatus(true,d.savedAt);gdSetStatus('드라이브에서 불러옴 '+gdHH(),'var(--green)');}
+    else{localStorage.setItem(GD_OWNER_KEY,acct);await gdFlush(true);gdSetStatus('동기화됨(로컬 최신) '+gdHH(),'var(--green)');}
   }catch(e){gdSetStatus('동기화 오류: '+(e.message||e),'var(--red)');}
 }
 function gdScheduleFlush(){
@@ -4930,8 +4962,16 @@ async function gdFlush(silent){
     if(!obj.savedAt)obj.savedAt=new Date().toISOString();
     let id=await gdFind();if(!id)id=await gdCreate();
     await gdUploadMedia(id,new Blob([JSON.stringify(obj)],{type:'application/json'}));
+    gdFlush._retry=false;
     gdSetStatus('동기화됨 '+gdHH(),'var(--green)');
-  }catch(e){gdSetStatus('동기화 실패: '+(e.message||e),'var(--red)');}
+  }catch(e){
+    // 토큰 만료(401/403) → 조용히 재발급 후 1회 재시도
+    if(/40[13]/.test(''+(e.message||e))&&gdTokenClient&&!gdFlush._retry){
+      gdFlush._retry=true;gdSetStatus('세션 갱신 중…','var(--yellow)');
+      try{gdTokenClient.requestAccessToken({prompt:''});}catch(_){}
+      setTimeout(()=>{gdFlush(true);},1800);
+    }else{gdFlush._retry=false;gdSetStatus('동기화 실패: '+(e.message||e),'var(--red)');}
+  }
 }
 // ── 사진 업로드/표시 (드라이브 저장 · URL 방식과 병행) ──────────────
 // imageUrl은 표시용(런타임). 업로드 사진은 imgFileId/imgThumbId를 저장하고,
