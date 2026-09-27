@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>피규어리스트 · 개인정보처리방침</title>
+<style>
+:root{--bg:#0f0f13;--surface:#17171d;--border:#2a2a34;--text:#e8e8f0;--text2:#a0a0b4;--text3:#6a6a80;--accent:#7b6cff;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Noto Sans KR','Malgun Gothic',system-ui,sans-serif;line-height:1.75;font-size:15px;}
+.wrap{max-width:760px;margin:0 auto;padding:40px 20px 80px;}
+h1{font-size:24px;margin:0 0 6px;}
+.meta{color:var(--text3);font-size:13px;margin-bottom:28px;}
+h2{font-size:17px;margin:30px 0 8px;color:var(--accent);}
+p{margin:8px 0;color:var(--text);}
+ul{margin:8px 0;padding-left:20px;}
+li{margin:5px 0;}
+a{color:var(--accent);}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-top:14px;}
+.muted{color:var(--text2);font-size:14px;}
+hr{border:none;border-top:1px solid var(--border);margin:34px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>개인정보처리방침</h1>
+  <div class="meta">피규어리스트(Figure Purchase Tracker) · 최종 수정일: 2026년 9월 28일</div>
+
+  <p>본 방침은 개인이 취미로 개발·제공하는 웹 애플리케이션 "피규어리스트"(이하 "본 앱")의 개인정보 처리 방식을 설명합니다. 본 앱은 피규어 구매 기록을 정리하기 위한 도구이며, 별도의 서버 없이 동작합니다.</p>
+
+  <h2>1. 수집·저장하는 정보</h2>
+  <p>본 앱은 사용자가 직접 입력한 다음 정보를 저장합니다.</p>
+  <ul>
+    <li>구매 기록(상품명·제조사·가격·구매일·구매처·메모 등)</li>
+    <li>위시리스트, 방출(판매) 기록 등 사용자가 입력한 목록</li>
+    <li>사용자가 등록한 이미지(URL 또는 직접 업로드한 사진)</li>
+  </ul>
+
+  <h2>2. 저장 위치</h2>
+  <p>수집된 정보는 <b>오직 사용자 본인의 저장 공간에만</b> 보관되며, 개발자나 제3자의 서버로 전송·수집되지 않습니다.</p>
+  <ul>
+    <li><b>브라우저 로컬 저장소(localStorage)</b>: 로그인 없이 사용할 때, 데이터는 사용자의 기기·브라우저 안에만 저장됩니다.</li>
+    <li><b>사용자 본인의 Google 드라이브</b>: 구글 로그인으로 동기화를 켜면, 데이터와 업로드 사진이 사용자 계정의 <b>앱 전용 폴더(appDataFolder)</b>에 저장됩니다. 이 폴더는 본 앱만 접근할 수 있으며, 사용자의 다른 드라이브 파일에는 접근하지 않습니다.</li>
+  </ul>
+
+  <h2>3. Google 계정 및 권한</h2>
+  <ul>
+    <li>구글 로그인 시 이메일 등 기본 프로필 정보는 <b>로그인한 계정을 식별하고 올바른 데이터를 연결</b>하는 용도로만 사용됩니다.</li>
+    <li>본 앱이 요청하는 드라이브 권한은 <code>drive.appdata</code>(앱 전용 폴더 접근)로 한정됩니다. 사용자의 일반 드라이브 파일을 읽거나 수정하지 않습니다.</li>
+    <li>개발자는 사용자의 드라이브 데이터에 접근할 수 없습니다.</li>
+  </ul>
+
+  <h2>4. 제3자 제공</h2>
+  <p>본 앱은 사용자 정보를 제3자에게 판매·제공·공유하지 않습니다. 데이터 저장을 위해 사용자가 로그인한 Google 드라이브(사용자 본인의 저장 공간) 외에 정보가 전달되는 곳은 없습니다.</p>
+
+  <h2>5. 데이터 보관 및 삭제</h2>
+  <ul>
+    <li>데이터는 사용자가 삭제하기 전까지 사용자 본인의 저장 공간에 유지됩니다.</li>
+    <li>앱 내 "데이터 초기화" 기능으로 로컬 데이터를 삭제할 수 있습니다.</li>
+    <li>Google 드라이브에 저장된 앱 데이터는 <b>Google 드라이브 → 설정 → 앱 관리 → 숨겨진 앱 데이터 삭제</b>에서 제거할 수 있습니다.</li>
+    <li>구글 계정 연결 해제는 <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">Google 계정 → 보안 → 서드파티 액세스</a>에서 가능합니다.</li>
+  </ul>
+
+  <h2>6. 쿠키 및 추적</h2>
+  <p>본 앱은 광고·분석용 추적 도구나 쿠키를 사용하지 않습니다. 로그인 유지를 위한 최소한의 인증 정보만 브라우저에 저장됩니다.</p>
+
+  <h2>7. 문의</h2>
+  <div class="box muted">
+    개인정보 처리에 관한 문의: <a href="mailto:ndivia93@gmail.com">ndivia93@gmail.com</a>
+  </div>
+
+  <hr>
+  <p class="muted">본 방침은 서비스 변경에 따라 갱신될 수 있으며, 변경 시 본 페이지에 게시합니다.</p>
+</div>
+</body>
+</html>
