@@ -4861,12 +4861,18 @@ const GD_FILE='figurelist_data.json';
 const GD_SCOPE='https://www.googleapis.com/auth/drive.appdata';
 let gdToken=null, gdEmail='', gdTokenClient=null, gdFlushTimer=null, gdRefreshTimer=null;
 const GD_OWNER_KEY=STORAGE_KEY+'_owner';   // 현재 localStorage 데이터의 소유 계정(이메일)
-// 액세스 토큰(약 1시간)이 만료되기 전에 조용히 갱신 → 로그인 상태 유지
-function gdScheduleTokenRefresh(){
+// 발급받은 토큰을 만료 시각과 함께 저장 → 새로고침해도 유효하면 즉시 재사용(로그인 유지)
+function gdSaveToken(tok,expiresInSec){
+  try{localStorage.setItem('gd_tok',tok);localStorage.setItem('gd_exp',String(Date.now()+(( +expiresInSec||3600)*1000)));}catch(e){}
+}
+function gdClearToken(){try{localStorage.removeItem('gd_tok');localStorage.removeItem('gd_exp');}catch(e){}}
+// 액세스 토큰이 만료되기 전(5분 여유)에 조용히 갱신 → 로그인 상태 유지
+function gdScheduleTokenRefresh(ttlMs){
   clearTimeout(gdRefreshTimer);
+  const ms=Math.max(60000,(ttlMs||3600000)-5*60*1000);
   gdRefreshTimer=setTimeout(()=>{
     if(gdToken&&gdTokenClient){try{gdTokenClient.requestAccessToken({prompt:''});}catch(e){}}
-  }, 50*60*1000);
+  }, ms);
 }
 function gdHH(){const d=new Date();return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');}
 function gdSetStatus(t,color){const el=document.getElementById('gd-status');if(el){el.textContent=t||'';if(color)el.style.color=color;}}
@@ -4875,13 +4881,14 @@ function gdInit(){
   if(gdTokenClient||!GD_CID||!(window.google&&google.accounts&&google.accounts.oauth2))return;
   gdTokenClient=google.accounts.oauth2.initTokenClient({client_id:GD_CID,scope:GD_SCOPE,callback:(r)=>{
     if(r.error){gdSetStatus('로그인 취소/오류',(''));return;}
-    gdToken=r.access_token; localStorage.setItem('gd_on','1'); gdScheduleTokenRefresh(); gdSignedIn();
+    gdToken=r.access_token; localStorage.setItem('gd_on','1');
+    gdSaveToken(r.access_token,r.expires_in); gdScheduleTokenRefresh(((+r.expires_in||3600)*1000)); gdSignedIn();
   }});
 }
 function gdToggle(){
   if(gdToken){ // 로그아웃
     try{google.accounts.oauth2.revoke(gdToken,()=>{});}catch(e){}
-    gdToken=null;gdEmail='';clearTimeout(gdRefreshTimer);localStorage.removeItem('gd_on');gdSetBtn(false);gdSetStatus('로그아웃됨','var(--text3)');return;
+    gdToken=null;gdEmail='';clearTimeout(gdRefreshTimer);gdClearToken();try{localStorage.removeItem('gd_email');}catch(e){}localStorage.removeItem('gd_on');gdSetBtn(false);gdSetStatus('로그아웃됨','var(--text3)');return;
   }
   if(!GD_CID){const v=prompt('구글 OAuth 클라이언트 ID를 입력하세요');if(!v)return;GD_CID=v.trim();localStorage.setItem('gd_cid',GD_CID);}
   gdInit(); if(!gdTokenClient){gdSetStatus('로그인 준비 중… 잠시 후 다시','var(--yellow)');return;}
@@ -4889,7 +4896,7 @@ function gdToggle(){
 }
 async function gdSignedIn(){
   gdSetBtn(true); gdSetStatus('동기화 연결 중…','var(--yellow)');
-  try{const r=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+gdToken}});const j=await r.json();gdEmail=j.email||'';}catch(e){}
+  try{const r=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+gdToken}});const j=await r.json();gdEmail=j.email||'';try{if(gdEmail)localStorage.setItem('gd_email',gdEmail);}catch(e){}}catch(e){}
   await gdLoadFromDrive();
 }
 const gdH=()=>({Authorization:'Bearer '+gdToken});
@@ -4946,7 +4953,11 @@ async function gdLoadFromDrive(){
     const dT=Date.parse(d.savedAt||0)||0, lT=local?(Date.parse(local.savedAt||0)||0):0;
     if(dT>=lT){gdApplyData(d);localStorage.setItem(STORAGE_KEY,JSON.stringify(d));localStorage.setItem(GD_OWNER_KEY,acct);updateSaveStatus(true,d.savedAt);gdSetStatus('드라이브에서 불러옴 '+gdHH(),'var(--green)');}
     else{localStorage.setItem(GD_OWNER_KEY,acct);await gdFlush(true);gdSetStatus('동기화됨(로컬 최신) '+gdHH(),'var(--green)');}
-  }catch(e){gdSetStatus('동기화 오류: '+(e.message||e),'var(--red)');}
+  }catch(e){
+    // 저장된 토큰이 만료/무효면 정리 후 조용히 재연결 시도
+    if(/40[13]/.test(''+(e.message||e))){gdClearToken();if(gdTokenClient){try{gdTokenClient.requestAccessToken({prompt:''});}catch(_){}}gdSetStatus('세션 갱신 중…','var(--yellow)');}
+    else gdSetStatus('동기화 오류: '+(e.message||e),'var(--red)');
+  }
 }
 function gdScheduleFlush(){
   if(!gdToken)return;
@@ -5026,9 +5037,20 @@ async function resolveDriveImages(){
 
 // GIS 로드 대기 → 이전에 로그인했으면 조용히 재연결 시도
 window.addEventListener('load',()=>{
+  // ① 저장된 토큰이 아직 유효하면 즉시 재사용 → 새로고침해도 로그인 유지(팝업 없음)
+  try{
+    const tk=localStorage.getItem('gd_tok'), exp=+localStorage.getItem('gd_exp')||0;
+    if(tk&&exp>Date.now()+15000){
+      gdToken=tk; gdEmail=localStorage.getItem('gd_email')||'';
+      gdSetBtn(true); gdSetStatus('동기화 연결됨','var(--green)');
+      gdScheduleTokenRefresh(exp-Date.now());
+      setTimeout(()=>{if(typeof gdLoadFromDrive==='function')gdLoadFromDrive();},300); // 백그라운드 최신화
+    }
+  }catch(e){}
+  // ② GIS 로드 후: 토큰이 없거나 만료됐고 이전에 로그인한 적 있으면 조용히 재연결
   let n=0;const t=setInterval(()=>{
     if(window.google&&google.accounts&&google.accounts.oauth2){clearInterval(t);gdInit();
-      if(localStorage.getItem('gd_on')==='1'&&gdTokenClient){gdSetStatus('자동 로그인 중…','var(--text3)');try{gdTokenClient.requestAccessToken({prompt:''});}catch(e){}}
+      if(!gdToken&&localStorage.getItem('gd_on')==='1'&&gdTokenClient){gdSetStatus('자동 로그인 중…','var(--text3)');try{gdTokenClient.requestAccessToken({prompt:''});}catch(e){}}
     } else if(++n>40){clearInterval(t);}
   },300);
   setTimeout(()=>{if(typeof resolveDriveImages==='function')resolveDriveImages();},1200); // 시작 시 캐시된 사진 해석
