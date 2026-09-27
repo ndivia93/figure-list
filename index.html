@@ -4940,7 +4940,7 @@ let _imgdb=null;
 function imgdb(){return new Promise((res,rej)=>{if(_imgdb)return res(_imgdb);const q=indexedDB.open('fig-img',1);q.onupgradeneeded=()=>q.result.createObjectStore('img');q.onsuccess=()=>{_imgdb=q.result;res(_imgdb);};q.onerror=()=>rej(q.error);});}
 async function imgCacheGet(k){try{const db=await imgdb();return await new Promise(r=>{const t=db.transaction('img').objectStore('img').get(k);t.onsuccess=()=>r(t.result||null);t.onerror=()=>r(null);});}catch(e){return null;}}
 async function imgCachePut(k,v){try{const db=await imgdb();await new Promise(r=>{const t=db.transaction('img','readwrite').objectStore('img').put(v,k);t.onsuccess=()=>r();t.onerror=()=>r();});}catch(e){}}
-function imgResize(file,maxEdge,q){return new Promise(async(res,rej)=>{try{const bmp=await createImageBitmap(file);let w=bmp.width,h=bmp.height;const s=Math.min(1,maxEdge/Math.max(w,h));w=Math.max(1,Math.round(w*s));h=Math.max(1,Math.round(h*s));const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(bmp,0,0,w,h);cv.toBlob(b=>b?res(b):rej(new Error('encode')),'image/jpeg',q);}catch(e){rej(e);}});}
+function imgResize(file,maxEdge,q){return new Promise(async(res,rej)=>{try{const bmp=await createImageBitmap(file);let w=bmp.width,h=bmp.height;const s=Math.min(1,maxEdge/Math.max(w,h));w=Math.max(1,Math.round(w*s));h=Math.max(1,Math.round(h*s));const cv=document.createElement('canvas');cv.width=w;cv.height=h;const ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(bmp,0,0,w,h);cv.toBlob(b=>b?res(b):rej(new Error('encode')),'image/jpeg',q);}catch(e){rej(e);}});}
 async function gdImgCreate(name){const r=await fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:{...gdH(),'Content-Type':'application/json'},body:JSON.stringify({name,mimeType:'image/jpeg',parents:['appDataFolder']})});const j=await r.json();return j.id;}
 async function gdUploadOne(blob){const id=await gdImgCreate('img_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)+'.jpg');await gdUploadMedia(id,blob);return id;}
 async function uploadPhotoForTarget(file){
@@ -4948,14 +4948,19 @@ async function uploadPhotoForTarget(file){
   const o=imgFind(_imgTargetId);if(!o){showToast('대상을 찾을 수 없어요','error');return;}
   showToast('사진 업로드 중…','success');
   try{
-    const [disp,thumb]=await Promise.all([imgResize(file,2000,0.9),imgResize(file,400,0.8)]);   // 표시용·썸네일 동시 리사이즈
+    const [disp,thumb]=await Promise.all([imgResize(file,3200,0.92),imgResize(file,800,0.85)]);   // 표시용(고화질)·썸네일 동시 리사이즈
     const [dispId,thId]=await Promise.all([gdUploadOne(disp),gdUploadOne(thumb)]);               // 두 장 동시 업로드
     await Promise.all([imgCachePut(dispId,disp),imgCachePut(thId,thumb)]);
     o.imgFileId=dispId;o.imgThumbId=thId;
     try{o.imageUrl=URL.createObjectURL(thumb);}catch(e){}
     delete o.imgFocus;
-    const k=_imgKind;closeImgUrlModal();imgRerender(k);autoSave();
-    showToast('🖼 사진 업로드 완료','success');
+    imgRerender(_imgKind);autoSave();
+    // 모달을 닫지 않고 위치·확대 편집기를 표시 (고해상도 disp로 편집)
+    _cropState={x:50,y:50,z:1};
+    try{_uploadedCropSrc=URL.createObjectURL(disp);}catch(e){_uploadedCropSrc=o.imageUrl||'';}
+    updateImgPreview(o.imageUrl||'');
+    renderCrop();
+    showToast('업로드 완료 — 위치·확대를 조정한 뒤 저장을 눌러주세요','success');
   }catch(e){showToast('업로드 실패: '+(e.message||e),'error');}
 }
 async function imgUrlFromId(fileId){
@@ -6971,7 +6976,12 @@ function openImgUrlModal(id,kind){
   inp.value=isUploaded?'':(o.imageUrl||'');
   updateImgPreview(o.imageUrl||'');
   _cropState=focusOf(o);
+  _uploadedCropSrc=isUploaded?(o.imageUrl||''):'';   // 업로드 사진이면 편집기에 썸네일 blob부터 사용
   initCropEditor();renderCrop();
+  // 업로드 사진은 고해상도 표시본으로 편집기 이미지 업그레이드(확대 화질용)
+  if(isUploaded&&o.imgFileId&&typeof imgUrlFromId==='function'){
+    imgUrlFromId(o.imgFileId).then(u=>{if(u&&document.getElementById('img-url-modal').classList.contains('show')){_uploadedCropSrc=u;renderCrop();}});
+  }
   // 검색 버튼
   document.getElementById('img-search-google').onclick=()=>{
     openGoogleSearch(o);
@@ -7017,7 +7027,10 @@ function saveImgUrl(){
     if(f.x===50&&f.y===50&&f.z===1)delete o.imgFocus;
     else o.imgFocus={x:f.x,y:f.y,z:f.z};
   } else if(o.imgThumbId){
-    // 업로드된 사진 유지 (URL 칸을 비운 것은 무시)
+    // 업로드된 사진 유지 + 위치·확대 저장 (URL 칸을 비운 것은 무시)
+    const f=_cropState;
+    if(f.x===50&&f.y===50&&f.z===1)delete o.imgFocus;
+    else o.imgFocus={x:f.x,y:f.y,z:f.z};
   } else {
     o.imageUrl=''; delete o.imgFocus;
   }
@@ -7037,10 +7050,13 @@ function syncAddModalImg(o){
 
 // ── 썸네일 위치 편집기 ────────────────────────────────────────
 let _cropState={x:50,y:50,z:1};
+let _uploadedCropSrc=''; // 업로드 사진 편집용 이미지 소스(blob). URL 칸이 비어있을 때 사용
+// 편집기에 쓸 이미지: URL 칸이 있으면 URL, 없으면 업로드 사진
+function cropSrc(){const u=((document.getElementById('img-url-input')||{}).value||'').trim();return u?u:(_uploadedCropSrc||'');}
 function cropCss(){return 'object-fit:cover;object-position:'+_cropState.x+'% '+_cropState.y+'%;'
   +(_cropState.z!==1?'transform:scale('+_cropState.z+');transform-origin:'+_cropState.x+'% '+_cropState.y+'%;':'');}
 function renderCrop(){
-  const url=(document.getElementById('img-url-input')||{}).value||'';
+  const url=cropSrc();
   const box=document.getElementById('img-crop-box');
   if(!box)return;
   if(!url){box.style.display='none';return;}
