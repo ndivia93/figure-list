@@ -928,7 +928,7 @@ option[value="전액구매"]{color:#7b6cff;}
     <!-- 구매유형 · 배송/방출 현황 (전체 폭 막대) -->
     <div id="manage-bars" style="margin-top:16px;display:flex;flex-direction:column;gap:14px;"></div>
     <!-- 구글 드라이브 동기화 -->
-    <div style="margin-top:16px;padding:14px;background:var(--surface2);border:1px solid var(--aborder);border-radius:var(--r);">
+    <div id="gd-sync-card" style="margin-top:16px;padding:14px;background:var(--surface2);border:1px solid var(--aborder);border-radius:var(--r);transition:box-shadow .3s;">
       <div class="manage-section-title" style="margin-bottom:10px;">구글 드라이브 동기화</div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <button id="gd-btn" onclick="gdToggle()" style="font-size:13px;font-weight:700;padding:8px 16px;border-radius:20px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;font-family:inherit;white-space:nowrap;">☁ 구글 동기화</button>
@@ -6954,8 +6954,8 @@ function openImgViewer(id,kind){
   const img=document.getElementById('img-viewer-img');
   img.src=o.imageUrl||'';
   img.onerror=()=>{img.src='';img.alt='이미지를 불러올 수 없어요';};
-  document.getElementById('img-viewer-search').onclick=()=>openGoogleSearch(o);
   document.getElementById('img-viewer-edit').onclick=()=>{closeImgViewer();openImgUrlModal(id,kind);};
+  document.getElementById('img-viewer-reset').onclick=()=>resetImgFromViewer(id,kind);
   document.getElementById('img-viewer').classList.add('show');
   // 업로드된 사진이면 고해상도 표시본을 드라이브/캐시에서 로드
   if(o.imgFileId&&typeof imgUrlFromId==='function'){
@@ -6963,12 +6963,27 @@ function openImgViewer(id,kind){
   }
 }
 function closeImgViewer(){document.getElementById('img-viewer').classList.remove('show');}
+// 이미지 뷰어에서 초기화
+function resetImgFromViewer(id,kind){
+  const o=imgFind(id,kind||'order');if(!o)return;
+  if(!confirm('이미지를 초기화할까요?'))return;
+  o.imageUrl='';delete o.imgFocus;delete o.imgFileId;delete o.imgThumbId;
+  closeImgViewer();if(typeof imgRerender==='function')imgRerender(kind);autoSave();
+}
+// 이미지 등록창 → 관리탭 구글 동기화 카드로 이동
+function goToSyncTab(){
+  closeImgUrlModal();
+  let el=null;document.querySelectorAll('.tab').forEach(t=>{if((t.getAttribute('onclick')||'').indexOf("'manage'")>=0)el=t;});
+  if(el&&typeof switchTab==='function'){switchTab('manage',el);}
+  else{document.querySelectorAll('.panel').forEach(e=>e.classList.remove('active'));const p=document.getElementById('panel-manage');if(p)p.classList.add('active');if(typeof renderManage==='function')renderManage();}
+  setTimeout(()=>{const c=document.getElementById('gd-sync-card');if(c){c.scrollIntoView({behavior:'smooth',block:'center'});c.style.boxShadow='0 0 0 3px var(--accent)';setTimeout(()=>{c.style.boxShadow='';},1600);}},180);
+}
 
 function openImgUrlModal(id,kind){
   closePayDatePop();
   _imgTargetId=id;_imgKind=kind||'order';
   const o=imgFind(id,_imgKind);if(!o)return;
-  const title=`🖼 ${o.charName} — 이미지 등록`;
+  const title=`${o.charName} — 이미지 등록`;
   document.getElementById('img-url-title').textContent=title;
   const inp=document.getElementById('img-url-input');
   // 업로드 사진(blob:/imgThumbId)은 URL 칸을 비워, 저장 시 URL 방식으로 오인되지 않게 함
@@ -7136,6 +7151,11 @@ function showImgPop(e, id, kind){
   const img=document.getElementById('fhp-img');
   const name=document.getElementById('fhp-name');
   img.src=o.imageUrl;
+  // 업로드 사진이면 고해상도 표시본으로 교체(호버 팝업 선명도)
+  if(o.imgFileId&&typeof imgUrlFromId==='function'){
+    const wantId=o.imgFileId; img.dataset.want=wantId;
+    imgUrlFromId(wantId).then(u=>{if(u&&pop.classList.contains('show')&&img.dataset.want===wantId)img.src=u;});
+  } else { img.dataset.want=''; }
   name.textContent=o.charName+(o.maker?` — ${o.maker}`:'');
   // 위치 계산 — 커서 왼쪽 위로
   const x=e.clientX, y=e.clientY;
@@ -7445,30 +7465,33 @@ document.addEventListener('mousemove', function(e){
   <div class="img-viewer-title" id="img-viewer-title"></div>
   <img id="img-viewer-img" src="" alt="">
   <div class="img-viewer-actions">
-    <button class="btn" onclick="closeImgViewer()">✕ 닫기</button>
-    <button class="btn export" id="img-viewer-search" onclick="">🔍 구글 검색</button>
-    <button class="btn primary" id="img-viewer-edit" onclick="">✎ URL 변경</button>
+    <button class="btn primary" id="img-viewer-edit" onclick="">이미지 변경</button>
+    <button class="btn" id="img-viewer-reset" style="color:var(--red);border-color:var(--rborder);" onclick="">이미지 초기화</button>
+    <button class="btn" onclick="closeImgViewer()">취소</button>
   </div>
 </div>
 <!-- 이미지 URL 입력 패널 -->
 <div class="modal-overlay" id="img-url-modal" onclick="if(event.target===this)closeImgUrlModal()" style="background:rgba(0,0,0,.72);z-index:2700;">
   <div class="modal" style="max-width:480px;" onclick="event.stopPropagation()">
-    <div class="modal-title" id="img-url-title">🖼 이미지 URL 설정</div>
-    <div style="margin-bottom:8px;font-size:12px;color:var(--text2);">
-      아미아미, 굿스마일 등 공식 샵에서 이미지 우클릭 → 이미지 주소 복사 후 붙여넣으세요.
-    </div>
-    <input type="file" id="img-file-input" accept="image/*" style="display:none;" onchange="if(this.files&&this.files[0]){uploadPhotoForTarget(this.files[0]);this.value='';}">
-    <div style="display:flex;gap:8px;margin-bottom:6px;">
-      <button class="btn primary" onclick="document.getElementById('img-file-input').click()" style="font-size:12px;flex:1;">📁 사진 파일 업로드</button>
-    </div>
-    <div style="margin-bottom:10px;font-size:11px;color:var(--text3);line-height:1.5;">
-      사진 업로드는 <b>관리탭 → 구글 동기화</b> 로그인 후 사용할 수 있어요. 업로드한 사진은 본인 구글 드라이브에 저장됩니다.<br>URL 방식은 로그인 없이 계속 쓸 수 있어요.
-    </div>
-    <input id="img-url-input" type="text" class="form-input" placeholder="또는 이미지 URL 붙여넣기 (https://...)" style="margin-bottom:8px;">
+    <div class="modal-title" id="img-url-title">이미지 등록</div>
 
+    <!-- 사진 업로드 -->
+    <input type="file" id="img-file-input" accept="image/*" style="display:none;" onchange="if(this.files&&this.files[0]){uploadPhotoForTarget(this.files[0]);this.value='';}">
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="btn primary" onclick="document.getElementById('img-file-input').click()" style="font-size:14px;padding:10px 14px;flex:1;">사진 파일 업로드</button>
+    </div>
+    <div style="margin-bottom:14px;font-size:13px;color:var(--text2);line-height:1.6;">
+      사진 업로드는 <a onclick="goToSyncTab()" style="color:var(--accent);font-weight:700;cursor:pointer;text-decoration:underline;">관리탭 &rarr; 구글 동기화(로그인)</a> 후 사용할 수 있어요.<br>
+      업로드한 사진은 본인 구글 드라이브에 저장됩니다.
+    </div>
+
+    <!-- 이미지 URL -->
+    <div style="border-top:1px solid var(--border);padding-top:12px;margin-bottom:8px;font-size:13px;color:var(--text2);">
+      또는 이미지 URL을 복사한 뒤 붙여넣으세요.
+    </div>
+    <input id="img-url-input" type="text" class="form-input" placeholder="https://..." style="margin-bottom:8px;">
     <div style="display:flex;gap:8px;margin-bottom:12px;">
-      <button class="btn export" id="img-search-google" onclick="" style="font-size:12px;">🔍 구글 이미지 검색</button>
-      <button class="btn" id="img-paste-btn" onclick="pasteFromClipboard()" style="font-size:12px;color:var(--cyan);border-color:var(--cborder);">📋 클립보드에서 붙여넣기</button>
+      <button class="btn export" id="img-search-google" onclick="" style="font-size:13px;">자동검색 (구글)</button>
     </div>
     <div id="img-url-preview" style="margin-bottom:12px;min-height:60px;text-align:center;"></div>
 
@@ -7499,8 +7522,8 @@ document.addEventListener('mousemove', function(e){
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;">
       <button class="btn" onclick="closeImgUrlModal()">취소</button>
-      <button class="btn" style="color:var(--red);border-color:var(--rborder);" onclick="removeImgUrl()">🗑 제거</button>
-      <button class="btn primary" onclick="saveImgUrl()">✅ 저장</button>
+      <button class="btn" style="color:var(--red);border-color:var(--rborder);" onclick="removeImgUrl()">제거</button>
+      <button class="btn primary" onclick="saveImgUrl()">저장</button>
     </div>
   </div>
 </div>
