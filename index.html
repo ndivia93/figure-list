@@ -90,8 +90,16 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 /* 드라이브에 아직 안 올라간 변경이 있으면 오른쪽 위 점 */
 .gd-orb.dirty > i{display:block;}
 .gd-orb > i{display:none;position:absolute;top:-1px;right:-1px;width:10px;height:10px;border-radius:50%;background:var(--red,#ff5c7a);border:2px solid var(--surface);z-index:2;}
-#gd-unsynced{display:none;position:fixed;left:16px;bottom:18px;z-index:8200;align-items:center;gap:10px;padding:10px 12px 10px 14px;max-width:calc(100vw - 150px);background:var(--surface2);border:1px solid var(--yborder);border-left:3px solid var(--yellow);border-radius:var(--r);box-shadow:0 6px 24px rgba(0,0,0,.45);font-size:13px;color:var(--text);word-break:keep-all;}
-#gd-unsynced b{color:var(--yellow);}
+/* 헤더: 구름 버튼 왼쪽 '드라이브 미저장' 알림 */
+#gd-unsynced{display:none;align-items:center;gap:8px;padding:4px 4px 4px 12px;border-radius:20px;background:var(--ydim);border:1px solid var(--yborder);font-size:12px;color:var(--yellow);white-space:nowrap;min-width:0;}
+#gd-unsynced.dirty{background:rgba(255,92,122,.12);border-color:rgba(255,92,122,.45);color:#ff8fa5;}
+#gd-unsynced .gd-u-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;animation:gd-blink 1.6s ease-in-out infinite;}
+#gd-unsynced #gd-unsynced-txt{overflow:hidden;text-overflow:ellipsis;}
+#gd-unsynced button{font-size:12px;font-weight:700;padding:4px 11px;border-radius:14px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;}
+#gd-unsynced button:hover{filter:brightness(1.1);}
+@keyframes gd-blink{50%{opacity:.35;}}
+@media (prefers-reduced-motion:reduce){#gd-unsynced .gd-u-dot{animation:none;}}
+@media (max-width:760px){#gd-unsynced #gd-unsynced-txt{display:none;}}
 @media (prefers-reduced-motion:reduce){.gd-orb.on::before{animation:none;}}
 .header-sub{font-size:10px;color:var(--text2);font-family:'Space Mono',monospace;}
 /* save-bar 제거됨 — 저장상태는 헤더 내 표시 */
@@ -469,7 +477,12 @@ option[value="전액구매"]{color:#7b6cff;}
   <div style="padding:14px 0;">
     <div class="header-title" id="header-title-text">피규어 구매 리스트</div>
   </div>
-  <div style="margin-left:auto;padding-right:6px;display:flex;align-items:center;gap:12px;">
+  <div style="margin-left:auto;padding-right:6px;display:flex;align-items:center;gap:12px;min-width:0;">
+    <div id="gd-unsynced" role="status" title="이 기기에만 저장되고 있어요. 로그인하면 구글 드라이브에 저장됩니다.">
+      <span class="gd-u-dot"></span>
+      <span id="gd-unsynced-txt">드라이브에 저장되지 않고 있어요</span>
+      <button onclick="gdSyncNow()">로그인하고 저장</button>
+    </div>
     <button id="gd-orb" class="gd-orb" onclick="gdOrbClick()" title="구글 동기화 켜기 (로그인)" aria-label="구글 동기화"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/></svg><i></i></button>
     <div style="text-align:right;display:flex;flex-direction:column;justify-content:center;">
       <div style="font-size:11px;color:var(--text2);opacity:0.6;font-family:'Space Mono',monospace;white-space:nowrap;">제작 : 아지타니히후미</div>
@@ -5006,8 +5019,10 @@ function gdSetStatus(t,color){
   const el=document.getElementById('gd-status');if(el){el.textContent=t||'';if(color)el.style.color=color;}
   const orb=document.getElementById('gd-orb');if(orb&&t)orb.dataset.status=t;gdOrbTitle();
 }
-// 상태: on(연결됨) · warn(이전에 로그인했지만 끊김) · off(사용 안 함)
-function gdState(){return gdToken?'on':(localStorage.getItem('gd_on')==='1'?'warn':'off');}
+// 한 번이라도 로그인한 적 있는지 (로그아웃해도 유지) — 이후엔 드라이브 미저장 상태를 계속 알림
+function gdEver(){try{return localStorage.getItem('gd_ever')==='1'||localStorage.getItem('gd_on')==='1';}catch(e){return false;}}
+// 상태: on(연결됨) · warn(로그인 이력 있지만 지금 연결 안 됨: 만료·로그아웃) · off(한 번도 안 씀)
+function gdState(){return gdToken?'on':(gdEver()?'warn':'off');}
 function gdOrbTitle(){
   const orb=document.getElementById('gd-orb');if(!orb)return;
   const s=gdState();
@@ -5031,7 +5046,7 @@ function gdInit(){
   if(gdTokenClient||!GD_CID||!(window.google&&google.accounts&&google.accounts.oauth2))return;
   gdTokenClient=google.accounts.oauth2.initTokenClient({client_id:GD_CID,scope:GD_SCOPE,callback:(r)=>{
     if(r.error){gdSetStatus('로그인 취소/오류','var(--text3)');gdSetBtn();return;}
-    gdToken=r.access_token; localStorage.setItem('gd_on','1');
+    gdToken=r.access_token; localStorage.setItem('gd_on','1'); localStorage.setItem('gd_ever','1');
     gdSaveToken(r.access_token,r.expires_in); gdScheduleTokenRefresh(((+r.expires_in||3600)*1000)); gdSignedIn();
   }});
 }
@@ -5046,7 +5061,7 @@ function gdConnect(){
 function gdToggle(){
   if(gdToken){ // 로그아웃
     try{google.accounts.oauth2.revoke(gdToken,()=>{});}catch(e){}
-    gdToken=null;gdEmail='';clearTimeout(gdRefreshTimer);gdClearToken();try{localStorage.removeItem('gd_email');localStorage.removeItem('gd_dirty');}catch(e){}localStorage.removeItem('gd_on');gdSetBtn();gdSetStatus('로그아웃됨','var(--text3)');return;
+    gdToken=null;gdEmail='';clearTimeout(gdRefreshTimer);gdClearToken();try{localStorage.removeItem('gd_email');localStorage.setItem('gd_ever','1');}catch(e){}localStorage.removeItem('gd_on');gdSetBtn();gdSetStatus('로그아웃됨 · 드라이브에 저장되지 않음','var(--yellow)');return;
   }
   gdConnect();
 }
@@ -5060,7 +5075,7 @@ function gdOrbClick(){
 }
 // 알림 막대의 '로그인하고 저장'
 function gdSyncNow(){
-  _gdBarHidden=false;gdFlush._announce=true;
+  gdFlush._announce=true;
   if(gdToken){gdFlush();return;}
   gdConnect();
 }
@@ -5148,23 +5163,26 @@ function gdSetDirty(v){
   gdRenderUnsynced();
 }
 function gdAfterLocalSave(){
-  if(localStorage.getItem('gd_on')!=='1')return;   // 동기화 안 쓰는 사용자는 해당 없음
+  if(!gdEver())return;   // 동기화를 한 번도 안 쓴 사용자는 해당 없음
   gdSaveSeq++;gdSetDirty(true);
   if(gdToken)gdScheduleFlush();
 }
-// 끊긴 상태 + 미동기화 변경 → 화면 알림 막대 / 헤더 버튼 점 표시
-let _gdBarHidden=false;
+// 로그인 이력이 있는데 지금 연결 안 됨(만료·로그아웃) → 헤더 구름 버튼 왼쪽에 계속 알림
 function gdRenderUnsynced(){
-  const need=gdIsDirty()&&!gdToken&&localStorage.getItem('gd_on')==='1';
+  const need=gdEver()&&!gdToken;
   const bar=document.getElementById('gd-unsynced');
-  if(bar)bar.style.display=(need&&!_gdBarHidden)?'flex':'none';
+  if(bar){
+    bar.style.display=need?'inline-flex':'none';
+    bar.classList.toggle('dirty',gdIsDirty());
+    const t=document.getElementById('gd-unsynced-txt');
+    if(t)t.textContent=gdIsDirty()?'저장 안 된 변경 있음 · 드라이브에 저장되지 않고 있어요':'드라이브에 저장되지 않고 있어요';
+  }
   const orb=document.getElementById('gd-orb');
-  if(orb)orb.classList.toggle('dirty',gdIsDirty()&&localStorage.getItem('gd_on')==='1');
+  if(orb)orb.classList.toggle('dirty',gdIsDirty()&&gdEver());
 }
-function gdHideUnsyncedBar(){_gdBarHidden=true;gdRenderUnsynced();}
 // 창 닫기/새로고침 시: 드라이브에 안 올라간 변경이 있으면 브라우저 기본 확인창
 window.addEventListener('beforeunload',e=>{
-  if(localStorage.getItem('gd_on')==='1'&&gdIsDirty()){e.preventDefault();e.returnValue='';return '';}
+  if(gdEver()&&gdIsDirty()){e.preventDefault();e.returnValue='';return '';}
 });
 function gdScheduleFlush(){
   if(!gdToken)return;
@@ -5256,6 +5274,7 @@ function imgPendingClick(id,kind){
 // 시작 시: 저장된 토큰이 유효하면 재사용, 아니면 팝업 없이 '끊김'으로 표시(다시 연결은 클릭으로)
 window.addEventListener('load',()=>{
   try{gdEmail=localStorage.getItem('gd_email')||'';}catch(e){}
+  try{if(localStorage.getItem('gd_on')==='1')localStorage.setItem('gd_ever','1');}catch(e){} // 기존 사용자 이력 반영
   try{
     const tk=localStorage.getItem('gd_tok'), exp=+localStorage.getItem('gd_exp')||0;
     if(tk&&exp>Date.now()+15000){
@@ -5265,7 +5284,7 @@ window.addEventListener('load',()=>{
       setTimeout(()=>{if(typeof gdLoadFromDrive==='function')gdLoadFromDrive();},300); // 백그라운드 최신화
     }else if(localStorage.getItem('gd_on')==='1'){
       gdClearToken(); gdSetBtn(); gdSetStatus('동기화 끊김 · 다시 연결 필요','var(--yellow)');
-    }else{ gdSetBtn(); }
+    }else{ gdSetBtn(); if(gdEver())gdSetStatus('로그아웃됨 · 드라이브에 저장되지 않음','var(--yellow)'); }
   }catch(e){}
   // GIS 로드 후 클라이언트만 준비 (자동 팝업 없음)
   let n=0;const t=setInterval(()=>{
@@ -7777,12 +7796,6 @@ document.addEventListener('mousemove', function(e){
 </div>
 
 <!-- 이미지 뷰어 -->
-<!-- 드라이브 미동기화 알림 막대 -->
-<div id="gd-unsynced" role="status">
-  <span><b>구글 드라이브에 저장되지 않은 변경</b>이 있어요. 이 기기에만 저장된 상태입니다.</span>
-  <button class="btn primary" onclick="gdSyncNow()" style="font-size:13px;padding:6px 12px;white-space:nowrap;">로그인하고 저장</button>
-  <span onclick="gdHideUnsyncedBar()" title="닫기" style="cursor:pointer;color:var(--text3);font-size:14px;padding:0 2px;">✕</span>
-</div>
 <!-- 안내 / 확인 모달 -->
 <div class="modal-overlay" id="notice-modal" onclick="if(event.target===this)closeNoticeModal()" style="background:rgba(0,0,0,.72);z-index:2800;">
   <div class="modal" style="max-width:440px;text-align:center;word-break:keep-all;" onclick="event.stopPropagation()">
