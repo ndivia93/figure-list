@@ -77,30 +77,46 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .header-icon{width:60px;height:calc(100% - 2px);flex-shrink:0;position:relative;cursor:pointer;overflow:hidden;align-self:center;border-radius:10px;aspect-ratio:1/1;}
 .header-title{font-size:24px;font-weight:700;}
 /* 헤더 구글 동기화 버튼 — 연결 시 테두리가 도는 '패시브 활성' 효과 */
-.gd-orb{position:relative;width:34px;height:34px;border-radius:50%;border:none;padding:0;background:transparent;cursor:pointer;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;color:var(--text3);transition:color .2s,box-shadow .3s;}
+.gd-orb{position:relative;width:36px;height:36px;border-radius:50%;border:none;padding:0;background:transparent;cursor:pointer;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;color:var(--text3);transition:color .2s;}
 .gd-orb::before{content:'';position:absolute;inset:0;border-radius:50%;background:var(--border2);}
-.gd-orb::after{content:'';position:absolute;inset:2px;border-radius:50%;background:var(--surface);}
+.gd-orb::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--surface);}
 .gd-orb svg{position:relative;z-index:1;}
 .gd-orb:hover{color:var(--text2);}
-.gd-orb.on{color:var(--accent);box-shadow:0 0 12px rgba(123,108,255,.45);}
-.gd-orb.on::before{background:conic-gradient(from 0deg,transparent 0deg,var(--accent) 70deg,#4ecfcf 150deg,transparent 200deg,transparent 250deg,var(--accent) 320deg,transparent 360deg);animation:gd-spin 2.2s linear infinite;}
+/* 연결됨: 혜성 꼬리 모양 링이 계속 회전 + 은은한 맥동 광 (모션 줄이기 설정과 무관하게 동작) */
+.gd-orb.on{color:var(--accent);animation:gd-glow 2.4s ease-in-out infinite;}
+.gd-orb.on::before{background:conic-gradient(from 0deg,rgba(123,108,255,0) 0deg,rgba(123,108,255,.15) 60deg,var(--accent) 200deg,#4ecfcf 300deg,#ffffff 350deg,rgba(123,108,255,0) 360deg);animation:gd-spin 1.4s linear infinite;}
+.gd-orb.on svg{animation:gd-icon 2.4s ease-in-out infinite;}
 .gd-orb.warn{color:var(--yellow);}
-.gd-orb.warn::before{background:var(--yellow);opacity:.7;}
+.gd-orb.warn::before{background:var(--yellow);opacity:.75;}
 @keyframes gd-spin{to{transform:rotate(360deg);}}
+@keyframes gd-glow{0%,100%{box-shadow:0 0 6px rgba(123,108,255,.35);}50%{box-shadow:0 0 16px rgba(78,207,207,.55);}}
+@keyframes gd-icon{0%,100%{filter:drop-shadow(0 0 0 rgba(123,108,255,0));}50%{filter:drop-shadow(0 0 4px rgba(123,108,255,.8));}}
+/* 스크롤로 헤더가 사라지면 왼쪽 아래에 희미하게 */
+#gd-float{position:fixed;left:14px;bottom:14px;z-index:7800;display:flex;align-items:center;gap:8px;opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .25s,transform .25s;}
+#gd-float.show{opacity:.55;pointer-events:auto;transform:none;}
+#gd-float.show:hover{opacity:1;}
+#gd-float .gd-orb::after{background:var(--bg);}
 /* 드라이브에 아직 안 올라간 변경이 있으면 오른쪽 위 점 */
 .gd-orb.dirty > i{display:block;}
 .gd-orb > i{display:none;position:absolute;top:-1px;right:-1px;width:10px;height:10px;border-radius:50%;background:var(--red,#ff5c7a);border:2px solid var(--surface);z-index:2;}
 /* 헤더: 구름 버튼 왼쪽 '드라이브 미저장' 알림 */
-#gd-unsynced{display:none;align-items:center;gap:8px;padding:4px 4px 4px 12px;border-radius:20px;background:var(--ydim);border:1px solid var(--yborder);font-size:12px;color:var(--yellow);white-space:nowrap;min-width:0;}
-#gd-unsynced.dirty{background:rgba(255,92,122,.12);border-color:rgba(255,92,122,.45);color:#ff8fa5;}
-#gd-unsynced .gd-u-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;animation:gd-blink 1.6s ease-in-out infinite;}
-#gd-unsynced #gd-unsynced-txt{overflow:hidden;text-overflow:ellipsis;}
-#gd-unsynced button{font-size:12px;font-weight:700;padding:4px 11px;border-radius:14px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;}
-#gd-unsynced button:hover{filter:brightness(1.1);}
+.gd-unsynced{display:none;align-items:center;gap:8px;padding:4px 4px 4px 12px;border-radius:20px;background:var(--ydim);border:1px solid var(--yborder);font-size:12px;color:var(--yellow);white-space:nowrap;min-width:0;}
+#gd-float .gd-unsynced{background:var(--surface2);}
+.gd-unsynced.dirty{background:rgba(255,92,122,.12);border-color:rgba(255,92,122,.45);color:#ff8fa5;}
+#gd-float .gd-unsynced.dirty{background:#2a1a22;}
+.gd-unsynced .gd-u-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;animation:gd-blink 1.6s ease-in-out infinite;}
+.gd-unsynced .gd-unsynced-txt{overflow:hidden;text-overflow:ellipsis;}
+.gd-unsynced button{font-size:12px;font-weight:700;padding:4px 11px;border-radius:14px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;}
+.gd-unsynced button:hover{filter:brightness(1.1);}
 @keyframes gd-blink{50%{opacity:.35;}}
-@media (prefers-reduced-motion:reduce){#gd-unsynced .gd-u-dot{animation:none;}}
-@media (max-width:760px){#gd-unsynced #gd-unsynced-txt{display:none;}}
-@media (prefers-reduced-motion:reduce){.gd-orb.on::before{animation:none;}}
+@media (max-width:760px){.gd-unsynced .gd-unsynced-txt{display:none;}}
+/* 이미지 등록: 업로드 드롭존 */
+.img-drop{margin-bottom:8px;padding:14px 12px;border-radius:var(--r);background:var(--adim);border:2px dashed var(--aborder);text-align:center;cursor:pointer;transition:background .15s,border-color .15s,transform .15s;}
+.img-drop:hover,.img-drop:focus-visible{border-color:var(--accent);outline:none;}
+.img-drop-main{font-size:15px;font-weight:700;color:var(--accent);}
+.img-drop-sub{font-size:12px;color:var(--text2);margin-top:3px;}
+.img-drop.over{background:rgba(123,108,255,.22);border-color:var(--accent);border-style:solid;transform:scale(1.015);}
+.img-drop.over .img-drop-main::after{content:' — 여기에 놓으세요';}
 .header-sub{font-size:10px;color:var(--text2);font-family:'Space Mono',monospace;}
 /* save-bar 제거됨 — 저장상태는 헤더 내 표시 */
 .header-save{font-size:10px;color:var(--green);font-family:'Space Mono',monospace;margin-top:2px;}
@@ -240,6 +256,13 @@ td input[type=number]{text-align:right;font-family:'Space Mono',monospace;}
 .mono{font-family:'Space Mono',monospace;}
 /* Autocomplete */
 .ac-wrap{position:relative;width:100%;}
+/* 탭 줄: 모든 요소 높이를 탭과 같게, 검색창은 남은 가로 공간을 채움 */
+#tabs-right{flex:1 1 auto;min-width:0;margin-left:8px;justify-content:flex-end;align-self:stretch;align-items:stretch !important;}
+#order-search-wrap{flex:1 1 auto;width:auto !important;min-width:128px;}
+#order-search-wrap input{height:100%;}
+#collapse-btn{align-self:stretch;padding:0 14px !important;font-size:13px !important;}
+.tab-gear{display:inline-flex;align-items:center;justify-content:center;}
+.tab-gear span{font-size:20px;line-height:1;display:block;}
 #order-search-wrap input{width:100%;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:14px;padding:9px 26px 9px 11px;font-family:'Noto Sans KR',sans-serif;outline:none;min-width:0;}
 #order-search-wrap input:focus{border-color:var(--accent);}
 #search-order-clear:hover{color:var(--text);background:rgba(255,255,255,.1);}
@@ -478,9 +501,9 @@ option[value="전액구매"]{color:#7b6cff;}
     <div class="header-title" id="header-title-text">피규어 구매 리스트</div>
   </div>
   <div style="margin-left:auto;padding-right:6px;display:flex;align-items:center;gap:12px;min-width:0;">
-    <div id="gd-unsynced" role="status" title="이 기기에만 저장되고 있어요. 로그인하면 구글 드라이브에 저장됩니다.">
+    <div id="gd-unsynced" class="gd-unsynced" role="status" title="이 기기에만 저장되고 있어요. 로그인하면 구글 드라이브에 저장됩니다.">
       <span class="gd-u-dot"></span>
-      <span id="gd-unsynced-txt">드라이브에 저장되지 않고 있어요</span>
+      <span class="gd-unsynced-txt">드라이브에 저장되지 않고 있어요</span>
       <button onclick="gdSyncNow()">로그인하고 저장</button>
     </div>
     <button id="gd-orb" class="gd-orb" onclick="gdOrbClick()" title="구글 동기화 켜기 (로그인)" aria-label="구글 동기화"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/></svg><i></i></button>
@@ -606,18 +629,19 @@ option[value="전액구매"]{color:#7b6cff;}
 </div>
 
 <div class="container">
-    <div class="tabs" style="display:flex;align-items:center;">
+    <div class="tabs" style="display:flex;align-items:stretch;">
     <button class="tab active" onclick="switchTab('order',this)">구매목록</button>
     <button class="tab" onclick="switchTab('cards',this)">카드보기</button>
-    <button class="tab" onclick="switchTab('wish',this)">위시리스트</button>
-    <button class="tab" onclick="switchTab('sell',this)">방출명단</button>
-    <button class="tab" onclick="switchTab('bundle',this)">할인정보</button>
+    <button class="tab" onclick="switchTab('wish',this)">위시</button>
+    <button class="tab" onclick="switchTab('sell',this)">방출</button>
+    <button class="tab" onclick="switchTab('bundle',this)">할인</button>
     <button class="tab" onclick="switchTab('store',this)">구매처</button>
     <button class="tab" onclick="switchTab('stats',this)">통계</button>
     <button class="tab" onclick="switchTab('ranking',this)">랭킹</button>
-    <button class="tab" onclick="switchTab('expbal',this)">예상잔금</button>
-    <div id="tabs-right" style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0;">
-    <div class="ac-wrap" id="order-search-wrap" style="width:128px;flex-shrink:0;">
+    <button class="tab" onclick="switchTab('expbal',this)">잔금</button>
+    <button class="tab tab-gear" onclick="switchTab('manage',this)" title="관리" style="padding-left:12px;padding-right:12px;"><span>⚙</span></button>
+    <div id="tabs-right" style="display:flex;gap:8px;">
+    <div class="ac-wrap" id="order-search-wrap">
       <input type="text" id="search-order" placeholder="🔍 검색..." oninput="renderOrder()" autocomplete="off">
       <span id="search-order-clear" onclick="clearOrderSearch()" title="지우기" style="position:absolute;right:7px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--text3);font-size:13px;line-height:1;padding:2px 4px;border-radius:50%;user-select:none;">✕</span>
     </div>
@@ -628,7 +652,6 @@ option[value="전액구매"]{color:#7b6cff;}
       <span id="collapse-arrow" style="transition:transform .3s;display:inline-block;">▲</span>
       <span id="collapse-label">결산 접기</span>
     </button>
-    <button class="tab" onclick="switchTab('manage',this)" title="관리" style="font-size:20px;padding-left:12px;padding-right:12px;flex-shrink:0;">⚙</button>
     </div>
   </div>
 
@@ -4111,7 +4134,7 @@ function renderCards(){
         </div>
         <div style="padding:6px 2px 0;text-align:center;overflow:hidden;">
           <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.charName||'-'}</div>
-          <div style="font-size:15px;font-family:'Space Mono',monospace;color:var(--accent);font-weight:700;white-space:nowrap;margin-top:2px;min-height:20px;">${cardAmountHtml(o)}</div>
+          <div style="font-size:15px;font-family:'Space Mono',monospace;color:var(--accent);font-weight:700;white-space:nowrap;margin-top:2px;${_cardCurr==='hide'?'visibility:hidden;':''}">${_cardCurr==='hide'?(totalCost(o)?'₩'+totalCost(o).toLocaleString('ko-KR'):'-'):cardAmountHtml(o)}</div>
         </div>
       </div>`;
     }).join('');
@@ -4151,15 +4174,14 @@ function renderCards(){
         ${o.released?`<div style="position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#e63946;">방출완료</div>`:''}
         `:''}
       </div>
-      ${_cardShow?`
-      <!-- 하단 정보 -->
-      <div style="padding:8px 10px;display:flex;align-items:center;gap:6px;">
+      <!-- 하단 정보 (숨기기 시 글자만 가리고 자리는 유지) -->
+      <div style="padding:8px 10px;display:flex;align-items:center;gap:6px;${_cardShow?'':'visibility:hidden;'}">
         <div style="flex:1;overflow:hidden;">
           <div style="font-size:16px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.charName||'-'}</div>
           <div style="font-size:13px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.maker||''}</div>
         </div>
         <div style="font-size:17px;font-family:'Space Mono',monospace;color:var(--accent);font-weight:700;white-space:nowrap;flex-shrink:0;">${tc?'₩'+tc.toLocaleString('ko-KR'):'-'}</div>
-      </div>`:''}
+      </div>
     </div>`;
   }).join('');
 }
@@ -5017,17 +5039,21 @@ function gdMarkDisconnected(){
 function gdHH(){const d=new Date();return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');}
 function gdSetStatus(t,color){
   const el=document.getElementById('gd-status');if(el){el.textContent=t||'';if(color)el.style.color=color;}
-  const orb=document.getElementById('gd-orb');if(orb&&t)orb.dataset.status=t;gdOrbTitle();
+  if(t)gdLastStatus=t;gdOrbTitle();
 }
+let gdLastStatus='';
+// 헤더 버튼과 스크롤 시 떠 있는 버튼 — 둘 다 같은 상태로 갱신
+function gdOrbs(){return [...document.querySelectorAll('.gd-orb')];}
+function gdNotices(){return [...document.querySelectorAll('.gd-unsynced')];}
 // 한 번이라도 로그인한 적 있는지 (로그아웃해도 유지) — 이후엔 드라이브 미저장 상태를 계속 알림
 function gdEver(){try{return localStorage.getItem('gd_ever')==='1'||localStorage.getItem('gd_on')==='1';}catch(e){return false;}}
 // 상태: on(연결됨) · warn(로그인 이력 있지만 지금 연결 안 됨: 만료·로그아웃) · off(한 번도 안 씀)
 function gdState(){return gdToken?'on':(gdEver()?'warn':'off');}
 function gdOrbTitle(){
-  const orb=document.getElementById('gd-orb');if(!orb)return;
   const s=gdState();
-  orb.title=s==='on'?('구글 동기화 켜짐'+(gdEmail?' · '+gdEmail:'')+(orb.dataset.status?' · '+orb.dataset.status:''))
-          :s==='warn'?'동기화 끊김 · 클릭해서 다시 연결':'구글 동기화 켜기 (로그인)';
+  const t=s==='on'?('구글 동기화 켜짐'+(gdEmail?' · '+gdEmail:'')+(gdLastStatus?' · '+gdLastStatus:''))
+         :s==='warn'?'동기화 끊김 · 클릭해서 다시 연결':'구글 동기화 켜기 (로그인)';
+  gdOrbs().forEach(o=>o.title=t);
 }
 function gdSetBtn(){
   const s=gdState();
@@ -5038,8 +5064,8 @@ function gdSetBtn(){
     b.style.color=s==='on'?'var(--accent)':s==='warn'?'var(--yellow)':'var(--text2)';
     b.style.borderColor=s==='on'?'var(--aborder)':s==='warn'?'var(--yborder)':'var(--border2)';
   }
-  const orb=document.getElementById('gd-orb');
-  if(orb){orb.classList.toggle('on',s==='on');orb.classList.toggle('warn',s==='warn');gdOrbTitle();}
+  gdOrbs().forEach(orb=>{orb.classList.toggle('on',s==='on');orb.classList.toggle('warn',s==='warn');});
+  gdOrbTitle();
   if(typeof gdRenderUnsynced==='function')gdRenderUnsynced();
 }
 function gdInit(){
@@ -5169,16 +5195,14 @@ function gdAfterLocalSave(){
 }
 // 로그인 이력이 있는데 지금 연결 안 됨(만료·로그아웃) → 헤더 구름 버튼 왼쪽에 계속 알림
 function gdRenderUnsynced(){
-  const need=gdEver()&&!gdToken;
-  const bar=document.getElementById('gd-unsynced');
-  if(bar){
+  const need=gdEver()&&!gdToken, dirty=gdIsDirty();
+  gdNotices().forEach(bar=>{
     bar.style.display=need?'inline-flex':'none';
-    bar.classList.toggle('dirty',gdIsDirty());
-    const t=document.getElementById('gd-unsynced-txt');
-    if(t)t.textContent=gdIsDirty()?'저장 안 된 변경 있음 · 드라이브에 저장되지 않고 있어요':'드라이브에 저장되지 않고 있어요';
-  }
-  const orb=document.getElementById('gd-orb');
-  if(orb)orb.classList.toggle('dirty',gdIsDirty()&&gdEver());
+    bar.classList.toggle('dirty',dirty);
+    const t=bar.querySelector('.gd-unsynced-txt');
+    if(t)t.textContent=dirty?'저장 안 된 변경 있음 · 드라이브에 저장되지 않고 있어요':'드라이브에 저장되지 않고 있어요';
+  });
+  gdOrbs().forEach(orb=>orb.classList.toggle('dirty',dirty&&gdEver()));
 }
 // 창 닫기/새로고침 시: 드라이브에 안 올라간 변경이 있으면 브라우저 기본 확인창
 window.addEventListener('beforeunload',e=>{
@@ -5263,6 +5287,23 @@ async function resolveDriveImages(){
     if(typeof renderBundle==='function'&&document.getElementById('panel-bundle')&&document.getElementById('panel-bundle').classList.contains('active'))renderBundle();
   }
 }
+// 헤더가 화면 밖으로 나가면 동기화 버튼(+알림)을 왼쪽 아래에 희미하게 띄움
+(function(){
+  function setup(){
+    const hd=document.querySelector('.header'), fl=document.getElementById('gd-float');
+    if(!hd||!fl)return;
+    const show=v=>{fl.classList.toggle('show',v);fl.setAttribute('aria-hidden',v?'false':'true');};
+    // 헤더는 스크롤 시 위로 밀려 숨겨지는 고정 헤더 → 실제 위치(아래 끝이 화면 위쪽 밖인지)로 판정
+    let tm=null;
+    const check=()=>show(hd.getBoundingClientRect().bottom<=4);
+    const later=()=>{clearTimeout(tm);tm=setTimeout(check,380);};   // 숨김 전환 애니메이션이 끝난 뒤 재확인
+    window.addEventListener('scroll',()=>{check();later();},{passive:true});
+    window.addEventListener('resize',check);
+    hd.addEventListener('transitionend',check);
+    check();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
+})();
 // 드라이브 사진인데 아직 못 불러온 상태(연결 끊김 등) — '사진 없음'과 구분
 function imgPending(o){return !!(o&&!o.imageUrl&&o.imgThumbId);}
 function gdCloudSvg(sz){return `<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/></svg>`;}
@@ -7324,6 +7365,37 @@ function openImgUrlModal(id,kind){
   document.getElementById('img-url-modal').classList.add('show');
   setTimeout(()=>inp.focus(),50);
 }
+// ── 이미지 등록 모달: 드래그 앤 드롭 ─────────────────────────
+function imgDragOver(e){
+  e.preventDefault();e.dataTransfer.dropEffect='copy';
+  const z=document.getElementById('img-drop');if(z)z.classList.add('over');
+}
+function imgDragLeave(e){
+  // 모달 밖으로 완전히 나갔을 때만 해제
+  if(e.relatedTarget&&e.currentTarget.contains(e.relatedTarget))return;
+  const z=document.getElementById('img-drop');if(z)z.classList.remove('over');
+}
+function imgDrop(e){
+  e.preventDefault();e.stopPropagation();
+  const z=document.getElementById('img-drop');if(z)z.classList.remove('over');
+  const dt=e.dataTransfer;if(!dt)return;
+  const file=[...(dt.files||[])].find(f=>/^image\//.test(f.type));
+  if(file){uploadPhotoForTarget(file);return;}
+  if(dt.files&&dt.files.length){showToast('이미지 파일만 올릴 수 있어요','warn');return;}
+  // 웹페이지에서 이미지를 끌어온 경우 → 파일이 아니라 주소가 넘어옴 → URL 칸에 넣기
+  let url=(dt.getData('text/uri-list')||'').split('\n').find(l=>l&&!l.startsWith('#'))||'';
+  const html=dt.getData('text/html')||'';
+  const m=html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if(m&&/^https?:/i.test(m[1]))url=m[1];
+  if(!url){const t=(dt.getData('text/plain')||'').trim();if(/^https?:\/\//i.test(t))url=t;}
+  if(!url){showToast('끌어온 항목에서 이미지를 찾지 못했어요','warn');return;}
+  const inp=document.getElementById('img-url-input');
+  inp.value=url;updateImgPreview(url);renderCrop();
+  showToast('이미지 주소를 넣었어요 — 저장을 눌러 적용하세요','success');
+}
+// 모달 밖에 잘못 떨어뜨려도 브라우저가 이미지를 새 탭으로 열지 않게
+window.addEventListener('dragover',e=>{const m=document.getElementById('img-url-modal');if(m&&m.classList.contains('show'))e.preventDefault();});
+window.addEventListener('drop',e=>{const m=document.getElementById('img-url-modal');if(m&&m.classList.contains('show')){e.preventDefault();imgDrop(e);}});
 function closeImgUrlModal(){document.getElementById('img-url-modal').classList.remove('show');_imgTargetId=null;}
 
 function updateImgPreview(url){
@@ -7796,6 +7868,15 @@ document.addEventListener('mousemove', function(e){
 </div>
 
 <!-- 이미지 뷰어 -->
+<!-- 스크롤로 헤더가 가려지면 왼쪽 아래에 희미하게 떠 있는 동기화 버튼 -->
+<div id="gd-float" aria-hidden="true">
+  <button class="gd-orb" onclick="gdOrbClick()" aria-label="구글 동기화"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/></svg><i></i></button>
+  <div class="gd-unsynced" role="status">
+    <span class="gd-u-dot"></span>
+    <span class="gd-unsynced-txt">드라이브에 저장되지 않고 있어요</span>
+    <button onclick="gdSyncNow()">로그인하고 저장</button>
+  </div>
+</div>
 <!-- 안내 / 확인 모달 -->
 <div class="modal-overlay" id="notice-modal" onclick="if(event.target===this)closeNoticeModal()" style="background:rgba(0,0,0,.72);z-index:2800;">
   <div class="modal" style="max-width:440px;text-align:center;word-break:keep-all;" onclick="event.stopPropagation()">
@@ -7815,13 +7896,17 @@ document.addEventListener('mousemove', function(e){
 </div>
 <!-- 이미지 URL 입력 패널 -->
 <div class="modal-overlay" id="img-url-modal" onclick="if(event.target===this)closeImgUrlModal()" style="background:rgba(0,0,0,.72);z-index:2700;">
-  <div class="modal" style="max-width:480px;" onclick="event.stopPropagation()">
+  <div class="modal" style="max-width:480px;" onclick="event.stopPropagation()"
+       ondragover="imgDragOver(event)" ondragleave="imgDragLeave(event)" ondrop="imgDrop(event)">
     <div class="modal-title" id="img-url-title">이미지 등록</div>
 
-    <!-- 사진 업로드 -->
+    <!-- 사진 업로드: 클릭하면 탐색기, 끌어다 놓아도 업로드 -->
     <input type="file" id="img-file-input" accept="image/*" style="display:none;" onchange="if(this.files&&this.files[0]){uploadPhotoForTarget(this.files[0]);this.value='';}">
-    <div style="display:flex;gap:8px;margin-bottom:8px;">
-      <button class="btn primary" onclick="document.getElementById('img-file-input').click()" style="font-size:14px;padding:10px 14px;flex:1;">사진 파일 업로드</button>
+    <div id="img-drop" class="img-drop" role="button" tabindex="0"
+         onclick="document.getElementById('img-file-input').click()"
+         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
+      <div class="img-drop-main">사진 파일 업로드</div>
+      <div class="img-drop-sub">클릭해서 선택하거나, 사진을 여기로 끌어다 놓으세요</div>
     </div>
     <div style="margin-bottom:14px;font-size:13px;color:var(--text2);line-height:1.6;">
       사진 업로드는 <a onclick="goToSyncTab()" style="color:var(--accent);font-weight:700;cursor:pointer;text-decoration:underline;">관리탭 &rarr; 구글 동기화(로그인)</a> 후 사용할 수 있어요.<br>
