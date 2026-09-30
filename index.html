@@ -484,6 +484,197 @@ option[value="전액구매"]{color:#7b6cff;}
 .bundle-price-orig{font-family:'Space Mono',monospace;color:var(--text2);text-decoration:line-through;font-size:11px;}
 .bundle-price-disc{font-family:'Space Mono',monospace;font-weight:700;color:var(--green);}
 
+/* ════════════════ 모바일 (가로 760px 이하) ════════════════ */
+.m-only{display:none !important;}
+#m-nav{position:fixed;inset:0;z-index:9700;background:rgba(0,0,0,.55);display:none;}
+#m-nav.show{display:block;}
+#m-nav .m-nav-panel{position:absolute;top:0;left:0;bottom:0;width:min(78vw,300px);background:var(--surface);border-right:1px solid var(--border2);box-shadow:8px 0 32px rgba(0,0,0,.5);display:flex;flex-direction:column;animation:m-slide .18s ease-out;padding-bottom:env(safe-area-inset-bottom);}
+@keyframes m-slide{from{transform:translateX(-100%);}to{transform:none;}}
+#m-nav .m-nav-head{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 10px;font-size:13px;font-weight:700;color:var(--text3);letter-spacing:.05em;}
+#m-nav .m-nav-head button{background:none;border:none;color:var(--text2);font-size:18px;width:40px;height:40px;cursor:pointer;}
+#m-nav-list{flex:1;overflow-y:auto;padding:0 10px 16px;display:flex;flex-direction:column;gap:4px;}
+#m-nav-list button{display:flex;align-items:center;gap:10px;width:100%;min-height:50px;padding:0 14px;border-radius:var(--rs);border:1px solid transparent;background:transparent;color:var(--text);font-size:17px;font-weight:600;font-family:inherit;text-align:left;cursor:pointer;}
+#m-nav-list button.on{background:var(--adim);border-color:var(--aborder);color:var(--accent);}
+#m-nav-list .m-sep{height:1px;background:var(--border);margin:6px 4px;}
+
+@media (max-width:760px){
+  .m-only{display:flex !important;}
+  body{font-size:14px;}
+  .container{padding:8px 10px 90px;}
+  /* 헤더 */
+  .header{padding:0 10px;gap:8px;}
+  .header-icon{width:44px;}
+  #header-title-text{font-size:18px;white-space:nowrap;}
+  .hdr-credit{display:none;}
+  /* 탭 줄 → ☰ + 현재 탭 이름 + 검색 */
+  .tabs{gap:6px;padding:6px 0;}
+  .tabs > .tab{display:none;}
+  #m-nav-btn{width:44px;flex-shrink:0;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface2);cursor:pointer;padding:0;}
+  #m-nav-btn span{display:block;width:18px;height:2px;border-radius:2px;background:var(--text);}
+  #m-nav-cur{align-items:center;padding:0 12px;border-radius:var(--rs);border:1px solid var(--aborder);background:var(--adim);color:var(--accent);font-size:16px;font-weight:700;font-family:inherit;white-space:nowrap;cursor:pointer;flex-shrink:0;}
+  #tabs-right{margin-left:0 !important;gap:6px;}
+  #order-search-wrap{min-width:0 !important;}
+  #collapse-btn{padding:0 10px !important;}
+  #collapse-label{display:none;}
+  .tabs{overflow:visible;}
+  /* 모달 공통: 화면폭에 맞추고 세로 스크롤 */
+  .modal-overlay{align-items:flex-end;}
+  .modal{width:100% !important;max-width:100% !important;max-height:92dvh;padding:16px 14px calc(16px + env(safe-area-inset-bottom));border-radius:16px 16px 0 0;}
+  .modal-title{font-size:17px;}
+  .form-input,.form-select,.modal input[type=text],.modal input[type=number],.modal select,.modal textarea{font-size:16px !important;} /* iOS 확대 방지 */
+  /* 결산 카드: 4열(금액 카드는 2칸) */
+  #stats-order{grid-template-columns:repeat(4,minmax(0,1fr)) !important;gap:6px;}
+  #stats-order .stat-card{padding:8px 7px;}
+  #stats-order .stat-value{font-size:17px;}
+  #stats-order .stat-card:has([data-w="amt"]){grid-column:span 2;}
+  /* 구매목록: 표 대신 카드형 */
+  #panel-order .table-wrap{display:none;}
+  #order-mbar{gap:6px;margin:8px 0;}
+  #order-mbar select{flex:1;min-width:0;height:40px;padding:0 10px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:14px;font-family:inherit;}
+  #order-mbar button{height:40px;padding:0 12px;border-radius:var(--rs);border:1px solid var(--rborder);background:var(--rdim);color:var(--red);font-size:13px;font-weight:700;font-family:inherit;white-space:nowrap;}
+  #order-mlist{flex-direction:column;gap:8px;}
+  /* 플로팅 버튼 */
+  #fab-add,#fab-bundle{right:12px !important;}
+  #gd-float{left:10px;bottom:10px;}
+}
+/* 구매목록 모바일 카드 */
+.mrow{display:grid;grid-template-columns:22px 60px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;}
+.mrow.released{opacity:.5;}
+.mrow.sel{border-color:var(--accent);background:var(--adim);}
+.mrow .fig-icon{width:60px;height:60px;}
+.mrow .fig-icon.has-img img{width:60px;height:60px;}
+.mrow-name{font-size:16px;font-weight:700;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mrow-sub{font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
+.mrow-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;font-size:12px;color:var(--text3);}
+.mrow-meta .mono{font-family:'Space Mono',monospace;}
+.mrow-side{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+.mrow-cost{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;white-space:nowrap;}
+.mrow input[type=checkbox]{width:20px;height:20px;margin:0;}
+.m-empty{padding:40px 10px;text-align:center;color:var(--text2);font-size:14px;}
+
+/* 수정 모달 단계(모바일에서만 이전/다음으로 나눔) */
+.am-stepbar,.am-stepnav{display:none;}
+#add-modal-content.am-mobile .am-step{display:none;}
+#add-modal-content.am-mobile .am-step.cur{display:block;}
+#add-modal-content.am-mobile .am-desk-btns{display:none !important;}
+#add-modal-content.am-mobile .am-stepbar{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:14px;}
+.am-stepbar button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border:none;background:none;color:var(--text3);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;}
+.am-stepbar button b{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border2);font-size:12px;}
+.am-stepbar button.done b{background:var(--adim);border-color:var(--aborder);color:var(--accent);}
+.am-stepbar button.cur{color:var(--accent);}
+.am-stepbar button.cur b{background:var(--accent);border-color:var(--accent);color:#fff;}
+#add-modal-content.am-mobile .am-stepnav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;position:sticky;bottom:-16px;padding:10px 0 4px;background:var(--surface);}
+.am-stepnav button{height:48px;font-size:16px !important;}
+@media (max-width:760px){
+  #am-modal-wrap{width:100% !important;}
+  #add-modal .modal{border-radius:16px 16px 0 0;}
+  #add-modal-content.am-mobile [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr 1fr !important;}
+  #add-modal-content.am-mobile #am-memo-side{position:static !important;margin:0 !important;display:flex !important;}
+  #am-memo-toggle{display:none;}
+  #am-fx-side{position:fixed !important;left:8px !important;right:8px !important;bottom:8px !important;margin:0 !important;z-index:2100;}
+  /* 2·3단계: 2열 칸 → 1열, 금액칸은 남은 폭을 채움 */
+  #add-modal-content.am-mobile .am-step[data-step="2"] [style*="grid-template-columns"],
+  #add-modal-content.am-mobile .am-step[data-step="3"] [style*="grid-template-columns"]{grid-template-columns:1fr !important;grid-auto-rows:auto !important;}
+  #add-modal-content.am-mobile .cost-field input[type=number]{flex:1 1 auto !important;width:auto !important;min-width:0;}
+  #add-modal-content.am-mobile .cost-field input[type=text]{width:100px !important;flex-shrink:0;}
+  #add-modal-content.am-mobile .cost-field input[id$="-grp"]{width:46px !important;}
+  #add-modal-content.am-mobile .cost-field select{width:92px !important;}
+  #add-modal-content.am-mobile .cost-field .cost-label{flex:0 0 64px !important;}
+  /* 4단계: 메모·사진 패널 전체폭 */
+  #add-modal-content.am-mobile #am-memo-side{width:100% !important;max-width:none !important;padding:0 !important;border:none !important;box-shadow:none !important;animation:none !important;background:transparent !important;}
+  #add-modal-content.am-mobile #am-crop-stage{max-width:260px;margin:0 auto 12px !important;}
+  #add-modal-content.am-mobile #am-memo{min-height:120px !important;}
+  /* 모달이 열려 있으면 떠 있는 버튼들 숨김(모달 버튼을 가리지 않게) */
+  body:has(.modal-overlay.show) #fab-add,body:has(.modal-overlay.show) #fab-warn,body:has(.modal-overlay.show) #fab-bundle,
+  body:has(.modal-overlay.show) #scroll-btns,body:has(.modal-overlay.show) #gd-float,body:has(.modal-overlay.show) #warn-pop{display:none !important;}
+  #modal-close-fab{top:10px !important;bottom:auto !important;left:auto !important;right:10px !important;transform:none !important;}
+  /* 떠 있는 버튼 배치: 화면 맨 아래 한 줄 */
+  #scroll-btns,#sel-tray{display:none !important;}
+  #fab-add{bottom:16px !important;}
+  #fab-warn{bottom:16px !important;right:104px !important;}
+  #fab-bundle{bottom:70px !important;}
+  #warn-pop{bottom:70px !important;right:12px !important;left:12px;width:auto !important;}
+
+  /* ── 탭별 배치 ── */
+  .toolbar{flex-wrap:wrap;gap:6px;}
+  .stats-row{gap:6px !important;}
+  .stat-label{font-size:12px;}
+  /* 카드보기: 카드형 2열, 아이콘형 3열 (단 선택은 숨김) */
+  #cards-colsel{display:none !important;}
+  #cards-grid[data-view="card"]{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px !important;}
+  #cards-grid[data-view="icon"]{grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:8px !important;}
+  #cards-grid[data-view="card"] .card-item div[style*="position:absolute"][style*="font-size:16px"]{font-size:11px !important;padding:2px 6px !important;}
+  #cards-grid[data-view="card"] .card-item span[onclick*="openPriceModal"]{font-size:12px !important;padding:3px 10px !important;}
+  #cards-grid[data-view="card"] .card-item > div:last-child div[style*="font-size:16px"]{font-size:14px !important;}
+  #cards-grid[data-view="card"] .card-item > div:last-child div[style*="font-size:17px"]{font-size:13px !important;}
+  #cards-grid[data-view="card"] .card-item > div:last-child{flex-direction:column;align-items:stretch !important;gap:2px !important;}
+  /* 위시: 1열 */
+  #tbody-wish,#wish-cards{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+  #tbody-wish{grid-template-columns:1fr !important;}
+  #wish-colsel{display:none !important;}
+  /* 방출: 결산 2열, 썸네일 보기 1열(표는 쓰지 않음) */
+  #stats-sell{grid-template-columns:1fr 1fr !important;}
+  #sell-seg,#sell-colsel{display:none !important;}
+  #sell-cards{grid-template-columns:1fr !important;}
+  /* 할인: 그룹 1열 + 항목을 2줄로 */
+  #bundle-list > div{grid-template-columns:1fr !important;}
+  #bundle-summary > div{grid-template-columns:1fr 1fr !important;}
+  .bundle-group{padding:12px;}
+  .bundle-group-header{flex-wrap:wrap;gap:6px 10px;}
+  .bundle-group-header > span:last-child{margin-left:0 !important;width:100%;text-align:right;}
+  .bundle-coupon-row{grid-template-columns:1fr !important;}
+  .bundle-item{grid-template-columns:44px minmax(0,1fr) minmax(0,1fr) !important;grid-template-areas:"th nm ty" "th fx kx";gap:6px 10px !important;}
+  .bundle-item > :nth-child(1){grid-area:th;width:44px !important;height:44px !important;align-self:start;}
+  .bundle-item > :nth-child(2){grid-area:nm;}
+  .bundle-item > :nth-child(3){grid-area:ty;justify-self:end !important;}
+  .bundle-item > :nth-child(4){grid-area:fx;}
+  .bundle-item > :nth-child(5){grid-area:kx;}
+  /* 통계: 차트·요약 세로로, 요약 2열, 히스토리 2장씩 */
+  #panel-stats div:has(> div > #stats-summary){grid-template-columns:minmax(0,1fr) !important;}
+  #panel-stats div:has(> #stats-summary),#panel-stats div:has(> #stats-chart){min-width:0;}
+  #stats-chart,#stats-chart-labels{max-width:100%;}
+  #stats-summary{grid-template-columns:1fr 1fr !important;}
+  .history-track > div,#history-track > div{flex-basis:calc((100% - 12px)/2) !important;}
+  /* 관리: 1열 */
+  .manage-grid{grid-template-columns:1fr !important;}
+  #panel-manage [style*="grid-template-columns:1fr 1fr 1fr 1fr"]{grid-template-columns:1fr 1fr !important;}
+}
+
+@media (max-width:760px){
+  #price-modal-content .pm-row{display:grid !important;grid-template-columns:1fr 76px 1fr;grid-template-areas:"lbl lbl lbl" "amt cur lp" "date date grp";gap:6px !important;}
+  #price-modal-content .pm-lbl{grid-area:lbl;min-width:0 !important;}
+  #price-modal-content .pm-amt{grid-area:amt;width:auto !important;min-width:0;padding:6px 8px !important;}
+  #price-modal-content .pm-cur{grid-area:cur;width:auto !important;padding:5px 3px !important;font-size:12px !important;}
+  #price-modal-content .pm-lp{grid-area:lp;width:auto !important;min-width:0;padding:6px 8px !important;}
+  #price-modal-content .pm-date{grid-area:date;width:auto !important;min-width:0;padding:6px 8px !important;}
+  #price-modal-content .pm-grp{grid-area:grp;width:auto !important;min-width:0;padding:6px 8px !important;}
+  #price-modal-content .pm-local{flex-wrap:wrap;}
+  #price-modal-content .pm-local-lbl{flex-basis:100%;}
+  #price-modal-content .pm-local input{min-width:0;}
+  #price-modal-content .pm-cpgrid{grid-template-columns:minmax(0,1fr) !important;}
+  #price-modal-content .pm-cpgrid > div:empty{display:none;}
+  #bmw-modal input{min-width:0;}
+  #bmw-modal [style*="width:110px"]{width:76px !important;}
+  #bmw-modal [style*="width:66px"]{width:46px !important;}
+  #bmw-modal [style*="width:132px"]{width:92px !important;}
+  #bmw-modal [style*="padding:9px 14px"],#bmw-modal [style*="padding:11px 14px"]{font-size:14px !important;padding-left:8px !important;padding-right:8px !important;}
+  #bmw-modal [style*="width:150px"]{width:110px !important;}
+  #price-modal-content .pm-fxgrid{grid-template-columns:minmax(0,1fr) !important;}
+  #bundle-make-modal .bm-row{display:grid !important;grid-template-columns:auto 1fr auto;grid-template-areas:"chk lbl code" "chk date krw" "chk fx fx";row-gap:2px !important;column-gap:8px !important;}
+  #bundle-make-modal .bm-row:not(:has(input)){grid-template-columns:1fr auto;grid-template-areas:"lbl code" "date krw" "fx fx";}
+  #bundle-make-modal .bm-row > input{grid-area:chk;align-self:center;}
+  #bundle-make-modal .bm-lbl{grid-area:lbl;width:auto !important;font-weight:700;}
+  #bundle-make-modal .bm-date{grid-area:date;width:auto !important;}
+  #bundle-make-modal .bm-fx{grid-area:fx;width:auto !important;}
+  #bundle-make-modal .bm-fx:empty{display:none;}
+  #bundle-make-modal .bm-krw{grid-area:krw;width:auto !important;}
+  #bundle-make-modal .bm-code{grid-area:code;margin-left:0 !important;}
+  #bundle-make-modal .modal-title{flex-wrap:wrap;}
+  #bundle-make-modal #bm-code-tag{max-width:100% !important;}
+  #bundle-make-modal .bm-foot{flex-wrap:wrap;}
+  #bundle-make-modal #bm-sum{flex-basis:100%;margin-right:0 !important;}
+  #bundle-make-modal .bm-foot .btn{flex:1;min-height:42px;}
+}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -508,7 +699,7 @@ option[value="전액구매"]{color:#7b6cff;}
     </div>
     <button id="gd-orb" class="gd-orb" onclick="gdOrbClick()" title="구글 동기화 켜기 (로그인)" aria-label="구글 동기화"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/></svg><i></i></button>
     <div style="text-align:right;display:flex;flex-direction:column;justify-content:center;">
-      <div style="font-size:11px;color:var(--text2);opacity:0.6;font-family:'Space Mono',monospace;white-space:nowrap;">제작 : 아지타니히후미</div>
+      <div class="hdr-credit" style="font-size:11px;color:var(--text2);opacity:0.6;font-family:'Space Mono',monospace;white-space:nowrap;">제작 : 아지타니히후미</div>
       <div class="header-save unsaved" id="save-info"><span id="save-status">저장되지 않음</span></div>
     </div>
   </div>
@@ -630,6 +821,9 @@ option[value="전액구매"]{color:#7b6cff;}
 
 <div class="container">
     <div class="tabs" style="display:flex;align-items:stretch;">
+    <!-- 모바일: ☰ 메뉴 버튼 + 현재 탭 이름 (PC에서는 숨김) -->
+    <button id="m-nav-btn" class="m-only" onclick="openMNav()" aria-label="메뉴 열기" aria-haspopup="dialog"><span></span><span></span><span></span></button>
+    <button id="m-nav-cur" class="m-only" onclick="openMNav()">구매목록</button>
     <button class="tab active" onclick="switchTab('order',this)">구매목록</button>
     <button class="tab" onclick="switchTab('cards',this)">카드보기</button>
     <button class="tab" onclick="switchTab('wish',this)">위시</button>
@@ -663,6 +857,20 @@ option[value="전액구매"]{color:#7b6cff;}
     <div class="stats-row" id="stats-order"></div>
     </div><!-- end top-section -->
     </div><!-- end panel-sticky -->
+    <!-- 모바일 전용: 정렬/상태 필터 + 카드형 목록 (PC에서는 숨김, 아래 표를 사용) -->
+    <div id="order-mbar" class="m-only">
+      <select id="m-sort" onchange="mSetSort(this.value)" aria-label="정렬">
+        <option value="pdate:-1">결제일 최신순</option>
+        <option value="pdate:1">결제일 오래된순</option>
+        <option value="total:-1">총비용 높은순</option>
+        <option value="total:1">총비용 낮은순</option>
+        <option value="charName:1">이름순</option>
+        <option value="maker:1">상호명순</option>
+      </select>
+      <select id="m-status" onchange="mSetStatus(this.value)" aria-label="상태 필터"></select>
+      <button id="m-filter-reset" onclick="mResetFilters()" style="display:none;">필터 해제</button>
+    </div>
+    <div id="order-mlist" class="m-only"></div>
     <div class="table-wrap">
       <table>
         <thead id="order-thead"><tr>
@@ -2580,6 +2788,8 @@ function closeCouponPop(){
 }
 function openAddModal(editId){
   closePayDatePop();
+  // 모바일에서 4단계 안으로 옮겨둔 메모·사진 패널을 내용 재작성 전에 원래 자리로 되돌림(안 하면 함께 지워짐)
+  {const sd=document.getElementById('am-memo-side'),wr=document.getElementById('am-modal-wrap');if(sd&&wr&&sd.parentElement!==wr)wr.appendChild(sd);}
   const isEdit=editId!=null;const ex=isEdit?orders.find(o=>o.id===editId):null;
   document.getElementById('add-modal-title').textContent=isEdit?'피규어 수정':'피규어 추가';
   const defPt=ex?.purchaseType||'예약구매',defFt=ex?.figType||'PVC피규어',defGrp=ex?.groupId||'',defPdate=ex?.paymentDate||'';
@@ -2587,6 +2797,13 @@ function openAddModal(editId){
   const storeOpts=stores.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
 
   document.getElementById('add-modal-content').innerHTML=`
+    <div class="am-stepbar" role="tablist">
+      <button type="button" onclick="amGoStep(1)" data-s="1"><b>1</b>기본정보</button>
+      <button type="button" onclick="amGoStep(2)" data-s="2"><b>2</b>금액</button>
+      <button type="button" onclick="amGoStep(3)" data-s="3"><b>3</b>쿠폰·포인트</button>
+      <button type="button" onclick="amGoStep(4)" data-s="4"><b>4</b>사진·메모</button>
+    </div>
+    <div class="am-step" data-step="1">
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
       <div><div class="form-label">구매 유형</div><select id="am-pt" class="form-select" onchange="updateCostFields(_addEditId)">${P_TYPES.map(t=>`<option ${t===defPt?'selected':''}>${t}</option>`).join('')}</select></div>
       <div><div class="form-label">피규어 유형</div><select id="am-ft" class="form-select">${FIG_TYPES.map(t=>`<option ${t===defFt?'selected':''}>${t}</option>`).join('')}</select></div>
@@ -2604,6 +2821,8 @@ function openAddModal(editId){
       <div><div class="form-label">추가 명칭 <span style="color:var(--text2);font-weight:400;">(부제, 버전 등)</span></div><input id="am-subname" type="text" class="form-input" value="${ex?.subName||''}" placeholder="예: 알터 ver., 수영복 등"></div>
       <div><div class="form-label">구매처</div><div class="ac-wrap"><input id="am-store" type="text" class="form-input" value="${ex?.storeName||''}" placeholder="구매처 선택 또는 입력" autocomplete="off" list="store-list"><datalist id="store-list">${storeOpts}</datalist></div></div>
     </div>
+    </div><!-- /step1 -->
+    <div class="am-step" data-step="2">
     <div id="am-costs" style="margin-bottom:10px;"></div>
     <!-- 예상잔금 | 현지전액가격(참고용) -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
@@ -2622,6 +2841,8 @@ function openAddModal(editId){
         <button type="button" id="am-fx-toggle" onclick="toggleFxPanel()" title="원화 환산 창 열기/닫기" style="flex-shrink:0;font-size:12px;padding:3px 8px;border-radius:20px;border:1px solid var(--aborder);background:var(--adim);color:var(--accent);cursor:pointer;font-family:inherit;font-weight:700;">💱</button>
       </div>
     </div>
+    </div><!-- /step2 -->
+    <div class="am-step" data-step="3">
     <!-- 쿠폰 사용 (단일 품목, 2열 최대 4장) -->
     <div style="margin-bottom:10px;">
       <div class="form-label">🎟 쿠폰 사용 (단일 품목) <span style="color:var(--text2);font-weight:400;">— 최대 ${MAX_COUPONS}장</span></div>
@@ -2632,9 +2853,15 @@ function openAddModal(editId){
       <div class="form-label">🎯 포인트 (단일 품목) <span style="color:var(--text2);font-weight:400;">— 최대 ${MAX_POINTS}개 · 기록용</span></div>
       <div id="am-point-box"></div>
     </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
+    </div><!-- /step3 -->
+    <div class="am-step" data-step="4" id="am-step4"></div>
+    <div class="am-desk-btns" style="display:flex;gap:8px;justify-content:flex-end;">
       <button class="btn" onclick="closeAddModal()">취소</button>
       <button class="btn primary" onclick="submitAdd(${isEdit?editId:'null'})">${isEdit?'수정':'추가'}</button>
+    </div>
+    <div class="am-stepnav">
+      <button class="btn" id="am-prev" onclick="amStepPrev()">취소</button>
+      <button class="btn primary" id="am-next" onclick="amStepNext()">다음</button>
     </div>`;
 
   // 캐릭터명 자동완성
@@ -2660,8 +2887,41 @@ function openAddModal(editId){
   renderAmPoints();
   // 메모·사진 별도 창 (왼쪽 아래)
   renderMemoSide(ex);
+  amSetupLayout();
   document.getElementById('add-modal').classList.add('show');
-  setTimeout(()=>{document.getElementById('am-char').focus();updateLocalPreview();},50);
+  // 모바일은 바로 키보드가 올라오지 않게 자동 포커스 생략
+  setTimeout(()=>{if(!isMobile())document.getElementById('am-char').focus();updateLocalPreview();},50);
+}
+// ── 수정 모달: 모바일 4단계(이전/다음) ─────────────────────────
+let _amStep=1;
+function amSetupLayout(){
+  const c=document.getElementById('add-modal-content');
+  const side=document.getElementById('am-memo-side');
+  const wrap=document.getElementById('am-modal-wrap');
+  if(isMobile()){
+    c.classList.add('am-mobile');
+    const s4=document.getElementById('am-step4');
+    if(side&&s4&&side.parentElement!==s4)s4.appendChild(side);  // 메모·사진 패널을 4단계 안으로
+    amGoStep(1);
+  }else{
+    c.classList.remove('am-mobile');
+    if(side&&wrap&&side.parentElement!==wrap)wrap.appendChild(side); // PC: 원래 자리(모달 왼쪽 바깥)
+  }
+}
+function amGoStep(n){
+  _amStep=Math.max(1,Math.min(4,n));
+  document.querySelectorAll('#add-modal-content .am-step').forEach(s=>s.classList.toggle('cur',+s.dataset.step===_amStep));
+  document.querySelectorAll('#add-modal-content .am-stepbar button').forEach(b=>{const s=+b.dataset.s;b.classList.toggle('cur',s===_amStep);b.classList.toggle('done',s<_amStep);});
+  const prev=document.getElementById('am-prev'),next=document.getElementById('am-next');
+  if(prev)prev.textContent=_amStep===1?'취소':'이전';
+  if(next)next.textContent=_amStep===4?(_addEditId!=null?'수정 완료':'추가 완료'):'다음';
+  const m=document.querySelector('#add-modal .modal');if(m)m.scrollTop=0;
+}
+function amStepPrev(){if(_amStep===1)closeAddModal();else amGoStep(_amStep-1);}
+function amStepNext(){
+  if(_amStep===1&&!(document.getElementById('am-char').value||'').trim()){showToast('캐릭터명을 입력해주세요','error');document.getElementById('am-char').focus();return;}
+  if(_amStep<4){amGoStep(_amStep+1);return;}
+  submitAdd(_addEditId);
 }
 // ── 메모·사진 별도 창 (모달 왼쪽 경계 밖 아래) ────────────────
 let _amFocus={x:50,y:50,z:1};
@@ -2984,7 +3244,7 @@ function submitAdd(editId){
   const points=(_amPoints||[]).filter(c=>Number(c.amount)).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩'}));
   // 사진 URL (썸네일 초점은 이미지 편집 창에서 관리하므로 여기서 건드리지 않음)
   const imgUrl=(document.getElementById('am-imgurl')?.value||'').trim();
-  if(!charName){showToast('캐릭터명을 입력해주세요','error');return;}
+  if(!charName){showToast('캐릭터명을 입력해주세요','error');if(isMobile())amGoStep(1);return;}
   let costs={};
   if(pt==='중고거래')costs={used:Number(document.getElementById('cf-used')?.value)||0,shipping:Number(document.getElementById('cf-ship-used')?.value)||0,...readExtraCosts()};
   else if(pt==='예약구매')costs={pre:Number(document.getElementById('cf-pre')?.value)||0,official:Number(document.getElementById('cf-official')?.value)||0,balance:Number(document.getElementById('cf-balance')?.value)||0,shipping:Number(document.getElementById('cf-ship')?.value)||0,expectedBalance:Number(document.getElementById('cf-expbal')?.value)||0,...readExtraCosts()};
@@ -2992,7 +3252,7 @@ function submitAdd(editId){
   // 잔금은 있는데 정식예약금이 0원 → 저장 전 확인
   if(pt==='예약구매'&&costs.balance>0&&!costs.official&&!_depositConfirmed){
     openNoticeModal('예약금이 존재하지 않습니다.','예약금이 0원인게 확실한가요?',[
-      {label:'아니오',onClick:()=>{const el=document.getElementById('cf-official');if(el){el.focus();el.select&&el.select();}}},
+      {label:'아니오',onClick:()=>{if(isMobile())amGoStep(2);const el=document.getElementById('cf-official');if(el){el.focus();el.select&&el.select();}}},
       {label:'네',primary:true,onClick:()=>{_depositConfirmed=true;try{submitAdd(editId);}finally{_depositConfirmed=false;}}}
     ]);
     return;
@@ -3716,13 +3976,13 @@ function renderBundleMake(){
       const gc=code?(getGroupColor(code)||'var(--pink)'):'var(--accent)';
       const fx=lp[f]&&Number(lp[f].amount)>0&&!isKRW(lp[f].currency)?`${curSym(lp[f].currency)} ${fmtForeign(lp[f].amount)}`:'';
       const dateTxt=cd[f]||o.paymentDate||'-';
-      rows+=`<div onclick="bmRowClick(${o.id},'${f}')" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--border);font-size:12px;cursor:pointer;${checked?`background:${gc}14;box-shadow:inset 3px 0 0 ${gc};`:''}${locked?'opacity:.4;':''}">
+      rows+=`<div class="bm-row" onclick="bmRowClick(${o.id},'${f}')" style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--border);font-size:12px;cursor:pointer;${checked?`background:${gc}14;box-shadow:inset 3px 0 0 ${gc};`:''}${locked?'opacity:.4;':''}">
         ${bundling?`<input type="checkbox" class="chk-blue" ${checked?'checked':''} ${locked?'disabled':''} onclick="event.stopPropagation();bmToggleCheck('${key}',this.checked)">`:''}
-        <span style="width:80px;flex-shrink:0;">${BM_FIELDS[f]}</span>
-        <span class="mono" style="color:var(--text3);width:66px;flex-shrink:0;font-size:11px;">${dateTxt}</span>
-        <span class="mono" style="color:var(--yellow);width:78px;flex-shrink:0;text-align:right;">${fx}</span>
-        <span class="mono" style="width:96px;flex-shrink:0;text-align:right;">￦ ${(Number(c[f])||0).toLocaleString('ko-KR')}</span>
-        <span style="margin-left:auto;flex-shrink:0;text-align:right;white-space:nowrap;">${code?`<span class="badge" style="font-size:9px;padding:1px 6px;font-family:'Space Mono',monospace;color:${gc};border-color:${gc}66;background:${gc}1f;">${code}</span>`:''}${locked?' <span style="font-size:10px;color:var(--text3);">잠금</span>':''}</span>
+        <span class="bm-lbl" style="width:80px;flex-shrink:0;">${BM_FIELDS[f]}</span>
+        <span class="mono bm-date" style="color:var(--text3);width:66px;flex-shrink:0;font-size:11px;">${dateTxt}</span>
+        <span class="mono bm-fx" style="color:var(--yellow);width:78px;flex-shrink:0;text-align:right;">${fx}</span>
+        <span class="mono bm-krw" style="width:96px;flex-shrink:0;text-align:right;">￦ ${(Number(c[f])||0).toLocaleString('ko-KR')}</span>
+        <span class="bm-code" style="margin-left:auto;flex-shrink:0;text-align:right;white-space:nowrap;">${code?`<span class="badge" style="font-size:9px;padding:1px 6px;font-family:'Space Mono',monospace;color:${gc};border-color:${gc}66;background:${gc}1f;">${code}</span>`:''}${locked?' <span style="font-size:10px;color:var(--text3);">잠금</span>':''}</span>
       </div>`;
     });
   });
@@ -3967,6 +4227,7 @@ function renderOrder(){
   });
   const _sy=window.scrollY;
   document.getElementById('tbody-order').innerHTML=html;
+  renderOrderMobile(data);
   syncSelectAll();
   if(typeof updateScrollBtns==='function')updateScrollBtns();
   syncImgLockBtn();
@@ -3980,6 +4241,78 @@ function renderOrder(){
     fxb.style.background=_showForeign?'var(--cdim)':'transparent';
   }
 }
+
+// ── 모바일 ──────────────────────────────────────────────────
+var MQ_MOBILE=window.matchMedia('(max-width:760px)');
+function isMobile(){return window.matchMedia('(max-width:760px)').matches;}
+// 구매목록 카드형 (모바일에서만 그림 — PC는 표)
+function renderOrderMobile(data){
+  const el=document.getElementById('order-mlist');if(!el)return;
+  if(!isMobile()){if(el.innerHTML)el.innerHTML='';return;}
+  mSyncBar();
+  if(!data.length){el.innerHTML='<div class="m-empty">표시할 항목이 없어요</div>';return;}
+  el.innerHTML=data.map(o=>{
+    const status=calcStatus(o),tc=totalCost(o),sel=selectedIds.has(o.id);
+    const pd=earliestPayDate(o);
+    return`<div class="mrow${o.released?' released':''}${sel?' sel':''}" data-oid="${o.id}" onclick="openAddModal(${o.id})">
+      <input type="checkbox" class="row-sel chk-blue" data-oid="${o.id}" ${sel?'checked':''} aria-label="선택" onclick="event.stopPropagation();toggleSelect(${o.id},this.checked);this.closest('.mrow').classList.toggle('sel',this.checked)">
+      <div onclick="event.stopPropagation()">${imgThumbHtml(o)}</div>
+      <div style="min-width:0;">
+        <div class="mrow-name">${o.charName||'<span style="color:var(--text3)">(이름 없음)</span>'}</div>
+        <div class="mrow-sub">${o.maker||'-'}${o.subName?' · '+o.subName:''}</div>
+        <div class="mrow-meta"><span class="mono">${pd||'-'}</span><span>·</span><span style="color:${PT_COL[o.purchaseType]||'var(--text2)'}">${o.purchaseType||''}</span>${getGroupKey(o)?'<span class="badge bg-p" style="font-size:10px;">묶음</span>':''}</div>
+      </div>
+      <div class="mrow-side">
+        <div class="mrow-cost" onclick="event.stopPropagation();openPriceModal(${o.id})">${tc?'₩'+tc.toLocaleString('ko-KR'):'-'}</div>
+        <div onclick="event.stopPropagation()">${statusCellHtml(o,status)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+// 모바일 정렬/상태 필터 바
+function mSyncBar(){
+  const s=document.getElementById('m-sort');
+  if(s){const v=sortKey+':'+sortDir;if([...s.options].some(o=>o.value===v))s.value=v;}
+  const st=document.getElementById('m-status');
+  if(st){
+    const list=['배송완료','배송출발','잔금결제','전액결제','정식예약','선행예약','중고구매','미결제','미예약','방출완료'];
+    const cur=colFilters.status||'';
+    const want='<option value="">전체 상태</option>'+list.map(x=>`<option value="${x}"${x===cur?' selected':''}>${x}</option>`).join('');
+    if(st.innerHTML!==want)st.innerHTML=want;
+    st.value=cur;
+  }
+  const r=document.getElementById('m-filter-reset');
+  if(r)r.style.display=Object.values(colFilters).some(Boolean)?'':'none';
+}
+function mSetSort(v){const [k,d]=v.split(':');sortKey=k;sortDir=Number(d)||1;renderOrder();}
+function mSetStatus(v){colFilters.status=v;renderOrder();}
+function mResetFilters(){Object.keys(colFilters).forEach(k=>colFilters[k]='');renderOrder();}
+// ☰ 메뉴
+function openMNav(){
+  const list=document.getElementById('m-nav-list');
+  const tabs=[...document.querySelectorAll('.tabs > .tab')];
+  list.innerHTML='';
+  tabs.forEach((t,i)=>{
+    const isGear=t.classList.contains('tab-gear');
+    if(isGear){const sep=document.createElement('div');sep.className='m-sep';list.appendChild(sep);}
+    const b=document.createElement('button');
+    b.textContent=isGear?'⚙  관리':t.textContent.trim();
+    if(t.classList.contains('active'))b.classList.add('on');
+    b.onclick=()=>{closeMNav();t.click();window.scrollTo(0,0);};
+    list.appendChild(b);
+  });
+  document.getElementById('m-nav').classList.add('show');
+}
+function closeMNav(){document.getElementById('m-nav').classList.remove('show');}
+function syncMNavCur(){
+  const a=document.querySelector('.tabs > .tab.active');const c=document.getElementById('m-nav-cur');
+  if(a&&c)c.textContent=a.classList.contains('tab-gear')?'관리':a.textContent.trim();
+}
+// PC ↔ 모바일 폭이 바뀌면 현재 탭을 다시 그림
+MQ_MOBILE.addEventListener&&MQ_MOBILE.addEventListener('change',()=>{
+  const a=document.querySelector('.panel.active');const id=a?a.id.replace('panel-',''):'order';
+  if(id==='order')renderOrder();else if(id==='cards')renderCards();else if(id==='wish')renderWish();else if(id==='sell')renderSell();else if(id==='bundle')renderBundle();
+});
 
 function buildDetail(o){
   const grpKey=getGroupKey(o),grpColor=grpKey?getGroupColor(grpKey):null,grps=getGroups();
@@ -4023,7 +4356,7 @@ try{const c=parseInt(localStorage.getItem('cardIconCols'));if([7,8,9,10].include
 try{const c=localStorage.getItem('cardCurr');if(['hide','krw','foreign'].includes(c))_cardCurr=c;}catch(e){}
 try{if(localStorage.getItem('cardShow')==='0')_cardShow=false;}catch(e){}
 // 외화 표기: "¥ 1,500 위안" / "¥ 100 엔" / "$ 144 달러". 그 외(원화 등)는 ₩ 금액.
-function fmtForeign(amount,currency){
+function fmtForeignU(amount,currency){
   const m=({'¥(위안)':{s:'￥',u:'위안'},'¥(엔)':{s:'￥',u:'엔'},'$(달러)':{s:'＄',u:'달러'}})[currency];
   if(!m)return '￦'+Number(amount).toLocaleString('ko-KR');
   return m.s+' '+Number(amount).toLocaleString()+' '+m.u;
@@ -4040,7 +4373,7 @@ function orderForeign(o){
 function cardAmountHtml(o){
   const tc=totalCost(o);
   if(_cardCurr==='hide')return '';
-  if(_cardCurr==='foreign'){const f=orderForeign(o);if(f)return fmtForeign(f.amount,f.currency);}
+  if(_cardCurr==='foreign'){const f=orderForeign(o);if(f)return fmtForeignU(f.amount,f.currency);}
   return tc?`₩${tc.toLocaleString('ko-KR')}`:'-';
 }
 function setCardView(v){
@@ -4115,6 +4448,7 @@ function renderCards(){
   renderCardShowSel();
   const grid=document.getElementById('cards-grid');
   if(!grid)return;
+  grid.dataset.view=_cardView==='icon'?'icon':'card'; // 모바일 CSS가 보기 방식별 열 수를 정함
   // ── 아이콘(썸네일) 보기 — 썸네일 + 이름 + 가격만 ──
   if(_cardView==='icon'){
     grid.style.gridTemplateColumns='repeat('+_cardIconCols+',minmax(0,1fr))';
@@ -4575,11 +4909,12 @@ function renderSell(){
     if(bc)bc.classList.toggle('on', _sellView==='card');
   }
   if(cardsEl&&tableEl){
-    cardsEl.style.display=_sellView==='card'?'grid':'none';
-    tableEl.style.display=_sellView==='card'?'none':'block';
+    const _sv=isMobile()?'card':_sellView; // 모바일은 표 대신 항상 썸네일 보기
+    cardsEl.style.display=_sv==='card'?'grid':'none';
+    tableEl.style.display=_sv==='card'?'none':'block';
   }
   if(typeof renderSellColSel==='function')renderSellColSel();
-  if(_sellView==='card'){renderSellCards(data);return;}
+  if(_sellView==='card'||isMobile()){renderSellCards(data);return;}
 
   document.getElementById('tbody-sell').innerHTML=data.map(s=>{
     const buyLive=s.fromOrder?totalCost(orders.find(o=>o.id===s.fromOrder)||{}):Number(s.buy)||0;
@@ -5593,33 +5928,33 @@ function renderPriceModal(o){
     if(!o.localPrices)o.localPrices={};
     const lp=o.localPrices[r.field]||{currency:'¥(위안)',amount:0};
     return`<div style="padding:6px 0;border-bottom:1px solid var(--border);">
-      <div style="display:flex;gap:5px;align-items:center;flex-wrap:nowrap;">
+      <div class="pm-row" style="display:flex;gap:5px;align-items:center;flex-wrap:nowrap;">
         <!-- 카테고리명 -->
-        <span style="font-size:12px;color:var(--text2);font-weight:700;min-width:72px;flex-shrink:0;">${r.label}</span>
+        <span class="pm-lbl" style="font-size:12px;color:var(--text2);font-weight:700;min-width:72px;flex-shrink:0;">${r.label}</span>
         <!-- 결제금액 -->
-        <input type="text" inputmode="numeric" value="${r.val||''}" placeholder="0"
+        <input class="pm-amt" type="text" inputmode="numeric" value="${r.val||''}" placeholder="0"
           style="width:90px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:12px;font-weight:600;font-family:'Space Mono',monospace;padding:3px 6px;text-align:right;outline:none;"
           onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)';updateCostField(${o.id},'${r.field}',this.value);"
           onkeydown="if(event.key==='Enter')this.blur();">
         <!-- 화폐선택 -->
-        <select style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);color:var(--yellow);font-size:10px;padding:2px 3px;outline:none;flex-shrink:0;width:76px;"
+        <select class="pm-cur" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);color:var(--yellow);font-size:10px;padding:2px 3px;outline:none;flex-shrink:0;width:76px;"
           onchange="updateFieldLocalPrice(${o.id},'${r.field}','currency',this.value)">
           ${['¥(위안)','$(달러)','¥(엔)'].map(cur=>`<option ${lp.currency===cur?'selected':''} value="${cur}">${curLabel(cur)}</option>`).join('')}
         </select>
         <!-- 현지가 -->
-        <input type="text" inputmode="numeric" value="${lp.amount||''}" placeholder="현지가"
+        <input class="pm-lp" type="text" inputmode="numeric" value="${lp.amount||''}" placeholder="현지가"
           style="width:70px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);color:var(--yellow);font-size:11px;font-family:'Space Mono',monospace;padding:3px 5px;text-align:right;outline:none;"
           onfocus="this.style.borderColor='var(--accent)'"
           onblur="this.style.borderColor='var(--border)';updateFieldLocalPrice(${o.id},'${r.field}','amount',this.value);"
           onkeydown="if(event.key==='Enter')this.blur();">
         <!-- 결제일 -->
-        <input type="text" value="${dateVal}" placeholder="YY-MM-DD"
+        <input class="pm-date" type="text" value="${dateVal}" placeholder="YY-MM-DD"
           style="width:86px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);color:var(--accent);font-size:11px;font-family:'Space Mono',monospace;padding:3px 5px;text-align:center;outline:none;"
           onfocus="this.style.borderColor='var(--accent)'"
           onblur="this.style.borderColor='var(--border)';this.value=autoDate(this.value);updateCostDate(${o.id},'${r.field}',this.value);"
           onkeydown="if(event.key==='Enter')this.blur();">
         <!-- 묶음그룹 -->
-        <input type="text" value="${grpVal}" placeholder="그룹"
+        <input class="pm-grp" type="text" value="${grpVal}" placeholder="그룹"
           style="width:60px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);color:var(--pink);font-size:11px;font-family:'Space Mono',monospace;padding:3px 5px;text-align:center;outline:none;"
           onfocus="this.style.borderColor='var(--pborder)'"
           onblur="this.style.borderColor='var(--border)';updateCostGroup(${o.id},'${r.field}',this.value);"
@@ -5650,8 +5985,8 @@ function renderPriceModal(o){
 
   const localRow=`
     <!-- 현지전액가격 입력 (상단 1열) -->
-    <div style="display:flex;align-items:center;gap:8px;padding:7px 8px;background:rgba(255,209,102,.06);border-radius:var(--rs);margin-top:6px;">
-      <span style="font-size:12px;color:var(--yellow);">현지전액가격 (참고)</span>
+    <div class="pm-local" style="display:flex;align-items:center;gap:8px;padding:7px 8px;background:rgba(255,209,102,.06);border-radius:var(--rs);margin-top:6px;">
+      <span class="pm-local-lbl" style="font-size:12px;color:var(--yellow);">현지전액가격 (참고)</span>
       <select style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:12px;padding:4px 6px;outline:none;cursor:pointer;"
         onchange="updateLocalPriceCur(${o.id},this.value)">
         ${['¥(위안)','$(달러)','¥(엔)'].map(cur=>`<option ${lpCur===cur?'selected':''} value="${cur}">${curLabel(cur)}</option>`).join('')}
@@ -5661,7 +5996,7 @@ function renderPriceModal(o){
         onchange="updateLocalPriceAmt(${o.id},this.value)" onblur="updateLocalPriceAmt(${o.id},this.value)">
     </div>
     <!-- 하단 2열: 환율 | 수수료+결과 -->
-    ${lpAmt?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;align-items:start;">
+    ${lpAmt?`<div class="pm-fxgrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;align-items:start;">
       <!-- 좌: 환율 + 관부가세 + 결과 -->
       <div style="background:rgba(255,209,102,.06);border-radius:var(--rs);padding:7px 8px;">
         <div style="display:flex;gap:4px;align-items:center;font-size:10px;margin-bottom:4px;">
@@ -5725,7 +6060,7 @@ function renderPriceModal(o){
     </div>`:''}`;
 
   document.getElementById('price-modal-content').innerHTML=
-    rowHtml + `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;align-items:start;">${expBalRow?`<div style="background:var(--ydim);border-radius:var(--rs);padding:7px 8px;"><span style="font-size:12px;color:var(--yellow);">예상잔금 (메모용)</span><input type="number" value="${c.expectedBalance||''}" placeholder="0" style="width:100%;margin-top:4px;background:transparent;border:1px solid var(--yborder);border-radius:var(--rs);color:var(--yellow);font-size:13px;font-weight:600;font-family:'Space Mono',monospace;padding:5px 8px;text-align:right;outline:none;box-sizing:border-box;" onchange="updateCostField(${o.id},'expectedBalance',this.value)"></div>`:'<div></div>'}${couponEditorHtml(o.id)}</div>` + localRow + totalRow +
+    rowHtml + `<div class="pm-cpgrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;align-items:start;">${expBalRow?`<div style="background:var(--ydim);border-radius:var(--rs);padding:7px 8px;"><span style="font-size:12px;color:var(--yellow);">예상잔금 (메모용)</span><input type="number" value="${c.expectedBalance||''}" placeholder="0" style="width:100%;margin-top:4px;background:transparent;border:1px solid var(--yborder);border-radius:var(--rs);color:var(--yellow);font-size:13px;font-weight:600;font-family:'Space Mono',monospace;padding:5px 8px;text-align:right;outline:none;box-sizing:border-box;" onchange="updateCostField(${o.id},'expectedBalance',this.value)"></div>`:'<div></div>'}${couponEditorHtml(o.id)}</div>` + localRow + totalRow +
     `<div style="display:flex;justify-content:flex-end;margin-top:12px;">
       <button class="btn" onclick="closePriceModal()">닫기</button>
     </div>`;
@@ -6149,8 +6484,8 @@ function renderBundle(){
       const fx=lp
         ? (discF>0
             ?`<div style="font-size:11px;color:var(--text2);">${fSym}${preF.toLocaleString()} <span style="color:var(--yellow);">− ${fSym}${discF.toLocaleString()}</span></div>
-               <div style="font-size:13px;color:var(--green);font-weight:700;margin-top:1px;">= ${fmtForeign(postF,cur)}</div>`
-            :`<div style="font-size:13px;color:var(--green);font-weight:700;">${fmtForeign(preF,cur)}</div>`)
+               <div style="font-size:13px;color:var(--green);font-weight:700;margin-top:1px;">= ${fmtForeignU(postF,cur)}</div>`
+            :`<div style="font-size:13px;color:var(--green);font-weight:700;">${fmtForeignU(preF,cur)}</div>`)
         : `<span style="font-size:11px;color:var(--text3);">외화 없음</span>`;
       // 한화 분해: 할인전원화 − 할인액 = 할인후원화 (외화 바로 옆에서 시작)
       const kx=(i.discKrw>0)
@@ -7868,6 +8203,13 @@ document.addEventListener('mousemove', function(e){
 </div>
 
 <!-- 이미지 뷰어 -->
+<!-- 모바일 메뉴: ☰ 누르면 세로 탭 목록 -->
+<div id="m-nav" role="dialog" aria-modal="true" aria-label="메뉴" onclick="if(event.target===this)closeMNav()">
+  <div class="m-nav-panel">
+    <div class="m-nav-head"><span>메뉴</span><button onclick="closeMNav()" aria-label="닫기">✕</button></div>
+    <div id="m-nav-list"></div>
+  </div>
+</div>
 <!-- 스크롤로 헤더가 가려지면 왼쪽 아래에 희미하게 떠 있는 동기화 버튼 -->
 <div id="gd-float" aria-hidden="true">
   <button class="gd-orb" onclick="gdOrbClick()" aria-label="구글 동기화"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/></svg><i></i></button>
@@ -8204,7 +8546,8 @@ function closeWarnPop(){const wp=document.getElementById('warn-pop');if(wp)wp.st
   window.addEventListener('resize',()=>centerScrollBtns());
   // 탭 전환 감지
   const orig=window.switchTab;
-  window.switchTab=function(t,el){orig(t,el);updateScrollBtns();};
+  window.switchTab=function(t,el){orig(t,el);updateScrollBtns();if(typeof syncMNavCur==='function')syncMNavCur();};
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){const n=document.getElementById('m-nav');if(n&&n.classList.contains('show')){closeMNav();e.stopPropagation();}}},true);
   document.addEventListener('DOMContentLoaded',updateScrollBtns);
   setTimeout(updateScrollBtns,500);
 })();
@@ -8364,7 +8707,7 @@ function closeWarnPop(){const wp=document.getElementById('warn-pop');if(wp)wp.st
       <span id="bm-code-tag" onclick="bmEditCodeTag()" title="부여될(또는 픽업된) 할인 코드" style="font-family:'Space Mono',monospace;font-size:14px;font-weight:700;padding:4px 12px;border-radius:var(--rs);border:1px dashed var(--border2);color:var(--text3);min-width:92px;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;text-align:center;vertical-align:middle;box-sizing:border-box;">—</span>
     </div>
     <div id="bm-list" style="min-height:200px;max-height:60vh;overflow-y:auto;overflow-x:hidden;border:1px solid var(--border);border-radius:var(--rs);"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;align-items:center;">
+    <div class="bm-foot" style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;align-items:center;">
       <span id="bm-sum" style="margin-right:auto;font-size:12px;color:var(--text2);"></span>
       <button class="btn" onclick="closeBundleMake()">닫기</button>
       <button class="btn primary" id="bm-apply" onclick="bmBundle()">묶기</button>
