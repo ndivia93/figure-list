@@ -1213,6 +1213,14 @@ option[value="전액구매"]{color:#7b6cff;}
         <button class="btn primary" id="gh-conv-btn" onclick="ghConvertAll()" style="font-size:13px;padding:8px 16px;">변환하기</button>
         <span id="gh-conv-info" style="font-size:12px;color:var(--text3);"></span>
       </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">깃헙 사진 → 업로드 사진으로 옮기기</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px;">깃헙 사진을 받아서 내 구글 드라이브의 업로드 사진으로 바꿉니다. 옮긴 뒤에는 깃헙 접속 제한과 상관없이 빠르게 뜹니다. 썸네일 위치·확대 설정은 그대로 유지되고, 원래 주소는 기록으로 남겨둡니다. <b style="color:var(--text);">구글 동기화 로그인이 필요합니다.</b></div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <button class="btn primary" id="gh-up-btn" onclick="ghUploadAll()" style="font-size:13px;padding:8px 16px;">옮기기</button>
+          <span id="gh-up-info" style="font-size:12px;color:var(--text3);"></span>
+        </div>
+      </div>
     </div>
     <!-- 데이터 관리 버튼 -->
     <div style="margin-top:16px;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);">
@@ -3343,6 +3351,15 @@ function submitAdd(editId){
 
 function updateGroupCoupon(groupKey,field,value){const g=getGroups();if(!g[groupKey])return;const leader=g[groupKey][0];if(!leader.groupCoupon)leader.groupCoupon={amount:0,currency:'₩'};leader.groupCoupon[field]=field==='amount'?Number(value)||0:value;renderOrder();autoSave();}
 
+// 정렬을 지정한 방향으로 고정 (토글 없음) — 접속/데이터 불러오기 시 '결제일 최신순'
+function setSortFixed(k,dir){
+  sortKey=k;sortDir=dir;
+  ['date','pdate','price','total','maker','charName','purchaseType','figType','scale'].forEach(x=>{
+    const el=document.getElementById('th-'+x);if(!el)return;
+    el.className='sortable'+(x===sortKey?' '+(sortDir===1?'sort-asc':'sort-desc'):'');
+  });
+  renderOrder();
+}
 function setSort(k){
   if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1;}
   ['date','pdate','price','total','maker','charName','purchaseType','figType'].forEach(x=>{
@@ -5143,6 +5160,67 @@ function ghConvertAll(){
       if(typeof showToast==='function')showToast(`깃헙 주소 ${t.length}건 변환 완료`);
     }}]);
 }
+// ── 깃헙 사진 → 드라이브 업로드 사진으로 옮기기 ──
+let _ghUpBusy=false;
+function ghIsGithubImg(u){return !!u&&typeof u==='string'&&(/^https?:\/\/raw\.githubusercontent\.com\//i.test(u)||!!ghRawUrl(u));}
+function ghUpTargets(){
+  const out=[];
+  [['order',orders],['wish',wishes]].forEach(([k,list])=>(list||[]).forEach(o=>{if(o&&!o.imgFileId&&ghIsGithubImg(o.imageUrl))out.push({k,o});}));
+  return out;
+}
+function ghRenderUpCard(msg){
+  const btn=document.getElementById('gh-up-btn'),info=document.getElementById('gh-up-info');if(!btn||!info)return;
+  const n=ghUpTargets().length;
+  const can=n&&!_ghUpBusy;
+  btn.disabled=!can;btn.style.opacity=can?'1':'.45';btn.style.cursor=can?'pointer':'default';
+  btn.textContent=_ghUpBusy?'옮기는 중…':(n?`옮기기 (${n}건)`:'옮기기');
+  info.textContent=msg||(n?`옮길 깃헙 사진 ${n}건`+(gdToken?'':' · 로그인 필요'):'옮길 깃헙 사진이 없습니다');
+}
+async function ghUploadOne(o){
+  const src=ghRawUrl(o.imageUrl)||o.imageUrl;
+  const r=await fetch(src,{mode:'cors',referrerPolicy:'no-referrer',cache:'no-store'});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const file=await r.blob();
+  if(!/^image\//.test(file.type||'image/'))throw new Error('이미지가 아님');
+  const [disp,thumb]=await Promise.all([imgResize(file,4096,0.95),imgResize(file,1200,0.9)]);
+  const [dispId,thId]=await Promise.all([gdUploadOne(disp),gdUploadOne(thumb)]);
+  await Promise.all([imgCachePut(dispId,disp),imgCachePut(thId,thumb)]);
+  o.imgSrcUrl=o.imageUrl;            // 원래 주소 기록
+  o.imgFileId=dispId;o.imgThumbId=thId;
+  try{o.imageUrl=URL.createObjectURL(thumb);}catch(e){}
+  if(typeof _brokenImg!=='undefined')_brokenImg.delete(o.id);
+  // imgFocus(위치·확대)는 같은 사진이므로 그대로 유지
+}
+function ghUploadAll(){
+  if(_ghUpBusy)return;
+  const t=ghUpTargets();if(!t.length){ghRenderUpCard();return;}
+  if(!gdToken){showToast(gdState()==='warn'?'동기화가 끊겼어요 — 상단 구름 버튼을 눌러 다시 연결해주세요':'구글 동기화 로그인 후 옮길 수 있어요 (상단 구름 버튼)','warn');return;}
+  openNoticeModal('깃헙 사진 옮기기',
+    `깃헙 사진 <b>${t.length}건</b>을 구글 드라이브의 업로드 사진으로 옮깁니다.<br>사진 수에 따라 시간이 조금 걸릴 수 있어요.`,
+    [{label:'취소'},{label:'옮기기',primary:true,onClick:()=>ghUploadRun(t)}]);
+}
+async function ghUploadRun(t){
+  _ghUpBusy=true;let done=0,ok=0,fail=0;ghRenderUpCard(`0 / ${t.length} 진행 중…`);
+  const queue=t.slice();
+  const worker=async()=>{
+    while(queue.length){
+      const it=queue.shift();
+      try{await ghUploadOne(it.o);ok++;}catch(e){
+        fail++;
+        if(/40[13]/.test(''+(e.message||e))&&typeof gdMarkDisconnected==='function'){gdMarkDisconnected();queue.length=0;}
+      }
+      done++;ghRenderUpCard(`${done} / ${t.length} 진행 중…`);
+    }
+  };
+  await Promise.all([worker(),worker(),worker()]);
+  _ghUpBusy=false;
+  saveData();
+  renderOrder();if(typeof renderWish==='function')renderWish();if(typeof renderSell==='function')renderSell();
+  ghRenderCard();
+  const msg=fail?`완료 ${ok}건 · 실패 ${fail}건 (실패한 사진은 그대로 두었어요)`:`${ok}건 모두 옮겼어요`;
+  ghRenderUpCard(msg);
+  showToast('깃헙 사진 옮기기 — '+msg,fail?'warn':'success');
+}
 function renderManage(){
   // 캐릭터명 목록 (등록된 피규어에서 수집 + 수동 추가)
   const allChars=[...new Set([...orders.map(o=>o.charName).filter(Boolean),...(window._manualChars||[])])].sort((a,b)=>a.localeCompare(b,'ko'));
@@ -5184,7 +5262,7 @@ function renderManage(){
   const barsEl=document.getElementById('manage-bars');
   if(barsEl)barsEl.innerHTML=manageStackBar('구매 유형',ptypeSegs)+manageStackBar('배송·방출 현황',delSegs);
   renderManageChart();
-  ghRenderCard();
+  ghRenderCard();ghRenderUpCard();
 }
 // 전체 폭 누적 막대 — 유형·갯수·가격을 막대 안에 표기
 function manageStackBar(title,segs){
@@ -5371,7 +5449,7 @@ function loadData(){
     nO=Math.max(400,...orders.map(o=>o.id+1));
     nW=Math.max(400,...wishes.map(w=>w.id+1));
     nS=Math.max(400,...sells.map(s=>s.id+1));
-    openRows={};setSort('pdate');renderWish();renderSell();renderStore();
+    openRows={};setSortFixed('pdate',-1);renderWish();renderSell();renderStore();
     if(typeof resolveDriveImages==='function')resolveDriveImages();
     showToast('📂 불러오기 완료!','success');updateSaveStatus(true,d.savedAt);
   }
@@ -5514,7 +5592,7 @@ function gdApplyData(d){
   sells.forEach(s=>{if(!s.maker&&s.memo){const m=s.memo.match(/^방출\s*\((.+)\)$/);if(m)s.maker=m[1];}if(s.fromOrder!=null){const oo=orders.find(i=>i.id===s.fromOrder);if(oo){if(!s.date&&oo.releasedDate)s.date=oo.releasedDate;if(!s.maker&&oo.maker)s.maker=oo.maker;}}});
   if(d.makers)makers=d.makers;if(d.stores)stores=d.stores;if(d.bundleCoupons)bundleCoupons=d.bundleCoupons;if(d.nextStoreId)nextStoreId=d.nextStoreId;if(d.exchangeRates)exchangeRates=d.exchangeRates;
   nO=Math.max(400,...orders.map(o=>o.id+1));nW=Math.max(400,...wishes.map(w=>w.id+1));nS=Math.max(400,...sells.map(s=>s.id+1));
-  openRows={};setSort('pdate');renderWish();renderSell();if(typeof renderStore==='function')renderStore();if(typeof renderManage==='function')renderManage();
+  openRows={};setSortFixed('pdate',-1);renderWish();renderSell();if(typeof renderStore==='function')renderStore();if(typeof renderManage==='function')renderManage();
   if(typeof resolveDriveImages==='function')resolveDriveImages();
   if(typeof gdSetDirty==='function')gdSetDirty(false); // 드라이브 데이터로 맞춰졌으므로 미동기화 없음
 }
@@ -7704,7 +7782,7 @@ function closeImgViewer(){document.getElementById('img-viewer').classList.remove
 function resetImgFromViewer(id,kind){
   const o=imgFind(id,kind||'order');if(!o)return;
   if(!confirm('이미지를 초기화할까요?'))return;
-  o.imageUrl='';delete o.imgFocus;delete o.imgFileId;delete o.imgThumbId;
+  o.imageUrl='';delete o.imgFocus;delete o.imgFileId;delete o.imgThumbId;delete o.imgSrcUrl;
   closeImgViewer();if(typeof imgRerender==='function')imgRerender(kind);autoSave();
 }
 // 이미지 등록창 → 관리탭 구글 동기화 카드로 이동
@@ -7839,6 +7917,16 @@ let _uploadedCropSrc=''; // 업로드 사진 편집용 이미지 소스(blob). U
 function cropSrc(){const u=((document.getElementById('img-url-input')||{}).value||'').trim();return u?u:(_uploadedCropSrc||'');}
 function cropCss(){return 'object-fit:cover;object-position:'+_cropState.x+'% '+_cropState.y+'%;'
   +(_cropState.z!==1?'transform:scale('+_cropState.z+');transform-origin:'+_cropState.x+'% '+_cropState.y+'%;':'');}
+// 미리보기 <img>를 매번 새로 만들지 않고 재사용 (재디코딩 방지 → 고해상도 업로드 사진도 부드럽게)
+function _cropMiniSet(id,url,css){
+  const box=document.getElementById(id);if(!box)return;
+  let m=box.firstElementChild;
+  if(!m||m.tagName!=='IMG'||m.getAttribute('src')!==url){
+    box.innerHTML='<img referrerpolicy="no-referrer" decoding="async" alt="">';
+    m=box.firstElementChild;m.src=url;
+  }
+  m.style.cssText='width:100%;height:100%;display:block;will-change:transform;'+css;
+}
 function renderCrop(){
   const url=cropSrc();
   const box=document.getElementById('img-crop-box');
@@ -7846,16 +7934,19 @@ function renderCrop(){
   if(!url){box.style.display='none';return;}
   box.style.display='block';
   const im=document.getElementById('crop-img');
-  if(im.getAttribute('src')!==url)im.src=url;
-  im.style.cssText='width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none;'+cropCss();
+  if(im.getAttribute('src')!==url){im.decoding='async';im.src=url;}
+  const css=cropCss();
+  im.style.cssText='width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none;will-change:transform;'+css;
   document.getElementById('crop-z-val').textContent=_cropState.z.toFixed(2)+'x';
   document.getElementById('crop-x').value=_cropState.x;
   document.getElementById('crop-y').value=_cropState.y;
   document.getElementById('crop-z').value=_cropState.z;
-  const mini='<img referrerpolicy="no-referrer" src="'+url+'" style="width:100%;height:100%;display:block;'+cropCss()+'">';
-  document.getElementById('crop-mini').innerHTML=mini;
-  document.getElementById('crop-mini2').innerHTML=mini;
+  _cropMiniSet('crop-mini',url,css);
+  _cropMiniSet('crop-mini2',url,css);
 }
+// 드래그·휠·슬라이더 입력은 화면 갱신 주기(rAF)에 맞춰 한 번만 그림
+let _cropRaf=0;
+function renderCropSoon(){if(_cropRaf)return;_cropRaf=requestAnimationFrame(()=>{_cropRaf=0;renderCrop();});}
 function resetImgFocus(){_cropState={x:50,y:50,z:1};renderCrop();}
 function initCropEditor(){
   const st=document.getElementById('crop-stage');
@@ -7868,23 +7959,23 @@ function initCropEditor(){
     const k=100/(st.offsetWidth*Math.max(1,_cropState.z));
     _cropState.x=Math.min(100,Math.max(0,_cropState.x-(e.clientX-px)*k*2));
     _cropState.y=Math.min(100,Math.max(0,_cropState.y-(e.clientY-py)*k*2));
-    px=e.clientX;py=e.clientY;renderCrop();
+    px=e.clientX;py=e.clientY;renderCropSoon();
   });
   window.addEventListener('mouseup',()=>{if(drag){drag=false;st.style.cursor='grab';}});
   st.addEventListener('wheel',e=>{
     e.preventDefault();
     _cropState.z=Math.min(10,Math.max(1,+(_cropState.z+(e.deltaY<0?0.15:-0.15)).toFixed(2)));
-    renderCrop();
+    renderCropSoon();
   },{passive:false});
   ['x','y','z'].forEach(k=>{
     const el=document.getElementById('crop-'+k);
-    if(el)el.addEventListener('input',()=>{_cropState[k]=+el.value;renderCrop();});
+    if(el)el.addEventListener('input',()=>{_cropState[k]=+el.value;renderCropSoon();});
   });
 }
 function removeImgUrl(){
   const o=imgFind(_imgTargetId);if(!o)return;
   if(!confirm('이미지를 제거할까요?'))return;
-  o.imageUrl='';delete o.imgFocus;delete o.imgFileId;delete o.imgThumbId;
+  o.imageUrl='';delete o.imgFocus;delete o.imgFileId;delete o.imgThumbId;delete o.imgSrcUrl;
   if(typeof _brokenImg!=='undefined')_brokenImg.delete(o.id);
   syncAddModalImg(o);
   const k=_imgKind;closeImgUrlModal();imgRerender(k);autoSave();
@@ -8160,8 +8251,8 @@ window.addEventListener('load',()=>{
     }catch(e){console.error('로드 오류:',e);}
   }
   // 항상 렌더링 (저장본 여부/취소 무관)
-  sortKey='pdate';sortDir=-1;
-  renderOrder();renderWish();renderSell();renderStore();
+  setSortFixed('pdate',-1);
+  renderWish();renderSell();renderStore();
 });
 document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveData();}
