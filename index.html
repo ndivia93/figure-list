@@ -2953,7 +2953,10 @@ function syncMemoSideToggle(){
 function amFocusCss(){var f=_amFocus;var s='object-fit:cover;object-position:'+f.x+'% '+f.y+'%;';if(f.z&&f.z!==1)s+='transform:scale('+f.z+');transform-origin:'+f.x+'% '+f.y+'%;';return s;}
 function renderMemoSide(ex){
   const side=document.getElementById('am-memo-side');if(!side)return;
-  const img=ex?.imageUrl||'';
+  const _up=!!(ex&&ex.imgFileId);
+  const img=_up?'':(ex?.imageUrl||'');
+  _amUpSrc=_up?(ex.imageUrl||''):'';
+  if(_up&&typeof imgUrlFromId==='function'){const fid=ex.imgFileId,eid=ex.id;imgUrlFromId(fid).then(u=>{if(u&&_addEditId===eid){_amUpSrc=u;amCropRender();}});}
   const ff=(ex&&ex.imgFocus)||{};
   _amFocus={x:(ff.x==null?50:+ff.x),y:(ff.y==null?50:+ff.y),z:(ff.z==null?1:+ff.z)};
   side.innerHTML=`
@@ -2964,14 +2967,15 @@ function renderMemoSide(ex){
       <div class="am-crop-hover">✏️ 수정</div>
     </div>
     <div class="ms-title">사진 URL</div>
-    <input id="am-imgurl" type="text" class="form-input" value="${img.replace(/"/g,'&quot;')}" placeholder="https://... 이미지 주소" oninput="amCropRender()" style="margin-bottom:10px;">
+    <input id="am-imgurl" type="text" class="form-input" value="${img.replace(/"/g,'&quot;')}" placeholder="${_up?'업로드 사진 사용 중 (URL 입력 시 교체)':'https://... 이미지 주소'}" oninput="amCropRender()" style="margin-bottom:10px;">
     <div class="ms-title">메모</div>
     <textarea id="am-memo" class="form-input" style="flex:1;resize:none;min-height:70px;line-height:1.5;font-family:'Noto Sans KR',sans-serif;" placeholder="자유 메모">${ex?.memo||''}</textarea>`;
   syncMemoSideToggle();
   amCropRender();
 }
+let _amUpSrc=''; // 수정 모달: 업로드 사진의 고해상도 미리보기 소스
 function amCropRender(){
-  const url=(document.getElementById('am-imgurl')?.value||'').trim();
+  const url=(document.getElementById('am-imgurl')?.value||'').trim()||_amUpSrc;
   const im=document.getElementById('am-crop-img');
   const empty=document.getElementById('am-crop-empty');
   if(!im)return;
@@ -2987,7 +2991,7 @@ function amOpenImgEditor(){
   const id=_addEditId;
   if(id==null){showToast('저장 후 이미지 편집이 가능해요 (URL만 먼저 입력하세요)','warn');return;}
   const o=orders.find(x=>x.id===id);if(!o)return;
-  const inp=document.getElementById('am-imgurl');if(inp)o.imageUrl=inp.value.trim(); // 패널 URL을 먼저 반영
+  const inp=document.getElementById('am-imgurl');if(inp){const v=inp.value.trim();if(v){o.imageUrl=v;if(o.imgFileId){delete o.imgFileId;delete o.imgThumbId;}}else if(!o.imgFileId)o.imageUrl='';} // 패널 URL을 먼저 반영 (빈 칸 + 업로드 사진이면 유지)
   openImgUrlModal(id,'order');
 }
 // ── 모달 쿠폰 편집기 (모달-로컬 _amCoupons, 최대 4개) ──────────
@@ -3329,7 +3333,9 @@ function submitAdd(editId){
     if(editId!=null){
       const o=orders.find(i=>i.id===editId);
       if(o){
-        Object.assign(o,{purchaseType:pt,figType,scale,scale,charName:finalName,subName,maker,date,paymentDate,releaseDate,groupId:o.groupId||'',storeName,costs,coupons,coupon:null,points,imageUrl:imgUrl,localPrice,memo,costDates:newCostDates,costGroups:newCostGroups,localPrices:newLocalPrices});
+        let _img=imgUrl;
+        if(o.imgFileId){ if(!imgUrl)_img=o.imageUrl||''; else {delete o.imgFileId;delete o.imgThumbId;delete o.imgSrcUrl;} }
+        Object.assign(o,{purchaseType:pt,figType,scale,scale,charName:finalName,subName,maker,date,paymentDate,releaseDate,groupId:o.groupId||'',storeName,costs,coupons,coupon:null,points,imageUrl:_img,localPrice,memo,costDates:newCostDates,costGroups:newCostGroups,localPrices:newLocalPrices});
         o.paymentDate=autoPayDate(newCostDates,costs)||o.paymentDate;
       }
     } else {
@@ -7905,7 +7911,9 @@ function syncAddModalImg(o){
   if(_imgKind!=='order')return;
   const am=document.getElementById('add-modal');
   if(!am||!am.classList.contains('show')||_addEditId!==o.id)return;
-  const inp=document.getElementById('am-imgurl');if(inp)inp.value=o.imageUrl||'';
+  const inp=document.getElementById('am-imgurl');if(inp)inp.value=o.imgFileId?'':(o.imageUrl||'');
+  _amUpSrc=o.imgFileId?(o.imageUrl||''):'';
+  if(o.imgFileId&&typeof imgUrlFromId==='function'){const eid=o.id;imgUrlFromId(o.imgFileId).then(u=>{if(u&&_addEditId===eid){_amUpSrc=u;amCropRender();}});}
   const ff=o.imgFocus||{};_amFocus={x:(ff.x==null?50:+ff.x),y:(ff.y==null?50:+ff.y),z:(ff.z==null?1:+ff.z)};
   if(typeof amCropRender==='function')amCropRender();
 }
