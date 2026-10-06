@@ -758,7 +758,15 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
   background:conic-gradient(from var(--shipA),transparent 0deg 250deg,rgba(78,207,207,.25) 280deg,#4ecfcf 320deg,#ffffff 345deg,#4ecfcf 355deg,transparent 360deg);
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
   animation:shipSpin 2.2s linear infinite;}
-.ship-toggle{align-self:stretch;display:inline-flex;align-items:center;gap:5px;padding:0 12px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;margin-left:auto;flex-shrink:0;}
+.ship-toggle{align-self:stretch;display:inline-flex;align-items:center;gap:5px;padding:0 12px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.patch-btn{margin-left:auto;font-weight:600;}
+.patch-btn.on{color:var(--accent);border-color:var(--aborder);}
+#patch-pop{position:fixed;z-index:3000;width:340px;max-width:calc(100vw - 24px);max-height:70vh;overflow-y:auto;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);box-shadow:0 16px 40px rgba(0,0,0,.55);padding:12px 14px;display:none;}
+#patch-pop.show{display:block;}
+#patch-pop h4{margin:10px 0 4px;font-size:12px;color:var(--accent);font-family:'Space Mono',monospace;}
+#patch-pop h4:first-child{margin-top:0;}
+#patch-pop ul{margin:0;padding-left:16px;}
+#patch-pop li{font-size:12.5px;color:var(--text);line-height:1.65;}
 .ship-toggle b{font-size:11px;padding:1px 6px;border-radius:10px;background:var(--surface);color:var(--text3);}
 .ship-toggle.on{border-color:rgba(78,207,207,.6);color:#4ecfcf;background:rgba(78,207,207,.08);}
 .ship-toggle.on b{background:#4ecfcf;color:#0b0b0f;}
@@ -769,10 +777,11 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
 .am-track-box.locked input,.am-track-box.locked select{cursor:not-allowed;}
 #ship-row{justify-content:center;flex-wrap:wrap;gap:8px;padding:2px 0 4px;}
 .ship-th{width:52px;height:52px;border-radius:8px;overflow:hidden;background:var(--surface);border:1px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box;}
-#ship-drop{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:9000;width:58px;height:62vh;min-height:280px;border-radius:14px;border:2px dashed rgba(78,207,207,.6);background:rgba(15,20,24,.92);color:#4ecfcf;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:14px;text-align:center;box-shadow:0 14px 34px rgba(0,0,0,.5);pointer-events:auto;}
+#ship-drop{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:9000;width:80px;height:62vh;opacity:.4;transition:opacity .15s,background .15s;min-height:280px;border-radius:14px;border:2px dashed rgba(78,207,207,.6);background:rgba(15,20,24,.92);color:#4ecfcf;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:14px;text-align:center;box-shadow:0 14px 34px rgba(0,0,0,.5);pointer-events:auto;}
 #ship-drop.show{display:flex;}
 #ship-drop b{font-size:30px;line-height:1;font-weight:400;}
 #ship-drop .sd-txt{writing-mode:vertical-rl;letter-spacing:4px;font-size:15px;}
+#ship-drop.near,#ship-drop.over{opacity:1;}
 #ship-drop.over{background:#123033;border-style:solid;transform:translateY(-50%) scale(1.05);}
 @media (max-width:760px){ .ship-toggle{padding:0 8px;font-size:12px;} }
 </style>
@@ -935,6 +944,7 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
     <button class="tab" onclick="switchTab('expbal',this)">잔금</button>
     <button class="tab tab-gear" onclick="switchTab('manage',this)" title="관리" style="padding-left:12px;padding-right:12px;"><span>⚙</span></button>
     <div id="tabs-right" style="display:flex;gap:8px;">
+    <button type="button" id="patch-btn" class="ship-toggle patch-btn" onclick="togglePatchNotes(event)" title="최근 변경 사항">패치노트</button>
     <button type="button" id="ship-toggle" class="ship-toggle" onclick="toggleShipView()" title="배송중인 항목을 검색창 위에 모아 보기">배송중 <b>OFF</b></button>
     <button id="collapse-btn" onclick="toggleTopSection()"
       style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2);cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:3px 10px;font-family:inherit;white-space:nowrap;transition:all .15s;"
@@ -3203,6 +3213,26 @@ function renderMemoSide(ex){
   amCropRender();
   setTimeout(amTrackSync,0);
 }
+// ── 패치노트 (최신순, 짧게) ──
+const PATCH_NOTES=[
+  ['26.10.07',['배송중 상태 추가 — 운송장 입력 시 자동 전환','배송중 아이콘 빛 효과 · 배송중 모아보기 토글','해외 운송장 칸 추가 (17TRACK 조회)','운송장 조회 시 번호 자동 복사','썸네일·⠿ 끌어서 배송중 전환','위시 · 카드보기 그룹 기능','그룹 썸네일 2줄 가로 슬라이드 · 휠로 좌우 이동','수정 창에 그룹 선택 추가','검색창 하단 이동 · OR/AND · 여러 검색어 고정','방출 탭 정렬 옵션 확대','할인 탭 단일쿠폰·포인트 카드 · 보기 필터','쿠폰 칸 단일쿠폰 개별 표기']],
+  ['26.10.06',['단일쿠폰 부호 통일 (실결제액 유지)','운송장 조회 · 수정 창 하단 총금액','수정 창 하단 버튼 고정','금액 · 날짜 · 기간 검색','총비용 잠금 시 마우스 올리면 할인전 금액','원화·외화 단일쿠폰 분리 계산','구매목록 하단 여백 · 제작 표기']],
+  ['26.10.03',['수정 창 썸네일 고해상도 표시']],
+  ['26.10.02',['깃헙 사진 주소 변환 · 업로드 사진으로 옮기기','업로드 사진 확대·축소 부드럽게','접속 시 결제일 최신순 고정','외부 사진 차단 완화','모바일 최적화']]
+];
+function togglePatchNotes(e){
+  if(e)e.stopPropagation();
+  let p=document.getElementById('patch-pop');
+  if(!p){p=document.createElement('div');p.id='patch-pop';p.onclick=ev=>ev.stopPropagation();document.body.appendChild(p);
+    p.innerHTML=PATCH_NOTES.map(([dt,items])=>`<h4>${dt}</h4><ul>${items.map(t=>`<li>${t}</li>`).join('')}</ul>`).join('');}
+  const btn=document.getElementById('patch-btn');
+  if(p.classList.contains('show')){p.classList.remove('show');if(btn)btn.classList.remove('on');return;}
+  const r=btn.getBoundingClientRect();
+  p.style.top=Math.round(r.bottom+6)+'px';
+  p.style.left=Math.round(Math.max(12,Math.min(r.right-340,innerWidth-352)))+'px';
+  p.classList.add('show');btn.classList.add('on');
+}
+document.addEventListener('click',()=>{const p=document.getElementById('patch-pop');if(p&&p.classList.contains('show')){p.classList.remove('show');const b=document.getElementById('patch-btn');if(b)b.classList.remove('on');}});
 // ── 배송중 ──────────────────────────────────────────────────
 // 결제가 끝난 상태(전액결제·잔금결제·중고구매)여야 운송장 입력·배송중 전환 가능
 function isPaidForShip(o){
@@ -4017,7 +4047,10 @@ function moveOrderRelative(dragId,targetId,after){
   let shipDrop=null,overShip=false;
   const shipShow=on=>{
     if(!shipDrop){shipDrop=document.createElement('div');shipDrop.id='ship-drop';shipDrop.innerHTML='<b>＋</b><span class="sd-txt">배송중으로 전환</span>';document.body.appendChild(shipDrop);}
-    shipDrop.classList.toggle('show',on);shipDrop.classList.remove('over');overShip=false;
+    shipDrop.classList.toggle('show',on);shipDrop.classList.remove('over','near');overShip=false;
+    if(on){const f=document.getElementById('fab-add');const fr=f&&f.offsetWidth?f.getBoundingClientRect():null;
+      if(fr){shipDrop.style.width=Math.round(fr.width)+'px';shipDrop.style.right=Math.round(innerWidth-fr.right)+'px';}
+      else{shipDrop.style.width='';shipDrop.style.right='';}}
   };
   const finish=()=>{
     if(ghost){ghost.remove();ghost=null;}
@@ -4080,6 +4113,7 @@ function moveOrderRelative(dragId,targetId,after){
       const r=shipDrop.getBoundingClientRect();
       overShip=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
       shipDrop.classList.toggle('over',overShip);
+      shipDrop.classList.toggle('near',Math.max(r.left-e.clientX,0,e.clientX-r.right)<120);
       if(overShip){clearMarks();overRow=null;return;}
     }
     const row=el&&el.closest?el.closest('#tbody-order .main-row'):null;
