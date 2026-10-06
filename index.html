@@ -517,9 +517,6 @@ option[value="전액구매"]{color:#7b6cff;}
   #collapse-btn{padding:0 10px !important;}
   #collapse-label{display:none;}
   .tabs{overflow:visible;}
-  /* 구매목록 탭: 검색줄을 다음 줄 전체 폭으로 (모드·칩·기간설정 공간 확보) */
-  .tabs:has(#order-search-wrap[style*="flex"]){flex-wrap:wrap;row-gap:6px;}
-  .tabs:has(#order-search-wrap[style*="flex"]) #tabs-right{flex:1 1 100%;min-height:43px;}
   /* 모달 공통: 화면폭에 맞추고 세로 스크롤 */
   .modal-overlay{align-items:flex-end;}
   .modal{width:100% !important;max-width:100% !important;max-height:92dvh;padding:16px 14px calc(16px + env(safe-area-inset-bottom));border-radius:16px 16px 0 0;}
@@ -685,6 +682,13 @@ option[value="전액구매"]{color:#7b6cff;}
 body.price-locked td:hover > .cc-now{display:none;}
 body.price-locked td:hover > .cc-pre{display:block;}
 /* ── 검색창: 모드 · 칩 · 기간설정 ── */
+#sq-dock{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:260;width:min(860px,calc(100vw - 380px));min-width:420px;display:flex;flex-direction:column;gap:6px;opacity:.42;transition:opacity .18s;}
+#sq-dock:hover,#sq-dock:focus-within,#sq-dock.near{opacity:1;}
+body:has(.modal-overlay.show) #sq-dock{display:none !important;}
+#sq-dock #sq-chips{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:5px;max-width:100% !important;overflow:visible !important;}
+#sq-dock #sq-chips:empty{display:none;}
+#sq-dock .sq-chip{font-size:12px;padding:4px 10px;box-shadow:0 4px 12px rgba(0,0,0,.35);backdrop-filter:blur(4px);}
+#sq-dock #order-search-wrap{height:46px;box-shadow:0 10px 28px rgba(0,0,0,.5);border-color:var(--border2);}
 #order-search-wrap{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:0 6px 0 5px;box-sizing:border-box;position:relative;}
 #order-search-wrap:focus-within{border-color:var(--accent);}
 #order-search-wrap input#search-order{border:none !important;background:transparent !important;flex:1 1 60px;min-width:60px;width:auto !important;padding:9px 4px !important;height:auto !important;}
@@ -708,7 +712,8 @@ body.price-locked td:hover > .cc-pre{display:block;}
 @media (max-width:760px){
   .sq-modes button{padding:4px 5px;font-size:10px;}
   #sq-range-btn{padding:4px 6px;font-size:10px;}
-  #sq-chips{max-width:40%;}
+  #sq-dock{left:10px;right:10px;width:auto;min-width:0;transform:none;bottom:calc(72px + env(safe-area-inset-bottom));}
+  #sq-dock #order-search-wrap{height:44px;}
 }
 /* ── 위시 그룹 ── */
 .wg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;align-items:start;}
@@ -733,7 +738,10 @@ body.price-locked td:hover > .cc-pre{display:block;}
 #wg-ghost{position:fixed;z-index:4100;pointer-events:none;width:64px;height:64px;border-radius:8px;overflow:hidden;box-shadow:0 10px 24px rgba(0,0,0,.5);border:2px solid var(--accent);background:var(--surface);opacity:.92;display:none;transform:translate(-50%,-50%);}
 #wg-ghost img{width:100%;height:100%;object-fit:cover;display:block;}
 body.wg-dragging{user-select:none;cursor:grabbing;}
-[data-wdrag]{touch-action:pan-y;}
+[data-gdrag]{touch-action:pan-y;}
+.wg-uncat{margin-top:12px;}
+.wg-strip{display:grid;grid-auto-flow:column;gap:5px;overflow-x:auto;overflow-y:hidden;padding-bottom:6px;scrollbar-width:thin;}
+.wg-strip .wg-th{width:auto !important;height:auto !important;}
 @media (max-width:760px){
   #wg-dock{width:132px;left:6px;top:70px;}
   .wg-grid{grid-template-columns:1fr;}
@@ -899,26 +907,6 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
     <button class="tab" onclick="switchTab('expbal',this)">잔금</button>
     <button class="tab tab-gear" onclick="switchTab('manage',this)" title="관리" style="padding-left:12px;padding-right:12px;"><span>⚙</span></button>
     <div id="tabs-right" style="display:flex;gap:8px;">
-    <div class="ac-wrap" id="order-search-wrap">
-      <div class="sq-modes" id="sq-modes">
-        <button type="button" class="on" data-m="text" onclick="sqSetMode('text')" title="이름·상호·부제·구매처">일반</button>
-        <button type="button" data-m="amt" onclick="sqSetMode('amt')" title="원화·외화, 할인전·할인후 총금액 (범위: 10000~50000)">금액</button>
-        <button type="button" data-m="date" onclick="sqSetMode('date')" title="결제일·구매일·발매일·배송일 등 (26-10-01 / 26-10)">날짜</button>
-      </div>
-      <div id="sq-chips"></div>
-      <input type="text" id="search-order" placeholder="🔍 검색 후 Enter로 고정" oninput="renderOrder()" onkeydown="sqKey(event)" autocomplete="off">
-      <button type="button" id="sq-range-btn" onclick="sqToggleRange(event)" title="기간으로 검색">기간설정</button>
-      <div id="sq-range-pop" onclick="event.stopPropagation()">
-        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">기간 설정</div>
-        <label>시작일</label><input type="date" id="sq-from">
-        <label>마지막일</label><input type="date" id="sq-to">
-        <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:10px;">
-          <button type="button" class="btn" onclick="sqCloseRange()" style="font-size:12px;padding:5px 12px;">취소</button>
-          <button type="button" class="btn primary" onclick="sqAddRange()" style="font-size:12px;padding:5px 12px;">확인</button>
-        </div>
-      </div>
-      <span id="search-order-clear" onclick="clearOrderSearch()" title="지우기" style="position:absolute;right:7px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--text3);font-size:13px;line-height:1;padding:2px 4px;border-radius:50%;user-select:none;">✕</span>
-    </div>
     <button id="collapse-btn" onclick="toggleTopSection()"
       style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2);cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:3px 10px;font-family:inherit;white-space:nowrap;transition:all .15s;"
       onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--aborder)'"
@@ -1022,7 +1010,7 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
       </table>
     </div>
     <!-- 하단 여백 (떠 있는 버튼들에 가려지지 않게) + 제작 표기 -->
-    <div class="order-foot" style="height:230px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:28px;box-sizing:border-box;">
+    <div class="order-foot" style="height:115px;display:flex;align-items:flex-start;justify-content:center;padding-top:20px;box-sizing:border-box;">
       <span style="font-size:12px;color:var(--text3);letter-spacing:.3px;">made by 아지타니히후미 (미소녀피규어채널)</span>
     </div>
   </div>
@@ -1154,9 +1142,10 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
       </select>
       <span id="cards-count" style="font-size:11px;color:var(--text2);margin-left:4px;"></span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        <span data-gzoom-slot="card" style="display:flex;align-items:center;gap:6px;"></span>
         <div id="cards-currsel" style="display:none;gap:0;border:1px solid var(--border2);border-radius:20px;overflow:hidden;"></div>
         <div id="cards-showsel" style="display:none;gap:0;border:1px solid var(--border2);border-radius:20px;overflow:hidden;"></div>
-        <div id="cards-colsel" style="display:inline-flex;gap:0;border:1px solid var(--border2);border-radius:20px;overflow:hidden;"></div>
+        <div id="cards-colsel" data-hide-in-gview="card" style="display:inline-flex;gap:0;border:1px solid var(--border2);border-radius:20px;overflow:hidden;"></div>
         <div style="display:inline-flex;gap:0;border:1px solid var(--border2);border-radius:20px;overflow:hidden;">
           <button id="cardview-card" onclick="setCardView('card')" style="font-size:12px;font-weight:700;padding:5px 14px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;">카드형</button>
           <button id="cardview-icon" onclick="setCardView('icon')" style="font-size:12px;font-weight:700;padding:5px 14px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;">아이콘형</button>
@@ -1164,6 +1153,7 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
       </div>
     </div>
     <div id="cards-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:4px 0;"></div>
+    <div id="cards-groups" style="display:none;"></div>
   </div>
 
   <div class="panel" id="panel-wish">
@@ -1171,19 +1161,14 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
     <div class="toolbar">
       <input type="text" id="search-wish" placeholder="🔍 검색..." style="width:150px;" oninput="renderWish()">
       <button class="btn primary" onclick="addWish()">＋ 추가</button>
-      <div class="seg" id="wish-seg" data-idx="0">
+      <div class="seg" id="wish-seg" data-idx="0" data-hide-in-gview="wish">
         <span class="seg-pill"></span>
         <button class="seg-btn on" id="wish-seg-list" onclick="setWishView('list')">📋 목록 보기</button>
         <button class="seg-btn" id="wish-seg-card" onclick="setWishView('card')">🖼 썸네일 보기</button>
       </div>
       <div id="wish-colsel" style="display:none;gap:0;border:1px solid var(--border2);border-radius:20px;overflow:hidden;"></div>
       <div class="wg-right" style="margin-left:auto;display:flex;align-items:center;gap:6px;">
-        <div id="wg-zoom" style="display:none;align-items:center;border:1px solid var(--border2);border-radius:20px;overflow:hidden;">
-          <button type="button" onclick="wgZoom(-1)" title="썸네일 작게" style="width:34px;height:30px;border:none;background:var(--surface2);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;">−</button>
-          <span id="wg-zoom-val" style="font-size:11px;color:var(--text2);padding:0 6px;font-family:'Space Mono',monospace;min-width:38px;text-align:center;"></span>
-          <button type="button" onclick="wgZoom(1)" title="썸네일 크게" style="width:34px;height:30px;border:none;background:var(--surface2);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;">＋</button>
-        </div>
-        <button type="button" class="btn" id="wg-view-btn" onclick="wgToggleView()" style="font-size:13px;padding:6px 14px;">그룹으로 보기</button>
+        <span data-gzoom-slot="wish"></span>
       </div>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap;">
@@ -1382,6 +1367,29 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
   </div>
 </div>
 
+<!-- 구매목록 검색 (하단 중앙 오버레이) -->
+<div id="sq-dock">
+  <div id="sq-chips"></div>
+    <div class="ac-wrap" id="order-search-wrap">
+    <div class="sq-modes" id="sq-modes">
+      <button type="button" class="on" data-m="text" onclick="sqSetMode('text')" title="이름·상호·부제·구매처">일반</button>
+      <button type="button" data-m="amt" onclick="sqSetMode('amt')" title="원화·외화, 할인전·할인후 총금액 (범위: 10000~50000)">금액</button>
+      <button type="button" data-m="date" onclick="sqSetMode('date')" title="결제일·구매일·발매일·배송일 등 (26-10-01 / 26-10)">날짜</button>
+    </div>
+    <input type="text" id="search-order" placeholder="🔍 이름·상호 검색 → Enter로 고정 (여러 개: 미토스 / 엑시아)" oninput="renderOrder()" onkeydown="sqKey(event)" autocomplete="off">
+    <button type="button" id="sq-range-btn" onclick="sqToggleRange(event)" title="기간으로 검색">기간설정</button>
+    <div id="sq-range-pop" onclick="event.stopPropagation()">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px;">기간 설정</div>
+      <label>시작일</label><input type="date" id="sq-from">
+      <label>마지막일</label><input type="date" id="sq-to">
+      <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:10px;">
+        <button type="button" class="btn" onclick="sqCloseRange()" style="font-size:12px;padding:5px 12px;">취소</button>
+        <button type="button" class="btn primary" onclick="sqAddRange()" style="font-size:12px;padding:5px 12px;">확인</button>
+      </div>
+    </div>
+    <span id="search-order-clear" onclick="clearOrderSearch()" title="지우기" style="position:absolute;right:7px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--text3);font-size:13px;line-height:1;padding:2px 4px;border-radius:50%;user-select:none;">✕</span>
+  </div>
+</div>
 <script>
 const STORAGE_KEY='figure_v125_user';
 // 헤더 이미지/제목 복원
@@ -1424,6 +1432,7 @@ const GROUP_COLORS=['#ff6eb4','#4ecfcf','#ffd166','#ff8c42','#4ecb71','#7b6cff',
 const DELIVERY_STATES=['none','shipping','delivered'];
 
 let nO=260,nW=200,nS=901,openRows={},sortKey='pdate',sortDir=-1;
+let cardGroups=[]; // 카드보기/구매 그룹 [{id,name,desc}] — o.cgroupId
 let wishGroups=[]; // 위시 그룹 [{id,name,desc}] — 위시 항목은 w.groupId로 소속
 let colFilters={maker:'',charName:'',purchaseType:'',figType:'',scale:'',date:'',pdate:'',status:'',bundle:''};
 let exchangeRates={usd:1380,cny:195,jpy:9.5};
@@ -1851,12 +1860,15 @@ function couponDeductionKrw(o){return validCoupons(o).reduce((a,c)=>{const n=Num
 // 참고용(양수 쿠폰)의 원화 합
 function couponPosKrw(o){return validCoupons(o).reduce((a,c)=>{const k=toKRW(Number(c.amount),c.currency||'₩',exchangeRates);return k>0?a+k:a;},0);}
 // 컴팩트 셀 표시용 텍스트 (없으면 null)
+// 구매목록 쿠폰 칸 — 단일쿠폰을 장마다 개별 칩으로 (묶음 칩 아래에 함께 표시)
+function cpnChipsHtml(o){
+  const unit={'₩':'원','$':'달러','¥':'위안','$(달러)':'달러','¥(위안)':'위안','¥(엔)':'엔'};
+  return validCoupons(o).map(c=>{const a=Number(c.amount);
+    return `<div onclick="openCouponPop(event,${o.id})" title="단일쿠폰 — 클릭하여 수정" style="cursor:pointer;display:flex;align-items:center;justify-content:center;width:74px;box-sizing:border-box;padding:0 4px;line-height:1.15;border-radius:8px;border:1px solid var(--yborder);background:var(--ydim);"><span style="font-size:12px;color:var(--yellow);font-family:'Space Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:66px;">${a.toLocaleString()}<span style="margin-left:2px;font-family:inherit;font-size:11px;">${unit[c.currency||'₩']||''}</span></span></div>`;}).join('');
+}
 function couponCellText(o){
   const vc=validCoupons(o);if(!vc.length)return null;
-  if(vc.length===1)return fmtCur(vc[0].amount,vc[0].currency);
-  const cur0=vc[0].currency||'₩';
-  if(vc.every(c=>(c.currency||'₩')===cur0))return fmtCur(vc.reduce((a,c)=>a+Number(c.amount),0),cur0)+` (${vc.length})`;
-  return `${vc.length}장 ≈${fmtCur(couponTotalKrw(o),'₩')}`;
+  return vc.map(c=>fmtCur(c.amount,c.currency)).join(' · '); // 장수로 묶지 않고 쿠폰마다 개별 표기
 }
 function totalCost(o){
   const c=o.costs||{};
@@ -3126,6 +3138,11 @@ function renderMemoSide(ex){
       <input id="am-track-no" type="text" inputmode="numeric" class="form-input" value="${(ex?.trackNo||'').replace(/"/g,'&quot;')}" placeholder="운송장번호" style="flex:1;min-width:0;padding-left:7px;padding-right:6px;font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault();amTrackLookup();}">
       <button type="button" class="btn primary" onclick="amTrackLookup()" style="flex:0 0 auto;padding:0 10px;white-space:nowrap;">조회</button>
     </div>
+    <div class="ms-title">그룹</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <select id="am-cgroup" class="form-select" style="flex:1;min-width:0;">${amGroupOptions(ex&&ex.cgroupId&&cardGroups.some(g=>g.id===ex.cgroupId)?ex.cgroupId:'')}</select>
+      <button type="button" class="btn" onclick="amNewGroup()" title="새 그룹 만들기" style="flex:0 0 34px;width:34px;padding:0;font-size:17px;line-height:1;">＋</button>
+    </div>
     <div class="ms-title">메모</div>
     <textarea id="am-memo" class="form-input" style="flex:1;resize:none;min-height:70px;line-height:1.5;font-family:'Noto Sans KR',sans-serif;" placeholder="자유 메모">${ex?.memo||''}</textarea>`;
   syncMemoSideToggle();
@@ -3443,6 +3460,7 @@ function submitAdd(editId){
   const imgUrl=(document.getElementById('am-imgurl')?.value||'').trim();
   const trackCourier=document.getElementById('am-track-courier')?.value||'';
   const trackNo=(document.getElementById('am-track-no')?.value||'').trim();
+  const cgroupId=document.getElementById('am-cgroup')?.value||'';
   if(!charName){showToast('캐릭터명을 입력해주세요','error');if(isMobile())amGoStep(1);return;}
   let costs={};
   if(pt==='중고거래')costs={used:Number(document.getElementById('cf-used')?.value)||0,shipping:Number(document.getElementById('cf-ship-used')?.value)||0,...readExtraCosts()};
@@ -3517,10 +3535,11 @@ function submitAdd(editId){
         Object.assign(o,{purchaseType:pt,figType,scale,scale,charName:finalName,subName,maker,date,paymentDate,releaseDate,groupId:o.groupId||'',storeName,costs,coupons,coupon:null,points,imageUrl:_img,localPrice,memo,costDates:newCostDates,costGroups:newCostGroups,localPrices:newLocalPrices});
         o.paymentDate=autoPayDate(newCostDates,costs)||o.paymentDate;
         o.trackCourier=trackCourier;o.trackNo=trackNo;
+        if(cgroupId)o.cgroupId=cgroupId;else delete o.cgroupId;
         _savedO=o;
       }
     } else {
-      const newOrder={trackCourier,trackNo,id:nO++,purchaseType:pt,figType,charName:finalName,subName,maker,date,paymentDate,releaseDate,groupId,storeName,costs,coupons,points,localPrice,memo,deliveryState:'none',released:false,deliveredDate:'',releasedDate:'',imageUrl:imgUrl,costDates:newCostDates,groupCoupon:null};
+      const newOrder={trackCourier,trackNo,...(cgroupId?{cgroupId}:{}),id:nO++,purchaseType:pt,figType,charName:finalName,subName,maker,date,paymentDate,releaseDate,groupId,storeName,costs,coupons,points,localPrice,memo,deliveryState:'none',released:false,deliveredDate:'',releasedDate:'',imageUrl:imgUrl,costDates:newCostDates,groupCoupon:null};
       newOrder.paymentDate=autoPayDate(newCostDates,costs)||paymentDate;
       orders.push(newOrder);_savedO=newOrder;
     }
@@ -3674,7 +3693,7 @@ function toggleRow(id){openRows[id]=!openRows[id];renderOrder();}
 // ── 강화 검색: 일반 / 금액 / 날짜 + 기간, 칩으로 중복 검색 ──
 // 같은 종류끼리는 OR(하나라도 맞으면), 다른 종류끼리는 AND(모두 맞아야)
 let _sqMode='text', _sqChips=[];
-const SQ_PH={text:'🔍 이름·상호 검색 후 Enter로 고정',amt:'금액 (예: 250000 · 480 · 10000~50000)',date:'날짜 (예: 26-10-01 · 26-10)'};
+const SQ_PH={text:'🔍 이름·상호 검색 → Enter로 고정 (여러 개: 미토스 / 엑시아)',amt:'금액 (예: 250000 · 480 · 10000~50000)',date:'날짜 (예: 26-10-01 · 26-10)'};
 function sqSetMode(m){
   _sqMode=m;
   document.querySelectorAll('#sq-modes button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
@@ -3716,6 +3735,12 @@ function sqParseAmt(s){
   if(t.includes('~')){const [a,b]=t.split('~');const lo=ev(a),hi=ev(b);if(isNaN(lo)&&isNaN(hi))return null;return {lo:isNaN(lo)?-Infinity:lo,hi:isNaN(hi)?Infinity:hi};}
   const v=ev(t);return isNaN(v)?null:{eq:v};
 }
+// "미토스 / 엑시아" 처럼 / , 로 나누면 여러 개를 한 번에 검색
+function sqChipsFrom(mode,raw){
+  const v=String(raw||'').trim();if(!v)return [];
+  if(mode==='text')return v.split(/[\/,，]+/).map(x=>x.trim()).filter(Boolean).map(x=>({t:'text',v:x,label:x}));
+  const c=sqChipFrom(mode,v);return c?[c]:[];
+}
 function sqChipFrom(mode,raw){
   const v=String(raw||'').trim();if(!v)return null;
   if(mode==='text')return {t:'text',v,label:v};
@@ -3732,8 +3757,7 @@ function sqMatchOne(o,c){
 }
 function sqActiveChips(){
   const list=_sqChips.slice();
-  const pend=sqChipFrom(_sqMode,document.getElementById('search-order')?.value);   // 입력 중인 값도 미리보기로 적용
-  if(pend)list.push(pend);
+  list.push(...sqChipsFrom(_sqMode,document.getElementById('search-order')?.value));   // 입력 중인 값도 미리보기로 적용
   return list;
 }
 function sqMatch(o){
@@ -3749,9 +3773,9 @@ function sqRemove(i){_sqChips.splice(i,1);sqRenderChips();renderOrder();}
 function sqKey(e){
   if(e.key!=='Enter')return;
   e.preventDefault();
-  const inp=e.target;const c=sqChipFrom(_sqMode,inp.value);
-  if(!c){if(inp.value.trim())showToast(_sqMode==='amt'?'금액 형식을 확인해주세요 (예: 250000, 480, 10000~50000)':'날짜 형식을 확인해주세요 (예: 26-10-01, 26-10)','warn');return;}
-  if(!_sqChips.some(x=>x.t===c.t&&JSON.stringify(x.v)===JSON.stringify(c.v)))_sqChips.push(c);
+  const inp=e.target;const cs=sqChipsFrom(_sqMode,inp.value);
+  if(!cs.length){if(inp.value.trim())showToast(_sqMode==='amt'?'금액 형식을 확인해주세요 (예: 250000, 480, 10000~50000)':'날짜 형식을 확인해주세요 (예: 26-10-01, 26-10)','warn');return;}
+  cs.forEach(c=>{if(!_sqChips.some(x=>x.t===c.t&&JSON.stringify(x.v)===JSON.stringify(c.v)))_sqChips.push(c);});
   inp.value='';sqRenderChips();renderOrder();
 }
 function sqToggleRange(e){
@@ -3760,10 +3784,11 @@ function sqToggleRange(e){
   if(p.parentElement!==document.body)document.body.appendChild(p);   // 탭 줄(overflow)에 잘리지 않게 body로
   if(p.classList.contains('show')){p.classList.remove('show');return;}
   const r=document.getElementById('sq-range-btn').getBoundingClientRect();
-  p.style.top=Math.round(r.bottom+6)+'px';
   if(innerWidth<=760){p.style.left='12px';p.style.right='12px';p.style.width='auto';}
   else{p.style.width='250px';p.style.right='auto';p.style.left=Math.round(Math.max(12,Math.min(r.right-250,innerWidth-262)))+'px';}
-  p.classList.add('show');
+  p.style.top='-9999px';p.classList.add('show');
+  const h=p.offsetHeight;   // 검색창이 화면 아래에 있으므로 위쪽으로 열기
+  p.style.top=Math.round(r.top-h-8>8?r.top-h-8:r.bottom+6)+'px';
 }
 function sqCloseRange(){const p=document.getElementById('sq-range-pop');if(p)p.classList.remove('show');}
 function sqAddRange(){
@@ -3774,6 +3799,11 @@ function sqAddRange(){
   _sqChips.push({t:'range',v:{from:a,to:b},label:lab});
   sqCloseRange();sqRenderChips();renderOrder();
 }
+(function(){let raf=0,mx=-1e4,my=-1e4;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;if(raf)return;raf=requestAnimationFrame(()=>{raf=0;
+    const dk=document.getElementById('sq-dock');if(!dk||dk.style.display==='none')return;
+    const r=dk.getBoundingClientRect();const dx=Math.max(r.left-mx,0,mx-r.right),dy=Math.max(r.top-my,0,my-r.bottom);
+    dk.classList.toggle('near',Math.hypot(dx,dy)<70);});},{passive:true});})();
 document.addEventListener('click',e=>{const p=document.getElementById('sq-range-pop');if(p&&p.classList.contains('show')&&!p.contains(e.target)&&e.target.id!=='sq-range-btn')sqCloseRange();});
 function getSorted(){
 
@@ -4452,8 +4482,17 @@ function renderOrder(){
     const couponKrw=couponTotalKrw(o);
     const _cpTxt=couponCellText(o);
     let couponCell='-';
-    if(grpKey){const gKrw=getGroupCouponKRW(grpKey);const g2=getGroups();if(gKrw!==0)couponCell=`<span class="badge bg-p" style="font-size:10px;cursor:pointer;" onclick="event.stopPropagation();openBundleGroupPop(event,'${grpKey}')">🎟묶음 ${gKrw<0?'-':''}${(Math.abs(gKrw)/10000).toFixed(1)}만￦</span>`;else if(_cpTxt)couponCell=`<span class="badge bg-y" style="font-size:10px;cursor:pointer;" onclick="event.stopPropagation();openCouponPop(event,${o.id})">🎟 ${_cpTxt}</span>`;}
-    else if(_cpTxt)couponCell=`<span class="badge bg-y" style="font-size:10px;cursor:pointer;" onclick="event.stopPropagation();openCouponPop(event,${o.id})">🎟 ${_cpTxt}</span>`;
+    { // 묶음쿠폰과 단일쿠폰을 함께 표시 (단일쿠폰은 장마다 개별 배지)
+      const parts=[];
+      let _legacy=false;
+      if(grpKey){const gKrw=getGroupCouponKRW(grpKey);if(gKrw!==0){_legacy=true;parts.push(`<span class="badge bg-p" style="font-size:10px;cursor:pointer;" onclick="event.stopPropagation();openBundleGroupPop(event,'${grpKey}')">🎟묶음 ${gKrw<0?'-':''}${(Math.abs(gKrw)/10000).toFixed(1)}만￦</span>`);}}
+      if(!_legacy){ // 할인탭 묶음쿠폰(bundleCoupons) 분담분
+        const bShare=(couponDeduction(o)-couponDeductionKrw(o))+bundleKrwShare(o);
+        if(bShare>0)parts.push(`<span class="badge bg-p" style="font-size:10px;cursor:pointer;white-space:nowrap;" title="묶음 할인 분담분 — 클릭하면 할인 탭" onclick="event.stopPropagation();const t=document.querySelector('.tab[onclick*=&quot;bundle&quot;]');if(t)switchTab('bundle',t);">🎟묶음 −￦ ${bShare.toLocaleString('ko-KR')}</span>`);
+      }
+      validCoupons(o).forEach(c=>parts.push(`<span class="badge bg-y" style="font-size:10px;cursor:pointer;white-space:nowrap;" onclick="event.stopPropagation();openCouponPop(event,${o.id})">🎟 ${fmtCur(c.amount,c.currency)}</span>`));
+      if(parts.length)couponCell=`<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${parts.join('')}</div>`;
+    }
     const FIG_TYPES_OPT=FIG_TYPES.map(t=>`<option value="${t}" ${t===o.figType?'selected':''}>${t}</option>`).join('');
     const figSelColor=FIG_COL[o.figType]||'var(--text)';
     const PT_OPT=P_TYPES.map(t=>`<option value="${t}" ${t===o.purchaseType?'selected':''}>${t}</option>`).join('');
@@ -4529,16 +4568,11 @@ function renderOrder(){
                 <span style="font-size:${isAlias?11:13}px;color:${gc};font-family:${isAlias?"'Noto Sans KR',sans-serif":"'Space Mono',monospace"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:66px;font-weight:700;">${lbl}</span>
               </div>`;
             }).join('');
-            return`<div style="display:flex;flex-direction:column;gap:2px;align-items:center;">${chips}</div>`;
+            return`<div style="display:flex;flex-direction:column;gap:2px;align-items:center;">${chips}${cpnChipsHtml(o)}</div>`;
           }
-          const _vc=validCoupons(o);const _has=_vc.length>0;
-          return `<div onclick="openCouponPop(event,${o.id})" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:2px;width:74px;box-sizing:border-box;padding:0 4px;line-height:1.15;border-radius:8px;border:1px solid ${_has?'var(--yborder)':'var(--border)'};background:${_has?'var(--ydim)':'transparent'};">
-            ${_has
-              ?(_vc.length===1
-                ?(()=>{const sym={'₩':'원','$':'달러','¥':'위안','$(달러)':'달러','¥(위안)':'위안','¥(엔)':'엔'}[_vc[0].currency||'₩']||'';return`<span style="font-size:13px;color:var(--yellow);font-family:'Space Mono',monospace;white-space:nowrap;">${Number(_vc[0].amount).toLocaleString()}<span style="margin-left:3px;font-family:inherit;">${sym}</span></span>`;})()
-                :`<span style="font-size:12px;color:var(--yellow);font-family:'Space Mono',monospace;white-space:nowrap;">🎟${_vc.length}장</span>`)
-              :`<span style="font-size:13px;color:var(--text3);">-</span>`}
-          </div>`;
+          const _cc=cpnChipsHtml(o);
+          return _cc?`<div style="display:flex;flex-direction:column;gap:2px;align-items:center;">${_cc}</div>`
+            :`<div onclick="openCouponPop(event,${o.id})" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:74px;box-sizing:border-box;padding:0 4px;line-height:1.15;border-radius:8px;border:1px solid var(--border);background:transparent;"><span style="font-size:13px;color:var(--text3);">-</span></div>`;
         })()}
       </td>
       <td onclick="event.stopPropagation()" style="text-align:center;padding-left:3px;padding-right:3px;vertical-align:middle;">${statusCellHtml(o,status)}</td>
@@ -4768,6 +4802,12 @@ function renderCards(){
   renderCardShowSel();
   const grid=document.getElementById('cards-grid');
   if(!grid)return;
+  gSyncToolbar('card');
+  const cg=document.getElementById('cards-groups');
+  if(cg){cg.style.display=_gView.card?'block':'none';grid.style.display=_gView.card?'none':'grid';
+    document.querySelectorAll('#cards-currsel,#cards-showsel').forEach(x=>{if(_gView.card)x.style.display='none';});
+    const cvw=document.getElementById('cardview-card');if(cvw&&cvw.parentElement){cvw.parentElement.style.visibility=_gView.card?'hidden':'';}
+    if(_gView.card){gRenderView('card',data,cg);return;}}
   grid.dataset.view=_cardView==='icon'?'icon':'card'; // 모바일 CSS가 보기 방식별 열 수를 정함
   // ── 아이콘(썸네일) 보기 — 썸네일 + 이름 + 가격만 ──
   if(_cardView==='icon'){
@@ -4775,7 +4815,7 @@ function renderCards(){
     grid.style.gap='12px';
     grid.innerHTML=data.map(o=>{
       const tc=totalCost(o);
-      return`<div class="card-item" data-order-id="${o.id}" style="cursor:pointer;display:flex;flex-direction:column;transition:transform .15s;"
+      return`<div class="card-item" data-order-id="${o.id}" data-gdrag="card:${o.id}" style="cursor:pointer;display:flex;flex-direction:column;transition:transform .15s;"
         onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform=''"
         onclick="switchTab('order',document.querySelector('.tab'));scrollToOrder(${o.id})">
         <div style="width:100%;aspect-ratio:1/1;background:var(--surface2);position:relative;overflow:hidden;border-radius:var(--r);border:1px solid var(--border);">
@@ -4800,7 +4840,7 @@ function renderCards(){
   grid.innerHTML=data.map(o=>{
     const tc=totalCost(o);
     const figCol=FIG_COL[o.figType]||'var(--text2)';
-    return`<div class="card-item" data-order-id="${o.id}" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s;"
+    return`<div class="card-item" data-order-id="${o.id}" data-gdrag="card:${o.id}" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s;"
       onmouseenter="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.4)'"
       onmouseleave="this.style.transform='';this.style.boxShadow=''"
       onclick="switchTab('order',document.querySelector('.tab'));scrollToOrder(${o.id})">
@@ -4840,66 +4880,84 @@ function renderCards(){
   }).join('');
 }
 
-// ── 위시 그룹 ────────────────────────────────────────────────
-let _wgView=false;
-let _wgSize=64;try{const z=parseInt(localStorage.getItem('wgSize'));if(z>=32&&z<=160)_wgSize=z;}catch(e){}
-const WG_SIZES=[36,48,64,80,100,128];
-function wgById(id){return wishGroups.find(g=>g.id===id)||null;}
-function wgToggleView(){_wgView=!_wgView;renderWish();}
-function wgSyncToolbar(){
-  const b=document.getElementById('wg-view-btn');
-  if(b){b.textContent=_wgView?'목록으로 보기':'그룹으로 보기';b.classList.toggle('primary',_wgView);}
-  const z=document.getElementById('wg-zoom');if(z)z.style.display=_wgView?'flex':'none';
-  const zv=document.getElementById('wg-zoom-val');if(zv)zv.textContent=_wgSize+'px';
-  const seg=document.getElementById('wish-seg');if(seg)seg.style.display=_wgView?'none':'';
-  const cs=document.getElementById('wish-colsel');if(cs&&_wgView)cs.style.display='none';
+// ── 그룹 (위시 / 카드보기 공용 엔진, 데이터는 따로) ─────────────────
+// kind: 'wish' → wishGroups + w.groupId / 'card' → cardGroups + o.cgroupId (할인 묶음그룹과는 별개)
+const GS={
+  wish:{list:()=>wishGroups,set:v=>{wishGroups=v;},items:()=>wishes,field:'groupId',render:()=>renderWish(),open:id=>openWishEdit(id),panel:'panel-wish',
+        price:w=>Number(w.price)||0,name:w=>w.charName||'',sub:w=>w.maker||''},
+  card:{list:()=>cardGroups,set:v=>{cardGroups=v;},items:()=>orders,field:'cgroupId',render:()=>{renderCards();amGroupSync();},open:id=>{switchTab('order',document.querySelector('.tab'));scrollToOrder(id);},panel:'panel-cards',
+        price:o=>totalCost(o),name:o=>o.charName||'',sub:o=>o.maker||''}
+};
+const _gView={wish:false,card:false};
+const _gSize={wish:64,card:64};
+['wish','card'].forEach(k=>{try{const z=parseInt(localStorage.getItem('gSize_'+k)||(k==='wish'?localStorage.getItem('wgSize'):''));if(z>=32&&z<=160)_gSize[k]=z;}catch(e){}});
+const G_SIZES=[36,48,64,80,100,128];
+function gById(kind,id){return GS[kind].list().find(g=>g.id===id)||null;}
+function gToggleView(kind){_gView[kind]=!_gView[kind];GS[kind].render();}
+function gZoom(kind,dir){
+  let i=G_SIZES.findIndex(s=>s>=_gSize[kind]);if(i<0)i=G_SIZES.length-1;
+  i=Math.max(0,Math.min(G_SIZES.length-1,i+dir));_gSize[kind]=G_SIZES[i];
+  try{localStorage.setItem('gSize_'+kind,_gSize[kind]);}catch(e){}
+  GS[kind].render();
 }
-function wgZoom(dir){
-  let i=WG_SIZES.findIndex(s=>s>=_wgSize);if(i<0)i=WG_SIZES.length-1;
-  i=Math.max(0,Math.min(WG_SIZES.length-1,i+dir));_wgSize=WG_SIZES[i];
-  try{localStorage.setItem('wgSize',_wgSize);}catch(e){}
-  renderWish();
+function gSyncToolbar(kind){
+  const on=_gView[kind];
+  const b=document.getElementById(kind+'-gview-btn');
+  if(b){b.textContent=on?'목록으로 보기':'그룹으로 보기';b.classList.toggle('primary',on);}
+  const z=document.getElementById(kind+'-gzoom');if(z)z.style.display=on?'flex':'none';
+  const zv=document.getElementById(kind+'-gzoom-val');if(zv)zv.textContent=_gSize[kind]+'px';
+  document.querySelectorAll('[data-hide-in-gview="'+kind+'"]').forEach(el=>{el.style.visibility=on?'hidden':'';el.style.pointerEvents=on?'none':'';});
 }
-function wgThumb(w){
-  const s=_wgSize;
-  const inner=w.imageUrl
-    ?`<img referrerpolicy="no-referrer" src="${w.imageUrl}" style="${focusCss(w)}" onerror="this.style.display='none'">`
-    :`<div class="wg-ph" style="font-size:${Math.max(9,Math.round(s/6))}px;">${(w.charName||'?').slice(0,s<50?2:6)}</div>`;
-  return `<div class="wg-th" data-wdrag="${w.id}" style="width:${s}px;height:${s}px;" title="${(w.charName||'').replace(/"/g,'&quot;')}${w.maker?' · '+w.maker.replace(/"/g,'&quot;'):''}${w.price?' · ￦ '+Number(w.price).toLocaleString('ko-KR'):''}" onclick="openWishEdit(${w.id})">${inner}</div>`;
+function gZoomHtml(kind){
+  return `<div id="${kind}-gzoom" style="display:none;align-items:center;border:1px solid var(--border2);border-radius:20px;overflow:hidden;">
+    <button type="button" onclick="gZoom('${kind}',-1)" title="썸네일 작게" style="width:34px;height:30px;border:none;background:var(--surface2);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;">−</button>
+    <span id="${kind}-gzoom-val" style="font-size:11px;color:var(--text2);padding:0 6px;font-family:'Space Mono',monospace;min-width:38px;text-align:center;"></span>
+    <button type="button" onclick="gZoom('${kind}',1)" title="썸네일 크게" style="width:34px;height:30px;border:none;background:var(--surface2);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;">＋</button>
+  </div>
+  <button type="button" class="btn" id="${kind}-gview-btn" onclick="gToggleView('${kind}')" style="font-size:13px;padding:6px 14px;">그룹으로 보기</button>`;
 }
-function renderWishGroups(data){
-  const el=document.getElementById('wish-groups');if(!el)return;
-  const ids=new Set(data.map(w=>w.id));
-  const valid=new Set(wishGroups.map(g=>g.id));
-  const sum=list=>list.reduce((a,w)=>a+(Number(w.price)||0),0);
-  const card=(g,list)=>{
-    const tot=sum(list);
-    return `<div class="wg-card" data-wgdrop="${g?g.id:'none'}">
-      <div class="wg-head">
-        <span class="wg-name" title="${g?g.name.replace(/"/g,'&quot;'):'미분류'}">${g?g.name.replace(/</g,'&lt;'):'<span style="color:var(--text3);">미분류</span>'}</span>
-        <span style="font-size:12px;color:var(--text3);flex-shrink:0;">${list.length}</span>
-        <span class="mono" style="margin-left:auto;font-size:12px;color:var(--text2);flex-shrink:0;">${tot?'￦ '+tot.toLocaleString('ko-KR'):''}</span>
-        ${g?`<button type="button" onclick="wgOpenEditor('${g.id}')" title="그룹 수정" style="flex-shrink:0;border:1px solid var(--border2);background:var(--surface);color:var(--text2);border-radius:var(--rs);font-size:11px;padding:2px 7px;cursor:pointer;font-family:inherit;">수정</button>`:''}
-      </div>
-      ${g&&g.desc?`<div class="wg-desc">${g.desc.replace(/</g,'&lt;')}</div>`:'<div style="height:6px;"></div>'}
-      <div class="wg-thumbs">${list.length?list.map(wgThumb).join(''):'<span style="font-size:12px;color:var(--text3);align-self:center;">여기로 끌어다 놓으세요</span>'}</div>
-    </div>`;
-  };
+function gThumb(kind,it){
+  const s=_gSize[kind],S=GS[kind];
+  const pr=S.price(it);
+  const t=(S.name(it)+(S.sub(it)?' · '+S.sub(it):'')+(pr?' · ￦ '+pr.toLocaleString('ko-KR'):'')).replace(/"/g,'&quot;');
+  const inner=it.imageUrl
+    ?`<img referrerpolicy="no-referrer" src="${it.imageUrl}" style="${focusCss(it)}" onerror="this.style.display='none'">`
+    :`<div class="wg-ph" style="font-size:${Math.max(9,Math.round(s/6))}px;">${S.name(it).slice(0,s<50?2:6)||'?'}</div>`;
+  return `<div class="wg-th" data-gdrag="${kind}:${it.id}" style="width:${s}px;height:${s}px;${it.released?'opacity:.45;':''}" title="${t}" onclick="GS['${kind}'].open(${it.id})">${inner}</div>`;
+}
+function gRenderView(kind,data,el){
+  if(!el)return;
+  const S=GS[kind],F=S.field,list=S.list();
+  const valid=new Set(list.map(g=>g.id));
+  const sum=arr=>arr.reduce((a,x)=>a+S.price(x),0);
+  const esc=s=>String(s||'').replace(/</g,'&lt;');
+  const head=(g,arr)=>{const tot=sum(arr);return `<div class="wg-head">
+      <span class="wg-name" title="${g?esc(g.name).replace(/"/g,'&quot;'):'미분류'}">${g?esc(g.name):'<span style="color:var(--text3);">미분류</span>'}</span>
+      <span style="font-size:12px;color:var(--text3);flex-shrink:0;">${arr.length}</span>
+      <span class="mono" style="margin-left:auto;font-size:12px;color:var(--text2);flex-shrink:0;">${tot?'￦ '+tot.toLocaleString('ko-KR'):''}</span>
+      ${g?`<button type="button" onclick="gOpenEditor('${kind}','${g.id}')" title="그룹 수정" style="flex-shrink:0;border:1px solid var(--border2);background:var(--surface);color:var(--text2);border-radius:var(--rs);font-size:11px;padding:2px 7px;cursor:pointer;font-family:inherit;">수정</button>`:''}
+    </div>`;};
   let h='<div class="wg-grid">';
-  h+=`<button type="button" class="wg-card wg-new" data-wgdrop="new" onclick="wgOpenEditor(null)"><b>＋</b><span style="font-size:13px;font-weight:700;">그룹 만들기</span></button>`;
-  wishGroups.forEach(g=>{h+=card(g,data.filter(w=>w.groupId===g.id));});
-  const un=data.filter(w=>!w.groupId||!valid.has(w.groupId));
-  if(un.length)h+=card(null,un);
+  h+=`<button type="button" class="wg-card wg-new" data-gdrop="${kind}:new" onclick="gOpenEditor('${kind}',null)"><b>＋</b><span style="font-size:13px;font-weight:700;">그룹 만들기</span></button>`;
+  list.forEach(g=>{const arr=data.filter(x=>x[F]===g.id);
+    h+=`<div class="wg-card" data-gdrop="${kind}:${g.id}">${head(g,arr)}${g.desc?`<div class="wg-desc">${esc(g.desc)}</div>`:'<div style="height:6px;"></div>'}
+      <div class="wg-thumbs">${arr.length?arr.map(x=>gThumb(kind,x)).join(''):'<span style="font-size:12px;color:var(--text3);align-self:center;">여기로 끌어다 놓으세요</span>'}</div></div>`;});
   h+='</div>';
+  // 미분류 — 맨 아래 전체 폭, 2줄 가로 슬라이드
+  const un=data.filter(x=>!x[F]||!valid.has(x[F]));
+  const s=_gSize[kind];
+  h+=`<div class="wg-card wg-uncat" data-gdrop="${kind}:none">${head(null,un)}
+    <div class="wg-strip" style="grid-template-rows:repeat(2,${s}px);grid-auto-columns:${s}px;">${un.length?un.map(x=>gThumb(kind,x)).join(''):'<span style="font-size:12px;color:var(--text3);grid-row:1/3;align-self:center;white-space:nowrap;">모두 그룹에 들어가 있어요</span>'}</div>
+  </div>`;
   el.innerHTML=h;
 }
-// 그룹 만들기/수정 (알림창 재사용). assignId가 있으면 만든 그룹에 그 위시를 자동 등록
-function wgOpenEditor(gid,assignId){
-  const g=gid?wgById(gid):null;
+// 그룹 만들기/수정. assignId가 있으면 만든 그룹에 그 항목을 자동 등록, onDone(g)은 저장 후 호출
+function gOpenEditor(kind,gid,assignId,onDone){
+  const S=GS[kind];const g=gid?gById(kind,gid):null;
   const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
   const html=`<div style="text-align:left;">
     <div style="font-size:12px;color:var(--text2);margin:4px 0 4px;">그룹명</div>
-    <input id="wg-in-name" class="form-input" maxlength="40" value="${esc(g&&g.name)}" placeholder="예: 2027 상반기 예약" style="width:100%;box-sizing:border-box;">
+    <input id="wg-in-name" class="form-input" maxlength="40" value="${esc(g&&g.name)}" placeholder="예: 2027 상반기" style="width:100%;box-sizing:border-box;">
     <div style="font-size:12px;color:var(--text2);margin:10px 0 4px;">설명 (선택)</div>
     <textarea id="wg-in-desc" class="form-input" rows="3" maxlength="300" placeholder="메모" style="width:100%;box-sizing:border-box;resize:vertical;font-family:inherit;">${esc(g&&g.desc)}</textarea>
     ${assignId!=null?`<div style="font-size:12px;color:var(--accent);margin-top:8px;">만들면 끌어온 항목이 이 그룹에 바로 들어갑니다.</div>`:''}
@@ -4907,84 +4965,93 @@ function wgOpenEditor(gid,assignId){
   const save=()=>{
     const name=(document.getElementById('wg-in-name').value||'').trim();
     const desc=(document.getElementById('wg-in-desc').value||'').trim();
-    if(!name){showToast('그룹명을 입력해주세요','warn');setTimeout(()=>wgOpenEditor(gid,assignId),0);return;}
+    if(!name){showToast('그룹명을 입력해주세요','warn');setTimeout(()=>gOpenEditor(kind,gid,assignId,onDone),0);return;}
     let target=g;
     if(g){g.name=name;g.desc=desc;}
-    else{target={id:'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),name,desc};wishGroups.push(target);}
-    if(assignId!=null){const w=wishes.find(x=>x.id===assignId);if(w)w.groupId=target.id;}
-    autoSave();renderWish();showToast(g?'그룹을 수정했어요':`'${name}' 그룹을 만들었어요`,'success');
+    else{target={id:'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),name,desc};S.list().push(target);}
+    if(assignId!=null){const it=S.items().find(x=>x.id===assignId);if(it)it[S.field]=target.id;}
+    autoSave();S.render();if(onDone)onDone(target);
+    showToast(g?'그룹을 수정했어요':`'${name}' 그룹을 만들었어요`,'success');
   };
   const btns=[{label:'취소'}];
   if(g)btns.push({label:'그룹 삭제',onClick:()=>{
-    openNoticeModal('그룹 삭제',`'${esc(g.name)}' 그룹을 삭제할까요?<br>안에 있던 위시 항목은 지워지지 않고 미분류로 이동합니다.`,[{label:'취소'},{label:'삭제',primary:true,onClick:()=>{
-      wishes.forEach(w=>{if(w.groupId===g.id)delete w.groupId;});
-      wishGroups=wishGroups.filter(x=>x.id!==g.id);autoSave();renderWish();showToast('그룹을 삭제했어요','success');}}]);
+    openNoticeModal('그룹 삭제',`'${esc(g.name)}' 그룹을 삭제할까요?<br>안에 있던 항목은 지워지지 않고 미분류로 이동합니다.`,[{label:'취소'},{label:'삭제',primary:true,onClick:()=>{
+      S.items().forEach(x=>{if(x[S.field]===g.id)delete x[S.field];});
+      S.set(S.list().filter(x=>x.id!==g.id));autoSave();S.render();showToast('그룹을 삭제했어요','success');}}]);
   }});
   btns.push({label:g?'저장':'만들기',primary:true,onClick:save});
   openNoticeModal(g?'그룹 수정':'그룹 만들기',html,btns);
   setTimeout(()=>{const i=document.getElementById('wg-in-name');if(i){i.focus();i.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();closeNoticeModal();save();}};}},30);
 }
-function wgAssign(wid,target){
-  const w=wishes.find(x=>x.id===wid);if(!w)return;
-  if(target==='new'){wgOpenEditor(null,wid);return;}
-  if(target==='none'){if(!w.groupId)return;delete w.groupId;autoSave();renderWish();showToast('미분류로 옮겼어요','success');return;}
-  const g=wgById(target);if(!g||w.groupId===g.id)return;
-  w.groupId=g.id;autoSave();renderWish();showToast(`'${g.name}' 그룹으로 옮겼어요`,'success');
+function gAssign(kind,id,target){
+  const S=GS[kind];const it=S.items().find(x=>x.id===id);if(!it)return;
+  if(target==='new'){gOpenEditor(kind,null,id);return;}
+  if(target==='none'){if(!it[S.field])return;delete it[S.field];autoSave();S.render();showToast('미분류로 옮겼어요','success');return;}
+  const g=gById(kind,target);if(!g||it[S.field]===g.id)return;
+  it[S.field]=g.id;autoSave();S.render();showToast(`'${g.name}' 그룹으로 옮겼어요`,'success');
 }
-// 끌어서 옮기기 (마우스·터치 공용). 일반 보기에서는 왼쪽에 그룹 목록이 세로로 뜸
+document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('[data-gzoom-slot]').forEach(el=>{el.style.display='flex';el.style.alignItems='center';el.style.gap='6px';el.innerHTML=gZoomHtml(el.dataset.gzoomSlot);gSyncToolbar(el.dataset.gzoomSlot);});});
+// 피규어 수정 모달의 그룹 선택칸 갱신
+function amGroupOptions(sel){
+  return `<option value="">(그룹 없음)</option>`+cardGroups.map(g=>`<option value="${g.id}" ${sel===g.id?'selected':''}>${String(g.name).replace(/</g,'&lt;')}</option>`).join('');
+}
+function amGroupSync(){const s=document.getElementById('am-cgroup');if(s){const v=s.value;s.innerHTML=amGroupOptions(v);if(v&&!cardGroups.some(g=>g.id===v))s.value='';}}
+function amNewGroup(){gOpenEditor('card',null,null,g=>{const s=document.getElementById('am-cgroup');if(s){s.innerHTML=amGroupOptions(g.id);s.value=g.id;}});}
+// 끌어서 옮기기 (마우스·터치). 목록 보기일 때만 왼쪽에 그룹 창이 뜸, 그룹 보기에서는 카드끼리 바로 이동
 (function(){
-  let st=null; // {id,x,y,started,timer,pointerType}
-  let dock=null,ghost=null,overEl=null,suppressClick=false;
+  let st=null,dock=null,ghost=null,overEl=null,suppressClick=false;
   function ensure(){
     if(!dock){dock=document.createElement('div');dock.id='wg-dock';document.body.appendChild(dock);}
     if(!ghost){ghost=document.createElement('div');ghost.id='wg-ghost';document.body.appendChild(ghost);}
   }
-  function buildDock(){
-    const esc=s=>String(s||'').replace(/</g,'&lt;');
+  function buildDock(kind){
+    const esc=s=>String(s||'').replace(/</g,'&lt;');const list=GS[kind].list();
     dock.innerHTML='<div class="wg-dock-title">그룹으로 이동</div>'
-      +wishGroups.map(g=>`<div class="wg-dock-item" data-wgdrop="${g.id}" title="${esc(g.name)}">${esc(g.name)}</div>`).join('')
-      +`<div class="wg-dock-item wg-plus" data-wgdrop="new" title="새 그룹 만들기">＋</div>`
-      +(wishGroups.length?`<div class="wg-dock-item wg-none" data-wgdrop="none">그룹에서 빼기</div>`:'');
+      +list.map(g=>`<div class="wg-dock-item" data-gdrop="${kind}:${g.id}" title="${esc(g.name)}">${esc(g.name)}</div>`).join('')
+      +`<div class="wg-dock-item wg-plus" data-gdrop="${kind}:new" title="새 그룹 만들기">＋</div>`
+      +(list.length?`<div class="wg-dock-item wg-none" data-gdrop="${kind}:none">그룹에서 빼기</div>`:'');
   }
   function begin(){
     ensure();st.started=true;suppressClick=true;
-    const w=wishes.find(x=>x.id===st.id);
-    ghost.innerHTML=w&&w.imageUrl?`<img referrerpolicy="no-referrer" src="${w.imageUrl}">`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text);padding:3px;box-sizing:border-box;text-align:center;">${(w&&w.charName||'').slice(0,8)}</div>`;
+    const S=GS[st.kind];const it=S.items().find(x=>x.id===st.id);
+    ghost.innerHTML=it&&it.imageUrl?`<img referrerpolicy="no-referrer" src="${it.imageUrl}">`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text);padding:3px;box-sizing:border-box;text-align:center;">${(it?S.name(it):'').slice(0,8)}</div>`;
     ghost.style.display='block';
-    buildDock();dock.classList.add('show');
+    if(!_gView[st.kind]){buildDock(st.kind);dock.classList.add('show');}
     document.body.classList.add('wg-dragging');
     move(st.x,st.y);
   }
   function move(x,y){
     ghost.style.left=x+'px';ghost.style.top=y+'px';
     ghost.style.display='none';const el=document.elementFromPoint(x,y);ghost.style.display='block';
-    const t=el&&el.closest('[data-wgdrop]');
+    let t=el&&el.closest('[data-gdrop]');
+    if(t&&!t.dataset.gdrop.startsWith(st.kind+':'))t=null;
     if(t!==overEl){if(overEl)overEl.classList.remove('wg-over');overEl=t;if(overEl)overEl.classList.add('wg-over');}
   }
   function end(drop){
     if(st&&st.timer)clearTimeout(st.timer);
-    const id=st&&st.id, started=st&&st.started;
-    const target=overEl&&overEl.dataset.wgdrop;
+    const kind=st&&st.kind,id=st&&st.id,started=st&&st.started;
+    const target=overEl&&overEl.dataset.gdrop.split(':').slice(1).join(':');
     if(overEl)overEl.classList.remove('wg-over');overEl=null;
     if(dock)dock.classList.remove('show');if(ghost)ghost.style.display='none';
     document.body.classList.remove('wg-dragging');
     st=null;
-    if(started&&drop&&target!=null)wgAssign(id,target);
+    if(started&&drop&&target)gAssign(kind,id,target);
     if(started)setTimeout(()=>{suppressClick=false;},50);
   }
   document.addEventListener('pointerdown',e=>{
     if(e.button!==0)return;
-    const h=e.target.closest('[data-wdrag]');if(!h)return;
+    const h=e.target.closest('[data-gdrag]');if(!h)return;
     if(e.target.closest('input,select,textarea,button,a,.del-btn,.ac-drop'))return;
-    if(!document.getElementById('panel-wish')?.classList.contains('active'))return;
-    st={id:Number(h.dataset.wdrag),x:e.clientX,y:e.clientY,started:false,pointerType:e.pointerType};
-    if(e.pointerType==='touch')st.timer=setTimeout(()=>{if(st&&!st.started){begin();if(navigator.vibrate)try{navigator.vibrate(15);}catch(_){}}},380); // 터치는 길게 눌러서 시작
+    const [kind,ids]=h.dataset.gdrag.split(':');if(!GS[kind])return;
+    if(!document.getElementById(GS[kind].panel)?.classList.contains('active'))return;
+    st={kind,id:Number(ids),x:e.clientX,y:e.clientY,started:false,pointerType:e.pointerType};
+    if(e.pointerType==='touch')st.timer=setTimeout(()=>{if(st&&!st.started){begin();if(navigator.vibrate)try{navigator.vibrate(15);}catch(_){}}},380);
   });
   document.addEventListener('pointermove',e=>{
     if(!st)return;
     if(!st.started){
       const dx=e.clientX-st.x,dy=e.clientY-st.y;
-      if(st.pointerType==='touch'){if(Math.hypot(dx,dy)>10){clearTimeout(st.timer);st=null;}return;} // 길게 누르기 전에 움직이면 스크롤
+      if(st.pointerType==='touch'){if(Math.hypot(dx,dy)>10){clearTimeout(st.timer);st=null;}return;}
       if(Math.hypot(dx,dy)<6)return;
       begin();
     }
@@ -4994,7 +5061,8 @@ function wgAssign(wid,target){
   document.addEventListener('pointerup',()=>{if(st)end(true);});
   document.addEventListener('pointercancel',()=>{if(st)end(false);});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&st&&st.started)end(false);});
-  document.addEventListener('click',e=>{if(suppressClick&&e.target.closest('[data-wdrag]')){e.stopPropagation();e.preventDefault();suppressClick=false;}},true);
+  document.addEventListener('dragstart',e=>{if(e.target.closest&&e.target.closest('[data-gdrag]'))e.preventDefault();});
+  document.addEventListener('click',e=>{if(suppressClick&&e.target.closest('[data-gdrag]')){e.stopPropagation();e.preventDefault();suppressClick=false;}},true);
 })();
 function renderWish(){
   const q=(document.getElementById('search-wish').value||'').toLowerCase();
@@ -5029,16 +5097,16 @@ function renderWish(){
     if(_wishView==='card')wCards.style.gridTemplateColumns='repeat('+_wishCols+',minmax(0,1fr))';
   }
   renderWishColSel();
-  wgSyncToolbar();
+  gSyncToolbar('wish');
   const wGroups=document.getElementById('wish-groups');
   if(wGroups){
-    wGroups.style.display=_wgView?'block':'none';
-    if(_wgView){if(wCards)wCards.style.display='none';if(wList)wList.style.display='none';renderWishGroups(data);return;}
+    wGroups.style.display=_gView.wish?'block':'none';
+    if(_gView.wish){if(wCards)wCards.style.display='none';if(wList)wList.style.display='none';gRenderView('wish',data,wGroups);return;}
   }
   if(_wishView==='card'){renderWishCards(data);return;}
 
   document.getElementById('tbody-wish').innerHTML=data.map(w=>`
-    <div data-wdrag="${w.id}" title="${w.groupId&&wgById(w.groupId)?'그룹: '+wgById(w.groupId).name.replace(/"/g,'&quot;')+' · ':''}끌어서 그룹으로 이동" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:5px 8px;display:flex;align-items:center;gap:6px;min-width:0;position:relative;">
+    <div data-gdrag="wish:${w.id}" title="${w.groupId&&gById('wish',w.groupId)?'그룹: '+gById('wish',w.groupId).name.replace(/"/g,'&quot;')+' · ':''}끌어서 그룹으로 이동" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:5px 8px;display:flex;align-items:center;gap:6px;min-width:0;position:relative;">
       ${imgThumbHtml(w,'wish')}
       <select onchange="wishes.find(i=>i.id===${w.id}).figType=this.value;renderWish();autoSave()" style="font-size:12px;width:56px;border:none;background:transparent;color:${FIG_COL[w.figType]||'var(--text2)'};font-weight:700;outline:none;flex-shrink:0;">${FIG_TYPES.map(t=>`<option value="${t}" ${t===w.figType?'selected':''}>${FIG_SHORT[t]||t}</option>`).join('')}</select>
       <div class="ac-wrap" style="flex:5;min-width:0;">
@@ -5215,7 +5283,7 @@ function renderWishCards(data){
       ? figThumb(w,96,6)
       : `<span onclick="event.stopPropagation();openImgUrlModal(${w.id},'wish')" style="display:inline-block;width:96px;height:96px;border-radius:6px;background:var(--surface);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;">🎁</span>`;
     const tc=FIG_COL[w.figType]||'var(--text2)';
-    return`<div data-wdrag="${w.id}" style="position:relative;display:flex;gap:11px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;align-items:center;min-width:0;"
+    return`<div data-gdrag="wish:${w.id}" style="position:relative;display:flex;gap:11px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;align-items:center;min-width:0;"
         onclick="openWishEdit(${w.id})">
       <button class="del-btn" onclick="event.stopPropagation();if(confirm('위시리스트에서 삭제할까요?')){wishes=wishes.filter(i=>i.id!==${w.id});renderWish();autoSave();}" style="position:absolute;top:4px;right:4px;z-index:2;">✕</button>
       ${thumb}
@@ -6006,7 +6074,7 @@ const _origRenderOrder=typeof renderOrder==='function'?renderOrder:null;
 function stripBlob(list){return (list||[]).map(o=>(o&&o.imageUrl&&o.imageUrl.indexOf('blob:')===0)?{...o,imageUrl:''}:o);}
 function saveData(){
   try{
-    const payload=JSON.stringify({orders:stripBlob(orders),wishes:stripBlob(wishes),wishGroups,sells,makers,stores,nextStoreId,bundleCoupons,savedAt:new Date().toISOString(),exchangeRates});
+    const payload=JSON.stringify({orders:stripBlob(orders),wishes:stripBlob(wishes),wishGroups,cardGroups,sells,makers,stores,nextStoreId,bundleCoupons,savedAt:new Date().toISOString(),exchangeRates});
     // 구매목록 개수 변화 감지 → 히스토리 저장
     try{
       const prev=localStorage.getItem(STORAGE_KEY);
@@ -6045,7 +6113,7 @@ function loadData(){
     if(d.makers)makers=d.makers;
     if(d.stores)stores=d.stores;
     if(d.bundleCoupons)bundleCoupons=d.bundleCoupons;
-    wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];
+    wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];
     if(d.nextStoreId)nextStoreId=d.nextStoreId;
     if(d.exchangeRates)exchangeRates=d.exchangeRates;
     nO=Math.max(400,...orders.map(o=>o.id+1));
@@ -6193,7 +6261,7 @@ function gdApplyData(d){
   wishes=d.wishes||[];sells=d.sells||[];
   sells.forEach(s=>{if(!s.maker&&s.memo){const m=s.memo.match(/^방출\s*\((.+)\)$/);if(m)s.maker=m[1];}if(s.fromOrder!=null){const oo=orders.find(i=>i.id===s.fromOrder);if(oo){if(!s.date&&oo.releasedDate)s.date=oo.releasedDate;if(!s.maker&&oo.maker)s.maker=oo.maker;}}});
   if(d.makers)makers=d.makers;if(d.stores)stores=d.stores;if(d.bundleCoupons)bundleCoupons=d.bundleCoupons;if(d.nextStoreId)nextStoreId=d.nextStoreId;if(d.exchangeRates)exchangeRates=d.exchangeRates;
-  wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];
+  wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];
   nO=Math.max(400,...orders.map(o=>o.id+1));nW=Math.max(400,...wishes.map(w=>w.id+1));nS=Math.max(400,...sells.map(s=>s.id+1));
   openRows={};setSortFixed('pdate',-1);renderWish();renderSell();if(typeof renderStore==='function')renderStore();if(typeof renderManage==='function')renderManage();
   if(typeof resolveDriveImages==='function')resolveDriveImages();
@@ -6210,7 +6278,7 @@ async function gdLoadFromDrive(){
       // 이 계정은 드라이브에 데이터가 없음
       if(differentAcct){
         // 다른 계정 데이터를 올리지 않고, 이 계정은 빈 데이터로 시작
-        const empty={orders:[],wishes:[],wishGroups:[],sells:[],makers,stores,nextStoreId,bundleCoupons:{},exchangeRates,savedAt:new Date().toISOString()};
+        const empty={orders:[],wishes:[],wishGroups:[],cardGroups:[],sells:[],makers,stores,nextStoreId,bundleCoupons:{},exchangeRates,savedAt:new Date().toISOString()};
         gdApplyData(empty);localStorage.setItem(STORAGE_KEY,JSON.stringify(empty));localStorage.setItem(GD_OWNER_KEY,acct);
         updateSaveStatus(true,empty.savedAt);await gdFlush(true);
         gdSetStatus('새 계정 · 빈 데이터로 시작 '+gdHH(),'var(--green)');return;
@@ -6278,7 +6346,7 @@ async function gdFlush(silent){
   const seqAtStart=gdSaveSeq;
   try{
     if(!silent)gdSetStatus('동기화 중…','var(--yellow)');
-    const obj=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||{orders:stripBlob(orders),wishes:stripBlob(wishes),wishGroups,sells,makers,stores,nextStoreId,bundleCoupons,exchangeRates,savedAt:new Date().toISOString()};
+    const obj=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||{orders:stripBlob(orders),wishes:stripBlob(wishes),wishGroups,cardGroups,sells,makers,stores,nextStoreId,bundleCoupons,exchangeRates,savedAt:new Date().toISOString()};
     if(!obj.savedAt)obj.savedAt=new Date().toISOString();
     let id=await gdFind();if(!id)id=await gdCreate();
     await gdUploadMedia(id,new Blob([JSON.stringify(obj)],{type:'application/json'}));
@@ -8827,7 +8895,7 @@ function importMakers(input){
 }
 
 function exportJSON(){
-  const payload=JSON.stringify({orders:stripBlob(orders),wishes:stripBlob(wishes),wishGroups,sells,makers,stores,nextStoreId,bundleCoupons,savedAt:new Date().toISOString()},null,2);
+  const payload=JSON.stringify({orders:stripBlob(orders),wishes:stripBlob(wishes),wishGroups,cardGroups,sells,makers,stores,nextStoreId,bundleCoupons,savedAt:new Date().toISOString()},null,2);
   const blob=new Blob([payload],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -8852,7 +8920,7 @@ function importJSON(input){
       if(d.makers)makers=d.makers;
       if(d.stores)stores=d.stores;
       if(d.bundleCoupons)bundleCoupons=d.bundleCoupons;
-      wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];
+      wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];
       if(d.nextStoreId)nextStoreId=d.nextStoreId;
       autoSave();
       renderOrder();renderWish();renderSell();renderStore();renderManage();
@@ -8911,7 +8979,7 @@ window.addEventListener('load',()=>{
       if(d.makers&&d.makers.length)makers=d.makers;
       if(d.stores&&d.stores.length)stores=d.stores;
       if(d.bundleCoupons)bundleCoupons=d.bundleCoupons;
-      wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];
+      wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];
       if(d.nextStoreId)nextStoreId=d.nextStoreId;
       if(d.exchangeRates)exchangeRates=d.exchangeRates;
       nO=Math.max(400,...[0,...orders.map(o=>o.id+1)]);
@@ -9334,7 +9402,8 @@ function closeWarnPop(){const wp=document.getElementById('warn-pop');if(wp)wp.st
     const fb=document.getElementById('fab-bundle');
     if(fb)fb.style.display=(onOrder&&typeof selectedIds!=='undefined'&&selectedIds.size)?'block':'none';
     const sw=document.getElementById('order-search-wrap');
-    if(sw)sw.style.display=onOrder?'flex':'none';
+    const _dk=document.getElementById('sq-dock');if(_dk)_dk.style.display=onOrder?'flex':'none';
+    if(sw)sw.style.display='flex';
     if(typeof renderWarnBadge==='function')renderWarnBadge();
     centerScrollBtns(onOrder);
   }
