@@ -683,7 +683,7 @@ body.price-locked td:hover > .cc-now{display:none;}
 body.price-locked td:hover > .cc-pre{display:block;}
 /* ── 검색창: 모드 · 칩 · 기간설정 ── */
 #sq-dock{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);z-index:260;width:min(860px,calc(100vw - 380px));min-width:420px;display:flex;flex-direction:column;gap:6px;}
-#sq-dock > #sq-chips,#sq-dock > #order-search-wrap{opacity:.42;transition:opacity .18s;}
+#sq-dock > #ship-row,#sq-dock > #sq-chips,#sq-dock > #order-search-wrap{opacity:.42;transition:opacity .18s;}
 #sq-dock:hover > *,#sq-dock:focus-within > *,#sq-dock.near > *{opacity:1 !important;}
 body:has(.modal-overlay.show) #sq-dock{display:none !important;}
 #sq-dock #sq-chips{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:5px;max-width:100% !important;overflow:visible !important;}
@@ -758,16 +758,21 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
   background:conic-gradient(from var(--shipA),transparent 0deg 250deg,rgba(78,207,207,.25) 280deg,#4ecfcf 320deg,#ffffff 345deg,#4ecfcf 355deg,transparent 360deg);
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
   animation:shipSpin 2.2s linear infinite;}
-.ship-toggle{align-self:stretch;display:inline-flex;align-items:center;gap:5px;padding:0 12px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;margin-left:4px;}
+.ship-toggle{align-self:stretch;display:inline-flex;align-items:center;gap:5px;padding:0 12px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;margin-left:auto;flex-shrink:0;}
 .ship-toggle b{font-size:11px;padding:1px 6px;border-radius:10px;background:var(--surface);color:var(--text3);}
 .ship-toggle.on{border-color:rgba(78,207,207,.6);color:#4ecfcf;background:rgba(78,207,207,.08);}
 .ship-toggle.on b{background:#4ecfcf;color:#0b0b0f;}
 .ship-toggle .ship-n{font-size:11px;color:#4ecfcf;font-family:'Space Mono',monospace;}
+.am-track-box{position:relative;}
+.am-track-tip{display:none;position:absolute;left:0;right:0;bottom:calc(100% + 4px);z-index:20;padding:8px 10px;border-radius:var(--rs);background:var(--surface);border:1px solid var(--yborder);color:var(--yellow);font-size:11px;line-height:1.5;box-shadow:0 8px 20px rgba(0,0,0,.45);pointer-events:none;}
+.am-track-box.locked:hover .am-track-tip{display:block;}
+.am-track-box.locked input,.am-track-box.locked select{cursor:not-allowed;}
 #ship-row{justify-content:center;flex-wrap:wrap;gap:8px;padding:2px 0 4px;}
 .ship-th{width:52px;height:52px;border-radius:8px;overflow:hidden;background:var(--surface);border:1px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box;}
-#ship-drop{position:fixed;right:18px;top:50%;transform:translateY(-50%);z-index:9000;width:150px;height:170px;border-radius:14px;border:2px dashed rgba(78,207,207,.6);background:rgba(15,20,24,.92);color:#4ecfcf;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:14px;text-align:center;box-shadow:0 14px 34px rgba(0,0,0,.5);pointer-events:auto;}
+#ship-drop{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:9000;width:58px;height:62vh;min-height:280px;border-radius:14px;border:2px dashed rgba(78,207,207,.6);background:rgba(15,20,24,.92);color:#4ecfcf;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:14px;text-align:center;box-shadow:0 14px 34px rgba(0,0,0,.5);pointer-events:auto;}
 #ship-drop.show{display:flex;}
-#ship-drop b{font-size:38px;line-height:1;font-weight:400;}
+#ship-drop b{font-size:30px;line-height:1;font-weight:400;}
+#ship-drop .sd-txt{writing-mode:vertical-rl;letter-spacing:4px;font-size:15px;}
 #ship-drop.over{background:#123033;border-style:solid;transform:translateY(-50%) scale(1.05);}
 @media (max-width:760px){ .ship-toggle{padding:0 8px;font-size:12px;} }
 </style>
@@ -929,8 +934,8 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
     <button class="tab" onclick="switchTab('ranking',this)">랭킹</button>
     <button class="tab" onclick="switchTab('expbal',this)">잔금</button>
     <button class="tab tab-gear" onclick="switchTab('manage',this)" title="관리" style="padding-left:12px;padding-right:12px;"><span>⚙</span></button>
-    <button type="button" id="ship-toggle" class="ship-toggle" onclick="toggleShipView()" title="배송중인 항목을 검색창 위에 모아 보기">🚚 배송중 <b>OFF</b></button>
     <div id="tabs-right" style="display:flex;gap:8px;">
+    <button type="button" id="ship-toggle" class="ship-toggle" onclick="toggleShipView()" title="배송중인 항목을 검색창 위에 모아 보기">배송중 <b>OFF</b></button>
     <button id="collapse-btn" onclick="toggleTopSection()"
       style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2);cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:3px 10px;font-family:inherit;white-space:nowrap;transition:all .15s;"
       onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--aborder)'"
@@ -3171,6 +3176,8 @@ function renderMemoSide(ex){
     </div>
     <div class="ms-title">사진 URL</div>
     <input id="am-imgurl" type="text" class="form-input" value="${img.replace(/"/g,'&quot;')}" placeholder="${_up?'업로드 사진 사용 중 (URL 입력 시 교체)':'https://... 이미지 주소'}" oninput="amCropRender()" style="margin-bottom:10px;">
+    <div id="am-track-box" class="am-track-box">
+    <div id="am-track-hint" class="am-track-tip">운송장은 전액결제 · 잔금결제 · 중고구매 상태에서 입력할 수 있어요.<br>입력하면 자동으로 배송중이 됩니다.</div>
     <div class="ms-title">운송장</div>
     <div class="am-track-row" style="display:flex;gap:6px;margin-bottom:10px;">
       <select id="am-track-courier" class="form-select" style="width:72px;flex:0 0 72px;padding-left:8px;padding-right:16px;" title="택배사">${COURIERS.map(([k,n])=>`<option value="${k}" ${(ex?.trackCourier||'cj')===k?'selected':''}>${n}</option>`).join('')}</select>
@@ -3183,7 +3190,7 @@ function renderMemoSide(ex){
       <input id="am-track-ino" type="text" class="form-input" value="${(ex?.trackNoIntl||'').replace(/"/g,'&quot;')}" placeholder="해외 운송장번호" style="flex:1;min-width:0;padding-left:7px;padding-right:6px;font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault();amTrackLookupIntl();}">
       <button type="button" class="btn primary am-track-btn" onclick="amTrackLookupIntl()" style="flex:0 0 auto;padding:0 10px;white-space:nowrap;">조회</button>
     </div>
-    <div id="am-track-hint" style="display:none;font-size:11px;color:var(--yellow);margin:0 0 8px;line-height:1.5;">운송장은 전액결제 · 잔금결제 · 중고구매 상태에서 입력할 수 있어요. 입력하면 자동으로 배송중이 됩니다.</div>
+    </div>
     <div style="height:4px;"></div>
     <div class="ms-title">그룹</div>
     <div style="display:flex;gap:6px;margin-bottom:10px;">
@@ -3233,7 +3240,7 @@ function shipConvert(id){
       [{label:'닫기'},{label:'운송장 등록하기',primary:true,onClick:()=>{openAddModal(id);amFocusTrack();}}]);return;
   }
   o.deliveryState='shipping';if(!o.shippedDate)o.shippedDate=todayYMD();
-  renderOrder();autoSave();showToast(`🚚 "${o.charName||''}" 배송중으로 전환했어요`,'success');
+  renderOrder();autoSave();showToast(`"${o.charName||''}" 배송중으로 전환했어요`,'success');
 }
 function amFocusTrack(){
   setTimeout(()=>{
@@ -3248,7 +3255,7 @@ function syncShipToggle(){
   const b=document.getElementById('ship-toggle');if(!b)return;
   const n=orders.filter(isShipping).length;
   b.classList.toggle('on',_shipView);
-  b.innerHTML=`🚚 배송중 <b>${_shipView?'ON':'OFF'}</b>${n?`<span class="ship-n">${n}</span>`:''}`;
+  b.innerHTML=`배송중 <b>${_shipView?'ON':'OFF'}</b>${n?`<span class="ship-n">${n}</span>`:''}`;
 }
 function renderShipRow(){
   const el=document.getElementById('ship-row');if(!el)return;
@@ -3276,34 +3283,35 @@ function amTrackSync(){
   const ok=amPaidNow();
   ['am-track-courier','am-track-no','am-track-icourier','am-track-ino'].forEach(id=>{const e=document.getElementById(id);if(e)e.disabled=!ok;});
   document.querySelectorAll('.am-track-btn').forEach(b=>{b.disabled=!ok;b.style.opacity=ok?'':'.4';});
-  const h=document.getElementById('am-track-hint');if(h)h.style.display=ok?'none':'block';
+  const bx=document.getElementById('am-track-box');if(bx)bx.classList.toggle('locked',!ok);
 }
 document.addEventListener('input',e=>{if(e.target.closest&&e.target.closest('#add-modal'))amTrackSync();});
 document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('#add-modal'))setTimeout(amTrackSync,0);});
 // 해외 운송장 조회 (17TRACK)
 const INTL_COURIERS=[['ems','EMS'],['dhl','DHL'],['fedex','FedEx'],['ups','UPS'],['sf','SF(순풍)'],['cainiao','차이냐오'],['jppost','일본우편'],['etc','기타']];
-async function amTrackLookupIntl(){
+function amTrackLookupIntl(){
   const no=(document.getElementById('am-track-ino')?.value||'').replace(/[^0-9A-Za-z]/g,'');
+  const ok=no?copyTextNow(no):false;
   window.open('https://t.17track.net/ko'+(no?'#nums='+encodeURIComponent(no):''),'_blank','noopener');
-  if(no){try{await navigator.clipboard.writeText(no);}catch(e){}showToast(`해외 운송장 ${no} 조회 창을 열었어요 (번호 복사됨)`,'success');}
+  if(no)showToast(ok?`해외 운송장 ${no} 복사됨 — 조회 창 입력칸에 붙여넣기(Ctrl+V) 하세요`:'운송장번호를 복사하지 못했어요','success');
 }
 // ── 운송장 조회 (택배닷넷) ──
 const COURIERS=[['cj','CJ'],['hanjin','한진'],['lotte','롯데'],['logen','로젠'],['post','우체국'],['kd','경동'],['daesin','대신'],['ilyang','일양'],['gs25','GS25'],['cu','CU'],['etc','기타']];
 const TAEKBAE_SLUG={cj:'cj',hanjin:'hanjin',lotte:'lotte',logen:'logen',post:'post'}; // 택배사 전용 페이지가 확인된 곳
-async function amTrackLookup(){
+// 클릭 순간(창이 열리기 전)에 동기 방식으로 복사 — 새 창이 열려 포커스를 잃으면 비동기 복사가 막힘
+function copyTextNow(txt){
+  let ok=false;
+  try{const t=document.createElement('textarea');t.value=txt;t.setAttribute('readonly','');t.style.cssText='position:fixed;top:0;left:0;opacity:0;';document.body.appendChild(t);t.select();t.setSelectionRange(0,txt.length);ok=document.execCommand('copy');t.remove();}catch(e){}
+  if(!ok&&navigator.clipboard)try{navigator.clipboard.writeText(txt);ok=true;}catch(e){}
+  return ok;
+}
+function amTrackLookup(){
   const c=document.getElementById('am-track-courier')?.value||'';
   const no=(document.getElementById('am-track-no')?.value||'').replace(/[^0-9A-Za-z]/g,'');
   const slug=TAEKBAE_SLUG[c];
-  const url='https://taekbae.net/'+(slug||'');
-  // 창은 클릭 즉시 열어야 팝업 차단을 피함 → 열고 나서 번호 복사
-  window.open(url,'_blank','noopener');
-  if(no){
-    let ok=false;
-    try{await navigator.clipboard.writeText(no);ok=true;}catch(e){
-      try{const t=document.createElement('textarea');t.value=no;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();ok=document.execCommand('copy');t.remove();}catch(e2){}
-    }
-    showToast(ok?`운송장번호 ${no} 복사됨 — 조회 창에 붙여넣기(Ctrl+V) 하세요`:'운송장번호를 복사하지 못했어요','success');
-  }
+  const ok=no?copyTextNow(no):false;
+  window.open('https://taekbae.net/'+(slug||''),'_blank','noopener');
+  if(no)showToast(ok?`운송장번호 ${no} 복사됨 — 조회 창 입력칸에 붙여넣기(Ctrl+V) 하세요`:'운송장번호를 복사하지 못했어요','success');
 }
 let _amUpSrc=''; // 수정 모달: 업로드 사진의 고해상도 미리보기 소스
 function amCropRender(){
@@ -3677,7 +3685,7 @@ function submitAdd(editId){
         o.paymentDate=autoPayDate(newCostDates,costs)||o.paymentDate;
         if((o.trackNo||'')!==trackNo||(o.trackNoIntl||'')!==trackNoIntl)delete o.shipUndone;
         o.trackCourier=trackCourier;o.trackNo=trackNo;o.trackCourierIntl=trackCourierIntl;o.trackNoIntl=trackNoIntl;
-        if(autoShipState(o))setTimeout(()=>showToast(`🚚 운송장이 등록되어 배송중으로 전환했어요`,'success'),400);
+        if(autoShipState(o))setTimeout(()=>showToast(`운송장이 등록되어 배송중으로 전환했어요`,'success'),400);
         if(cgroupId)o.cgroupId=cgroupId;else delete o.cgroupId;
         _savedO=o;
       }
@@ -4008,7 +4016,7 @@ function moveOrderRelative(dragId,targetId,after){
   };
   let shipDrop=null,overShip=false;
   const shipShow=on=>{
-    if(!shipDrop){shipDrop=document.createElement('div');shipDrop.id='ship-drop';shipDrop.innerHTML='<b>＋</b>🚚 배송중으로<br>전환';document.body.appendChild(shipDrop);}
+    if(!shipDrop){shipDrop=document.createElement('div');shipDrop.id='ship-drop';shipDrop.innerHTML='<b>＋</b><span class="sd-txt">배송중으로 전환</span>';document.body.appendChild(shipDrop);}
     shipDrop.classList.toggle('show',on);shipDrop.classList.remove('over');overShip=false;
   };
   const finish=()=>{
@@ -4021,10 +4029,41 @@ function moveOrderRelative(dragId,targetId,after){
     if(dragId!=null&&overRow){const tid=Number(overRow.dataset.oid); if(tid!==dragId)moveOrderRelative(dragId,tid,after);}
     dragId=null;overRow=null;
   };
+  let pend=null,thumbSuppress=false;
+  const startDrag=(tr,id,e,capEl)=>{
+    dragId=id; overRow=null;
+    if(typeof hideImgPop==='function')hideImgPop();
+    tr.classList.add('dragging');
+    ghost=document.createElement('div'); ghost.id='drag-ghost';
+    const nm=tr.querySelector('.row-name'); ghost.textContent=((nm?nm.textContent:'')||'항목').trim().slice(0,24)||'항목';
+    document.body.appendChild(ghost); moveGhost(e);
+    {const _o=orders.find(x=>x.id===dragId);shipShow(!!_o&&!_o.released&&_o.deliveryState!=='delivered'&&_o.deliveryState!=='shipping');}
+    try{capEl.setPointerCapture(e.pointerId);}catch(_){}
+  };
+  // 썸네일: 누른 채 움직이면 드래그 시작
+  document.addEventListener('pointerdown',e=>{
+    if(e.button!==0||dragId!=null)return;
+    const th=e.target.closest&&e.target.closest('#tbody-order tr.main-row .fig-icon');if(!th)return;
+    const tr=th.closest('tr.main-row');
+    pend={tr,id:Number(tr.dataset.oid),x:e.clientX,y:e.clientY,el:th,pt:e.pointerType};
+    if(e.pointerType==='touch'){pend.timer=setTimeout(()=>{if(pend){const p=pend;pend=null;thumbSuppress=true;startDrag(p.tr,p.id,{clientX:p.x,clientY:p.y,pointerId:e.pointerId},p.el);}},380);}
+  });
+  document.addEventListener('pointermove',e=>{
+    if(!pend)return;
+    const m=Math.hypot(e.clientX-pend.x,e.clientY-pend.y);
+    if(pend.pt==='touch'){if(m>10){clearTimeout(pend.timer);pend=null;}return;}
+    if(m<6)return;
+    const p=pend;pend=null;thumbSuppress=true;e.preventDefault();startDrag(p.tr,p.id,e,p.el);
+  },{passive:false});
+  document.addEventListener('pointerup',()=>{if(pend){clearTimeout(pend.timer);pend=null;}if(thumbSuppress)setTimeout(()=>{thumbSuppress=false;},60);});
+  document.addEventListener('click',e=>{if(thumbSuppress&&e.target.closest&&e.target.closest('.fig-icon')){e.stopPropagation();e.preventDefault();}thumbSuppress=false;},true);
+  document.addEventListener('dragstart',e=>{if(e.target.closest&&e.target.closest('#tbody-order .fig-icon'))e.preventDefault();});
   document.addEventListener('pointerdown',e=>{
     const grip=e.target.closest&&e.target.closest('.drag-grip'); if(!grip)return;
     const tr=grip.closest('tr.main-row'); if(!tr)return;
     e.preventDefault();
+    startDrag(tr,Number(grip.dataset.oid),e,grip);
+    return;
     dragId=Number(grip.dataset.oid); overRow=null;
     tr.classList.add('dragging');
     ghost=document.createElement('div'); ghost.id='drag-ghost';
@@ -4689,7 +4728,7 @@ function renderOrder(){
           style="line-height:1.35;cursor:text;outline:none;min-height:1em;white-space:normal;word-break:break-word;"
           onmousedown="event.stopPropagation();openMakerDropdownInline(this,${o.id},event);" oninput="openMakerDropdownInline(this,${o.id},event)"
           onclick="event.stopPropagation();"
-          onblur="(()=>{const ord=orders.find(i=>i.id===${o.id});if(ord){const t=(this.innerText||'').split('\n')[0].trim();if(t!==ord.maker){ord.maker=t;renderOrder();autoSave();}}})();"
+          onblur="(()=>{const ord=orders.find(i=>i.id===${o.id});if(ord){const t=(this.innerText||'').split(String.fromCharCode(10))[0].trim();if(t!==ord.maker){ord.maker=t;renderOrder();autoSave();}}})();"
           onfocus="event.stopPropagation();"
           onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}event.stopPropagation();"
           >${o.maker?o.maker.replace(/\s*\((.+)\)/,'<br><span style="font-size:12px;color:var(--text2);">($1)</span>'):'-'}</div>
