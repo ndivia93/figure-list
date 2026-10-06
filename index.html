@@ -682,8 +682,9 @@ option[value="전액구매"]{color:#7b6cff;}
 body.price-locked td:hover > .cc-now{display:none;}
 body.price-locked td:hover > .cc-pre{display:block;}
 /* ── 검색창: 모드 · 칩 · 기간설정 ── */
-#sq-dock{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:260;width:min(860px,calc(100vw - 380px));min-width:420px;display:flex;flex-direction:column;gap:6px;opacity:.42;transition:opacity .18s;}
-#sq-dock:hover,#sq-dock:focus-within,#sq-dock.near{opacity:1;}
+#sq-dock{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);z-index:260;width:min(860px,calc(100vw - 380px));min-width:420px;display:flex;flex-direction:column;gap:6px;}
+#sq-dock > #sq-chips,#sq-dock > #order-search-wrap{opacity:.42;transition:opacity .18s;}
+#sq-dock:hover > *,#sq-dock:focus-within > *,#sq-dock.near > *{opacity:1 !important;}
 body:has(.modal-overlay.show) #sq-dock{display:none !important;}
 #sq-dock #sq-chips{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:5px;max-width:100% !important;overflow:visible !important;}
 #sq-dock #sq-chips:empty{display:none;}
@@ -695,6 +696,7 @@ body:has(.modal-overlay.show) #sq-dock{display:none !important;}
 .sq-modes{display:flex;flex:0 0 auto;background:var(--surface2);border-radius:var(--rs);padding:2px;gap:1px;}
 .sq-modes button{font-family:inherit;font-size:11px;font-weight:700;padding:4px 7px;border:none;border-radius:5px;background:transparent;color:var(--text3);cursor:pointer;white-space:nowrap;}
 .sq-modes button.on{background:var(--accent);color:#fff;}
+.sq-logic button.on{background:var(--green);color:#0b0b0f;}
 #sq-chips{display:flex;gap:4px;flex:0 1 auto;min-width:0;max-width:55%;overflow-x:auto;scrollbar-width:none;}
 #sq-chips::-webkit-scrollbar{display:none;}
 .sq-chip{flex:0 0 auto;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;border:1px solid;cursor:pointer;white-space:nowrap;font-family:inherit;line-height:1.3;}
@@ -712,7 +714,7 @@ body:has(.modal-overlay.show) #sq-dock{display:none !important;}
 @media (max-width:760px){
   .sq-modes button{padding:4px 5px;font-size:10px;}
   #sq-range-btn{padding:4px 6px;font-size:10px;}
-  #sq-dock{left:10px;right:10px;width:auto;min-width:0;transform:none;bottom:calc(72px + env(safe-area-inset-bottom));}
+  #sq-dock{left:10px;right:10px;width:auto;min-width:0;transform:none;bottom:calc(84px + env(safe-area-inset-bottom));}
   #sq-dock #order-search-wrap{height:44px;}
 }
 /* ── 위시 그룹 ── */
@@ -747,6 +749,27 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
   .wg-grid{grid-template-columns:1fr;}
   .wg-right{margin-left:0 !important;width:100%;justify-content:flex-end;}
 }
+/* ── 배송중: 사각 테두리를 따라 빛이 도는 효과 ── */
+@property --shipA{syntax:'<angle>';inherits:false;initial-value:0deg;}
+@keyframes shipSpin{to{--shipA:360deg;}}
+@keyframes shipPulse{0%,100%{box-shadow:0 0 0 0 rgba(78,207,207,.0),0 0 10px rgba(78,207,207,.35);}50%{box-shadow:0 0 0 1px rgba(78,207,207,.35),0 0 18px rgba(78,207,207,.6);}}
+.ship-glow{position:relative;animation:shipPulse 2.4s ease-in-out infinite;}
+.ship-glow::after{content:'';position:absolute;inset:0;border-radius:inherit;padding:2px;pointer-events:none;z-index:3;
+  background:conic-gradient(from var(--shipA),transparent 0deg 250deg,rgba(78,207,207,.25) 280deg,#4ecfcf 320deg,#ffffff 345deg,#4ecfcf 355deg,transparent 360deg);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  animation:shipSpin 2.2s linear infinite;}
+.ship-toggle{align-self:stretch;display:inline-flex;align-items:center;gap:5px;padding:0 12px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;margin-left:4px;}
+.ship-toggle b{font-size:11px;padding:1px 6px;border-radius:10px;background:var(--surface);color:var(--text3);}
+.ship-toggle.on{border-color:rgba(78,207,207,.6);color:#4ecfcf;background:rgba(78,207,207,.08);}
+.ship-toggle.on b{background:#4ecfcf;color:#0b0b0f;}
+.ship-toggle .ship-n{font-size:11px;color:#4ecfcf;font-family:'Space Mono',monospace;}
+#ship-row{justify-content:center;flex-wrap:wrap;gap:8px;padding:2px 0 4px;}
+.ship-th{width:52px;height:52px;border-radius:8px;overflow:hidden;background:var(--surface);border:1px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-sizing:border-box;}
+#ship-drop{position:fixed;right:18px;top:50%;transform:translateY(-50%);z-index:9000;width:150px;height:170px;border-radius:14px;border:2px dashed rgba(78,207,207,.6);background:rgba(15,20,24,.92);color:#4ecfcf;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:14px;text-align:center;box-shadow:0 14px 34px rgba(0,0,0,.5);pointer-events:auto;}
+#ship-drop.show{display:flex;}
+#ship-drop b{font-size:38px;line-height:1;font-weight:400;}
+#ship-drop.over{background:#123033;border-style:solid;transform:translateY(-50%) scale(1.05);}
+@media (max-width:760px){ .ship-toggle{padding:0 8px;font-size:12px;} }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -906,6 +929,7 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
     <button class="tab" onclick="switchTab('ranking',this)">랭킹</button>
     <button class="tab" onclick="switchTab('expbal',this)">잔금</button>
     <button class="tab tab-gear" onclick="switchTab('manage',this)" title="관리" style="padding-left:12px;padding-right:12px;"><span>⚙</span></button>
+    <button type="button" id="ship-toggle" class="ship-toggle" onclick="toggleShipView()" title="배송중인 항목을 검색창 위에 모아 보기">🚚 배송중 <b>OFF</b></button>
     <div id="tabs-right" style="display:flex;gap:8px;">
     <button id="collapse-btn" onclick="toggleTopSection()"
       style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2);cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:3px 10px;font-family:inherit;white-space:nowrap;transition:all .15s;"
@@ -1011,7 +1035,10 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
     </div>
     <!-- 하단 여백 (떠 있는 버튼들에 가려지지 않게) + 제작 표기 -->
     <div class="order-foot" style="height:115px;display:flex;align-items:flex-start;justify-content:center;padding-top:20px;box-sizing:border-box;">
-      <span style="font-size:12px;color:var(--text3);letter-spacing:.3px;">made by 아지타니히후미 (미소녀피규어채널)</span>
+      <div style="text-align:center;line-height:1.7;">
+        <div style="font-size:12px;color:var(--text3);letter-spacing:.3px;">made by 아지타니히후미 (미소녀피규어채널)</div>
+        <div style="font-size:11px;color:var(--text3);opacity:.8;">피드백 문의는 댓글로</div>
+      </div>
     </div>
   </div>
 
@@ -1119,7 +1146,7 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
       </select>
       <select id="cf-status" onchange="renderCards()" style="font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);padding:4px 8px;outline:none;">
         <option value="">전체 상태</option>
-        <option>선행예약</option><option>정식예약</option><option>잔금결제</option><option>전액결제</option><option>배송출발</option><option>배송완료</option><option>방출완료</option>
+        <option>선행예약</option><option>정식예약</option><option>잔금결제</option><option>전액결제</option><option>배송중</option><option>배송완료</option><option>방출완료</option>
       </select>
       <select id="cf-sort" onchange="renderCards()" style="font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);padding:4px 8px;outline:none;">
         <option value="date-desc">날짜 최신순</option>
@@ -1369,8 +1396,13 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
 
 <!-- 구매목록 검색 (하단 중앙 오버레이) -->
 <div id="sq-dock">
+  <div id="ship-row" style="display:none;"></div>
   <div id="sq-chips"></div>
     <div class="ac-wrap" id="order-search-wrap">
+    <div class="sq-modes sq-logic" id="sq-logic" title="검색어를 합집합(OR)으로 볼지 교집합(AND)으로 볼지">
+      <button type="button" data-l="or" onclick="sqSetLogic('or')" title="하나라도 맞으면 표시 (합집합)">OR</button>
+      <button type="button" data-l="and" onclick="sqSetLogic('and')" title="모두 맞아야 표시 (교집합)">AND</button>
+    </div>
     <div class="sq-modes" id="sq-modes">
       <button type="button" class="on" data-m="text" onclick="sqSetMode('text')" title="이름·상호·부제·구매처">일반</button>
       <button type="button" data-m="amt" onclick="sqSetMode('amt')" title="원화·외화, 할인전·할인후 총금액 (범위: 10000~50000)">금액</button>
@@ -1996,16 +2028,17 @@ function calcStatus(o){
   if(o.released)return'방출완료';
   if(o.purchaseType==='중고거래'){
     if(o.deliveryState==='delivered')return'배송완료';
+    if(o.deliveryState==='shipping')return'배송중';
     return'중고구매';
   }
   if(o.purchaseType==='전액구매'){
     if(o.deliveryState==='delivered')return'배송완료';
-    if(o.deliveryState==='shipping')return'배송출발';
+    if(o.deliveryState==='shipping')return'배송중';
     if((o.costs.fullPayment||0)>0)return'전액결제';
     return'미결제';
   }
   if(o.deliveryState==='delivered')return'배송완료';
-  if(o.deliveryState==='shipping')return'배송출발';
+  if(o.deliveryState==='shipping')return'배송중';
   if((o.costs.balance||0)>0)return'잔금결제';
   if((o.costs.official||0)>0)return'정식예약';
   if((o.costs.pre||0)>0)return'선행예약';
@@ -2013,7 +2046,7 @@ function calcStatus(o){
 }
 
 function statusBadge(s){
-  const m={'배송완료':'bg-g','배송출발':'bg-c','잔금결제':'bg-a','전액결제':'bg-a','정식예약':'bg-y','선행예약':'bg-o','중고구매':'bg-gray','미결제':'bg-gray','미예약':'bg-gray','방출완료':'bg-r'};
+  const m={'배송완료':'bg-g','배송중':'bg-c','잔금결제':'bg-a','전액결제':'bg-a','정식예약':'bg-y','선행예약':'bg-o','중고구매':'bg-gray','미결제':'bg-gray','미예약':'bg-gray','방출완료':'bg-r'};
   return`<span class="badge ${m[s]||'bg-gray'}" style="font-size:12px;padding:2px 5px;">${s}</span>`;
 }
 function ptBadge(t){const c={'예약구매':'#ffffff','전액구매':'#7ecb71','중고거래':'#888888'};const col=c[t]||'var(--text2)';return`<span class="badge" style="font-size:14px;color:${col};background:${col}22;border-color:${col}55;">${t}</span>`;}
@@ -2054,7 +2087,7 @@ function deliveryLabel(o){
   if(o.released)return'방출완료';
   const st=o.deliveryState||'none';
   if(st==='delivered')return'배송완료';
-  if(st==='shipping')return'배송출발';
+  if(st==='shipping')return'배송중';
   return'미도착';
 }
 
@@ -2082,6 +2115,12 @@ function statusCellHtml(o,status){
     return`<div><div style="display:flex;align-items:center;gap:4px;justify-content:center;">
       <span onclick="event.stopPropagation();openReleaseModal2(${id})" style="cursor:pointer;" title="방출 처리">${statusBadge(status)}</span>${undo('undoDelivery','되돌리기')}
     </div>${dateLine(o.deliveredDate,'editDeliveredDate')}</div>`;
+  }
+  // 배송중 — 도착 입력 버튼 + 되돌리기
+  if(o.deliveryState==='shipping'){
+    return`<div><div style="display:flex;align-items:center;gap:4px;justify-content:center;">
+      <span class="ship-badge" onclick="event.stopPropagation();openAddModal(${id})" style="cursor:pointer;" title="운송장 보기·수정">${statusBadge(status)}</span>${undo('undoShipping','배송중 취소')}
+    </div><div style="margin-top:3px;"><span class="delivery-btn none" style="cursor:pointer;" onclick="event.stopPropagation();openDeliveredModal(${id})" title="배송도착 입력">도착 입력</span></div></div>`;
   }
   // 배송완료 이전 — 결제 완료 상태면 아래에 '미배송' 라벨을 두어 클릭을 유도
   if(PAID_STATES.includes(status)){
@@ -2383,7 +2422,7 @@ function showCharPop(e, charName){
       ?`<img referrerpolicy="no-referrer" class="char-pop-thumb" src="${o.imageUrl}" onerror="this.style.display='none'">`
       :`<div class="char-pop-thumb" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3);">-</div>`;
     const status=calcStatus(o);
-    const statusColor={'배송완료':'var(--green)','방출완료':'var(--red)','선행예약':'var(--orange)','정식예약':'var(--yellow)','잔금결제':'var(--accent)','전액결제':'var(--accent)','배송출발':'var(--cyan)','중고구매':'var(--text2)'}[status]||'var(--text2)';
+    const statusColor={'배송완료':'var(--green)','방출완료':'var(--red)','선행예약':'var(--orange)','정식예약':'var(--yellow)','잔금결제':'var(--accent)','전액결제':'var(--accent)','배송중':'var(--cyan)','중고구매':'var(--text2)'}[status]||'var(--text2)';
     return`<div class="char-pop-item" onclick="scrollToOrder(${o.id})">
       ${thumb}
       <span style="flex:1;overflow:hidden;line-height:1.35;">${o.maker?o.maker.replace(/\s*\((.+)\)/,'<br><span style="font-size:10px;color:var(--text3);">($1)</span>'):'-'}</span>
@@ -2483,7 +2522,7 @@ function cycleDelivery(id){
 function undoDelivery(id){
   const o=orders.find(i=>i.id===id);if(!o)return;
   if(!confirm(`"${o.charName}" 배송완료를 되돌릴까요?`))return;
-  o.deliveryState='none';o.deliveredDate='';
+  o.deliveryState=hasTracking(o)?'shipping':'none';o.deliveredDate='';
   renderOrder();showToast('↩ 배송완료가 취소됐어요','warn');
 }
 
@@ -3136,8 +3175,16 @@ function renderMemoSide(ex){
     <div class="am-track-row" style="display:flex;gap:6px;margin-bottom:10px;">
       <select id="am-track-courier" class="form-select" style="width:72px;flex:0 0 72px;padding-left:8px;padding-right:16px;" title="택배사">${COURIERS.map(([k,n])=>`<option value="${k}" ${(ex?.trackCourier||'cj')===k?'selected':''}>${n}</option>`).join('')}</select>
       <input id="am-track-no" type="text" inputmode="numeric" class="form-input" value="${(ex?.trackNo||'').replace(/"/g,'&quot;')}" placeholder="운송장번호" style="flex:1;min-width:0;padding-left:7px;padding-right:6px;font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault();amTrackLookup();}">
-      <button type="button" class="btn primary" onclick="amTrackLookup()" style="flex:0 0 auto;padding:0 10px;white-space:nowrap;">조회</button>
+      <button type="button" class="btn primary am-track-btn" onclick="amTrackLookup()" style="flex:0 0 auto;padding:0 10px;white-space:nowrap;">조회</button>
     </div>
+    <div class="ms-title">해외 운송장</div>
+    <div class="am-track-row" style="display:flex;gap:6px;margin-bottom:6px;">
+      <select id="am-track-icourier" class="form-select" style="width:72px;flex:0 0 72px;padding-left:8px;padding-right:16px;" title="해외 배송사">${INTL_COURIERS.map(([k,n])=>`<option value="${k}" ${(ex?.trackCourierIntl||'ems')===k?'selected':''}>${n}</option>`).join('')}</select>
+      <input id="am-track-ino" type="text" class="form-input" value="${(ex?.trackNoIntl||'').replace(/"/g,'&quot;')}" placeholder="해외 운송장번호" style="flex:1;min-width:0;padding-left:7px;padding-right:6px;font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault();amTrackLookupIntl();}">
+      <button type="button" class="btn primary am-track-btn" onclick="amTrackLookupIntl()" style="flex:0 0 auto;padding:0 10px;white-space:nowrap;">조회</button>
+    </div>
+    <div id="am-track-hint" style="display:none;font-size:11px;color:var(--yellow);margin:0 0 8px;line-height:1.5;">운송장은 전액결제 · 잔금결제 · 중고구매 상태에서 입력할 수 있어요. 입력하면 자동으로 배송중이 됩니다.</div>
+    <div style="height:4px;"></div>
     <div class="ms-title">그룹</div>
     <div style="display:flex;gap:6px;margin-bottom:10px;">
       <select id="am-cgroup" class="form-select" style="flex:1;min-width:0;">${amGroupOptions(ex&&ex.cgroupId&&cardGroups.some(g=>g.id===ex.cgroupId)?ex.cgroupId:'')}</select>
@@ -3147,6 +3194,98 @@ function renderMemoSide(ex){
     <textarea id="am-memo" class="form-input" style="flex:1;resize:none;min-height:70px;line-height:1.5;font-family:'Noto Sans KR',sans-serif;" placeholder="자유 메모">${ex?.memo||''}</textarea>`;
   syncMemoSideToggle();
   amCropRender();
+  setTimeout(amTrackSync,0);
+}
+// ── 배송중 ──────────────────────────────────────────────────
+// 결제가 끝난 상태(전액결제·잔금결제·중고구매)여야 운송장 입력·배송중 전환 가능
+function isPaidForShip(o){
+  const c=o.costs||{};
+  if(o.purchaseType==='중고거래')return true;
+  if(o.purchaseType==='전액구매')return (Number(c.fullPayment)||0)>0;
+  return (Number(c.balance)||0)>0;
+}
+function hasTracking(o){return !!((o.trackNo&&String(o.trackNo).trim())||(o.trackNoIntl&&String(o.trackNoIntl).trim()));}
+function isShipping(o){return !!o&&o.deliveryState==='shipping'&&!o.released;}
+// 운송장 유무에 맞춰 상태 자동 전환 (저장 시 호출)
+function autoShipState(o){
+  if(!o||o.released||o.deliveryState==='delivered')return;
+  if(hasTracking(o)&&isPaidForShip(o)&&!o.shipUndone){if(o.deliveryState!=='shipping'){o.deliveryState='shipping';if(!o.shippedDate)o.shippedDate=todayYMD();return true;}}
+  else if(o.deliveryState==='shipping'&&!hasTracking(o)){o.deliveryState='none';}
+}
+function todayYMD(){const t=new Date();return String(t.getFullYear()%100).padStart(2,'0')+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
+function undoShipping(id){
+  const o=orders.find(i=>i.id===id);if(!o)return;
+  openNoticeModal('배송중 취소',`"${o.charName||''}" 배송중 상태를 취소할까요?${hasTracking(o)?'<br><span style="font-size:12px;color:var(--text2);">운송장이 남아 있으면 다음 저장 때 다시 배송중이 됩니다. 운송장도 지우려면 수정 창에서 지워주세요.</span>':''}`,
+    [{label:'아니오'},{label:'취소하기',primary:true,onClick:()=>{o.deliveryState='none';o.shipUndone=true;renderOrder();autoSave();showToast('배송중을 취소했어요','warn');}}]);
+}
+// 끌어다 놓기 / 버튼으로 배송중 전환
+function shipConvert(id){
+  const o=orders.find(i=>i.id===id);if(!o)return;
+  if(o.released){showToast('방출된 항목이에요','warn');return;}
+  if(o.deliveryState==='delivered'){showToast('이미 배송완료된 항목이에요','warn');return;}
+  if(o.deliveryState==='shipping'){showToast('이미 배송중이에요','success');return;}
+  if(!isPaidForShip(o)){
+    openNoticeModal('배송중 전환 불가','잔금(또는 전액결제)이 입력되어야 배송중으로 등록할 수 있습니다.',
+      [{label:'닫기'},{label:'잔금 입력하기',primary:true,onClick:()=>openAddModal(id)}]);return;
+  }
+  if(!hasTracking(o)){
+    openNoticeModal('운송장 필요','운송장을 등록해야 배송중으로 등록할 수 있습니다.',
+      [{label:'닫기'},{label:'운송장 등록하기',primary:true,onClick:()=>{openAddModal(id);amFocusTrack();}}]);return;
+  }
+  o.deliveryState='shipping';if(!o.shippedDate)o.shippedDate=todayYMD();
+  renderOrder();autoSave();showToast(`🚚 "${o.charName||''}" 배송중으로 전환했어요`,'success');
+}
+function amFocusTrack(){
+  setTimeout(()=>{
+    if(typeof isMobile==='function'&&isMobile()&&typeof amGoStep==='function')amGoStep(4);
+    const i=document.getElementById('am-track-no');if(i){i.scrollIntoView({block:'center'});i.focus();}
+  },120);
+}
+// 배송중 보기 (검색창 위 가운데에 배송중 썸네일)
+let _shipView=false;try{_shipView=localStorage.getItem('shipView')==='1';}catch(e){}
+function toggleShipView(){_shipView=!_shipView;try{localStorage.setItem('shipView',_shipView?'1':'0');}catch(e){}syncShipToggle();renderShipRow();}
+function syncShipToggle(){
+  const b=document.getElementById('ship-toggle');if(!b)return;
+  const n=orders.filter(isShipping).length;
+  b.classList.toggle('on',_shipView);
+  b.innerHTML=`🚚 배송중 <b>${_shipView?'ON':'OFF'}</b>${n?`<span class="ship-n">${n}</span>`:''}`;
+}
+function renderShipRow(){
+  const el=document.getElementById('ship-row');if(!el)return;
+  syncShipToggle();
+  const list=_shipView?orders.filter(isShipping):[];
+  if(!list.length){el.innerHTML='';el.style.display='none';requestAnimationFrame(()=>{if(typeof syncTrayPos==='function')syncTrayPos();});return;}
+  el.style.display='flex';
+  el.innerHTML=list.map(o=>{
+    const t=((o.charName||'')+(o.maker?' · '+o.maker:'')+(o.trackNo?' · '+o.trackNo:'')+(o.trackNoIntl?' · 해외 '+o.trackNoIntl:'')).replace(/"/g,'&quot;');
+    const inner=o.imageUrl?`<img referrerpolicy="no-referrer" src="${o.imageUrl}" style="width:100%;height:100%;display:block;${focusCss(o)}">`
+      :`<span style="font-size:11px;font-weight:700;color:var(--text);padding:2px;text-align:center;line-height:1.1;">${(o.charName||'?').slice(0,4)}</span>`;
+    return `<div class="ship-th ship-glow" title="${t}" onclick="scrollToOrder(${o.id})">${inner}</div>`;
+  }).join('');
+  requestAnimationFrame(()=>{if(typeof syncTrayPos==='function')syncTrayPos();});
+}
+// 수정 모달: 결제 상태에 따라 운송장 칸 켜고 끄기
+function amPaidNow(){
+  const pt=document.getElementById('am-pt')?.value||'';
+  const v=id=>Number((document.getElementById(id)||{}).value)||0;
+  if(pt==='중고거래')return true;
+  if(pt==='전액구매')return v('cf-full')>0;
+  return v('cf-balance')>0;
+}
+function amTrackSync(){
+  const ok=amPaidNow();
+  ['am-track-courier','am-track-no','am-track-icourier','am-track-ino'].forEach(id=>{const e=document.getElementById(id);if(e)e.disabled=!ok;});
+  document.querySelectorAll('.am-track-btn').forEach(b=>{b.disabled=!ok;b.style.opacity=ok?'':'.4';});
+  const h=document.getElementById('am-track-hint');if(h)h.style.display=ok?'none':'block';
+}
+document.addEventListener('input',e=>{if(e.target.closest&&e.target.closest('#add-modal'))amTrackSync();});
+document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('#add-modal'))setTimeout(amTrackSync,0);});
+// 해외 운송장 조회 (17TRACK)
+const INTL_COURIERS=[['ems','EMS'],['dhl','DHL'],['fedex','FedEx'],['ups','UPS'],['sf','SF(순풍)'],['cainiao','차이냐오'],['jppost','일본우편'],['etc','기타']];
+async function amTrackLookupIntl(){
+  const no=(document.getElementById('am-track-ino')?.value||'').replace(/[^0-9A-Za-z]/g,'');
+  window.open('https://t.17track.net/ko'+(no?'#nums='+encodeURIComponent(no):''),'_blank','noopener');
+  if(no){try{await navigator.clipboard.writeText(no);}catch(e){}showToast(`해외 운송장 ${no} 조회 창을 열었어요 (번호 복사됨)`,'success');}
 }
 // ── 운송장 조회 (택배닷넷) ──
 const COURIERS=[['cj','CJ'],['hanjin','한진'],['lotte','롯데'],['logen','로젠'],['post','우체국'],['kd','경동'],['daesin','대신'],['ilyang','일양'],['gs25','GS25'],['cu','CU'],['etc','기타']];
@@ -3461,6 +3600,8 @@ function submitAdd(editId){
   const trackCourier=document.getElementById('am-track-courier')?.value||'';
   const trackNo=(document.getElementById('am-track-no')?.value||'').trim();
   const cgroupId=document.getElementById('am-cgroup')?.value||'';
+  const trackCourierIntl=document.getElementById('am-track-icourier')?.value||'';
+  const trackNoIntl=(document.getElementById('am-track-ino')?.value||'').trim();
   if(!charName){showToast('캐릭터명을 입력해주세요','error');if(isMobile())amGoStep(1);return;}
   let costs={};
   if(pt==='중고거래')costs={used:Number(document.getElementById('cf-used')?.value)||0,shipping:Number(document.getElementById('cf-ship-used')?.value)||0,...readExtraCosts()};
@@ -3534,14 +3675,16 @@ function submitAdd(editId){
         if(o.imgFileId){ if(!imgUrl)_img=o.imageUrl||''; else {delete o.imgFileId;delete o.imgThumbId;delete o.imgSrcUrl;} }
         Object.assign(o,{purchaseType:pt,figType,scale,scale,charName:finalName,subName,maker,date,paymentDate,releaseDate,groupId:o.groupId||'',storeName,costs,coupons,coupon:null,points,imageUrl:_img,localPrice,memo,costDates:newCostDates,costGroups:newCostGroups,localPrices:newLocalPrices});
         o.paymentDate=autoPayDate(newCostDates,costs)||o.paymentDate;
-        o.trackCourier=trackCourier;o.trackNo=trackNo;
+        if((o.trackNo||'')!==trackNo||(o.trackNoIntl||'')!==trackNoIntl)delete o.shipUndone;
+        o.trackCourier=trackCourier;o.trackNo=trackNo;o.trackCourierIntl=trackCourierIntl;o.trackNoIntl=trackNoIntl;
+        if(autoShipState(o))setTimeout(()=>showToast(`🚚 운송장이 등록되어 배송중으로 전환했어요`,'success'),400);
         if(cgroupId)o.cgroupId=cgroupId;else delete o.cgroupId;
         _savedO=o;
       }
     } else {
-      const newOrder={trackCourier,trackNo,...(cgroupId?{cgroupId}:{}),id:nO++,purchaseType:pt,figType,charName:finalName,subName,maker,date,paymentDate,releaseDate,groupId,storeName,costs,coupons,points,localPrice,memo,deliveryState:'none',released:false,deliveredDate:'',releasedDate:'',imageUrl:imgUrl,costDates:newCostDates,groupCoupon:null};
+      const newOrder={trackCourier,trackNo,trackCourierIntl,trackNoIntl,...(cgroupId?{cgroupId}:{}),id:nO++,purchaseType:pt,figType,charName:finalName,subName,maker,date,paymentDate,releaseDate,groupId,storeName,costs,coupons,points,localPrice,memo,deliveryState:'none',released:false,deliveredDate:'',releasedDate:'',imageUrl:imgUrl,costDates:newCostDates,groupCoupon:null};
       newOrder.paymentDate=autoPayDate(newCostDates,costs)||paymentDate;
-      orders.push(newOrder);_savedO=newOrder;
+      orders.push(newOrder);_savedO=newOrder;autoShipState(newOrder);
     }
     // 구매처 신규 자동 등록
     if(finalStoreName&&!stores.find(s=>s.name===finalStoreName)){
@@ -3562,6 +3705,8 @@ function updateGroupCoupon(groupKey,field,value){const g=getGroups();if(!g[group
 // 정렬을 지정한 방향으로 고정 (토글 없음) — 접속/데이터 불러오기 시 '결제일 최신순'
 function setSortFixed(k,dir){
   sortKey=k;sortDir=dir;
+  // 불러올 때: 운송장이 있고 결제가 끝난 항목은 배송중으로 (직접 취소한 항목 제외)
+  if(typeof autoShipState==='function')orders.forEach(o=>{if(o.deliveryState!=='shipping')autoShipState(o);});
   ['date','pdate','price','total','maker','charName','purchaseType','figType','scale'].forEach(x=>{
     const el=document.getElementById('th-'+x);if(!el)return;
     el.className='sortable'+(x===sortKey?' '+(sortDir===1?'sort-asc':'sort-desc'):'');
@@ -3592,7 +3737,7 @@ function openColFilter(col){
   let vals;
   if(col==='status'){
     // 저장 필드가 아닌 계산값 — 실제 존재하는 상태만, 진행 순서대로
-    const order=['미예약','선행예약','정식예약','잔금결제','전액결제','미결제','중고구매','배송출발','배송완료','방출완료'];
+    const order=['미예약','선행예약','정식예약','잔금결제','전액결제','미결제','중고구매','배송중','배송완료','방출완료'];
     const have=new Set(orders.map(o=>calcStatus(o)));
     vals=order.filter(v=>have.has(v));
   } else if(col==='bundle'){
@@ -3600,7 +3745,7 @@ function openColFilter(col){
     const have=new Set(orders.map(o=>bundleLabel(o)));
     vals=order.filter(v=>have.has(v));
   } else if(col==='delivery'){
-    const order=['미도착','배송출발','배송완료','방출완료'];
+    const order=['미도착','배송중','배송완료','방출완료'];
     const have=new Set(orders.map(o=>deliveryLabel(o)));
     vals=order.filter(v=>have.has(v));
   } else if(col==='scale'||col==='figType'||col==='purchaseType'){
@@ -3760,13 +3905,18 @@ function sqActiveChips(){
   list.push(...sqChipsFrom(_sqMode,document.getElementById('search-order')?.value));   // 입력 중인 값도 미리보기로 적용
   return list;
 }
+// OR: 검색어 중 하나라도 맞으면 / AND: 모든 검색어가 맞아야
+let _sqLogic='or';try{if(localStorage.getItem('sqLogic')==='and')_sqLogic='and';}catch(e){}
+function sqSetLogic(l){_sqLogic=l;try{localStorage.setItem('sqLogic',l);}catch(e){}sqSyncLogic();renderOrder();}
+function sqSyncLogic(){document.querySelectorAll('#sq-logic button').forEach(b=>b.classList.toggle('on',b.dataset.l===_sqLogic));}
 function sqMatch(o){
   const list=sqActiveChips();if(!list.length)return true;
-  const groups={};list.forEach(c=>{const g=c.t==='range'?'date':c.t;(groups[g]=groups[g]||[]).push(c);});
-  return Object.values(groups).every(g=>g.some(c=>sqMatchOne(o,c)));
+  return _sqLogic==='and'?list.every(c=>sqMatchOne(o,c)):list.some(c=>sqMatchOne(o,c));
 }
+document.addEventListener('DOMContentLoaded',sqSyncLogic);
 function sqRenderChips(){
   const box=document.getElementById('sq-chips');if(!box)return;
+  requestAnimationFrame(()=>{if(typeof syncTrayPos==='function')syncTrayPos();});
   box.innerHTML=_sqChips.map((c,i)=>`<button type="button" class="sq-chip t-${c.t}" onclick="sqRemove(${i})" title="클릭하면 해제">${c.t==='amt'?'￦ ':''}${String(c.label).replace(/</g,'&lt;')} ✕</button>`).join('');
 }
 function sqRemove(i){_sqChips.splice(i,1);sqRenderChips();renderOrder();}
@@ -3856,10 +4006,18 @@ function moveOrderRelative(dragId,targetId,after){
     if(sortKey==='date')return (a.date||'')===(b.date||'');
     return true; // 그 외 정렬은 자유 재배치 허용
   };
+  let shipDrop=null,overShip=false;
+  const shipShow=on=>{
+    if(!shipDrop){shipDrop=document.createElement('div');shipDrop.id='ship-drop';shipDrop.innerHTML='<b>＋</b>🚚 배송중으로<br>전환';document.body.appendChild(shipDrop);}
+    shipDrop.classList.toggle('show',on);shipDrop.classList.remove('over');overShip=false;
+  };
   const finish=()=>{
     if(ghost){ghost.remove();ghost=null;}
     clearMarks();
     const dr=document.querySelector(`#tbody-order .main-row[data-oid="${dragId}"]`); if(dr)dr.classList.remove('dragging');
+    const id=dragId,toShip=overShip;
+    shipShow(false);
+    if(toShip&&id!=null){dragId=null;overRow=null;shipConvert(id);return;}
     if(dragId!=null&&overRow){const tid=Number(overRow.dataset.oid); if(tid!==dragId)moveOrderRelative(dragId,tid,after);}
     dragId=null;overRow=null;
   };
@@ -3872,12 +4030,19 @@ function moveOrderRelative(dragId,targetId,after){
     ghost=document.createElement('div'); ghost.id='drag-ghost';
     const nm=tr.querySelector('.row-name'); ghost.textContent=((nm?nm.textContent:'')||'항목').trim().slice(0,24)||'항목';
     document.body.appendChild(ghost); moveGhost(e);
+    {const _o=orders.find(x=>x.id===dragId);shipShow(!!_o&&!_o.released&&_o.deliveryState!=='delivered'&&_o.deliveryState!=='shipping');}
     try{grip.setPointerCapture(e.pointerId);}catch(_){}
   });
   document.addEventListener('pointermove',e=>{
     if(dragId==null)return;
     e.preventDefault(); moveGhost(e);
     const el=document.elementFromPoint(e.clientX,e.clientY);
+    if(shipDrop&&shipDrop.classList.contains('show')){
+      const r=shipDrop.getBoundingClientRect();
+      overShip=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
+      shipDrop.classList.toggle('over',overShip);
+      if(overShip){clearMarks();overRow=null;return;}
+    }
     const row=el&&el.closest?el.closest('#tbody-order .main-row'):null;
     clearMarks(); overRow=null;
     if(row&&Number(row.dataset.oid)!==dragId){
@@ -4340,10 +4505,19 @@ function renderBundleMake(){
 }
 
 // ── 선택 항목 썸네일 트레이 ──────────────────────────────────
+// 선택 트레이는 하단 검색창 위에 뜨게
+function syncTrayPos(){
+  const tray=document.getElementById('sel-tray'),dk=document.getElementById('sq-dock');if(!tray)return;
+  if(dk&&dk.style.display!=='none'&&getComputedStyle(dk).display!=='none'){const r=dk.getBoundingClientRect();tray.style.bottom=Math.round(innerHeight-r.top+10)+'px';}
+  else tray.style.bottom='14px';
+}
+window.addEventListener('resize',()=>syncTrayPos());
 function renderSelTray(){
+  if(typeof renderShipRow==='function')renderShipRow();
   const tray=document.getElementById('sel-tray');
   const inner=document.getElementById('sel-tray-inner');
   if(!tray||!inner)return;
+  requestAnimationFrame(syncTrayPos);
   const onOrder=document.getElementById('panel-order')?.classList.contains('active');
   const list=orders.filter(o=>selectedIds.has(o.id));
   if(!onOrder||!list.length){tray.style.display='none';return;}
@@ -4629,7 +4803,7 @@ function mSyncBar(){
   if(s){const v=sortKey+':'+sortDir;if([...s.options].some(o=>o.value===v))s.value=v;}
   const st=document.getElementById('m-status');
   if(st){
-    const list=['배송완료','배송출발','잔금결제','전액결제','정식예약','선행예약','중고구매','미결제','미예약','방출완료'];
+    const list=['배송완료','배송중','잔금결제','전액결제','정식예약','선행예약','중고구매','미결제','미예약','방출완료'];
     const cur=colFilters.status||'';
     const want='<option value="">전체 상태</option>'+list.map(x=>`<option value="${x}"${x===cur?' selected':''}>${x}</option>`).join('');
     if(st.innerHTML!==want)st.innerHTML=want;
@@ -4818,7 +4992,7 @@ function renderCards(){
       return`<div class="card-item" data-order-id="${o.id}" data-gdrag="card:${o.id}" style="cursor:pointer;display:flex;flex-direction:column;transition:transform .15s;"
         onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform=''"
         onclick="switchTab('order',document.querySelector('.tab'));scrollToOrder(${o.id})">
-        <div style="width:100%;aspect-ratio:1/1;background:var(--surface2);position:relative;overflow:hidden;border-radius:var(--r);border:1px solid var(--border);">
+        <div class="${isShipping(o)?'ship-glow':''}" style="width:100%;aspect-ratio:1/1;background:var(--surface2);position:relative;overflow:hidden;border-radius:var(--r);border:1px solid var(--border);">
           ${o.imageUrl
             ?`<img referrerpolicy="no-referrer" src="${o.imageUrl}" style="width:100%;height:100%;${focusCss(o)}" onerror="this.style.display='none'">`
             :imgPending(o)
@@ -4845,7 +5019,7 @@ function renderCards(){
       onmouseleave="this.style.transform='';this.style.boxShadow=''"
       onclick="switchTab('order',document.querySelector('.tab'));scrollToOrder(${o.id})">
       <!-- 사진 (세로 긴 직사각형) -->
-      <div style="width:100%;aspect-ratio:3/4;background:var(--surface2);position:relative;overflow:hidden;">
+      <div class="${isShipping(o)?'ship-glow':''}" style="width:100%;aspect-ratio:3/4;background:var(--surface2);position:relative;overflow:hidden;">
         ${o.imageUrl
           ?`<img referrerpolicy="no-referrer" src="${o.imageUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`
           :imgPending(o)
@@ -4856,7 +5030,7 @@ function renderCards(){
         <div style="position:absolute;top:6px;left:6px;font-size:16px;font-weight:700;color:${figCol};background:rgba(0,0,0,.72);padding:3px 8px;border-radius:10px;border:1px solid ${figCol}55;">${o.figType||''}</div>
         <!-- 우상단: 상태 -->
         <div style="position:absolute;top:6px;right:6px;font-size:16px;font-weight:700;background:rgba(0,0,0,.72);padding:3px 8px;border-radius:10px;color:${
-          {'배송완료':'#4ecb71','배송출발':'#4ecfcf','잔금결제':'var(--accent)','전액결제':'var(--accent)','정식예약':'#ffd166','선행예약':'#f4a261','중고구매':'#888','미결제':'#888','미예약':'#888','방출완료':'#e63946'}[calcStatus(o)]||'#aaa'
+          {'배송완료':'#4ecb71','배송중':'#4ecfcf','잔금결제':'var(--accent)','전액결제':'var(--accent)','정식예약':'#ffd166','선행예약':'#f4a261','중고구매':'#888','미결제':'#888','미예약':'#888','방출완료':'#e63946'}[calcStatus(o)]||'#aaa'
         };">${calcStatus(o)}</div>
         <!-- 우하단: 상세 버튼 -->
         <div style="position:absolute;bottom:0;left:0;right:0;padding:10px 12px;background:linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,0) 100%);display:flex;justify-content:flex-end;align-items:flex-end;pointer-events:none;">
@@ -4923,7 +5097,7 @@ function gThumb(kind,it){
   const inner=it.imageUrl
     ?`<img referrerpolicy="no-referrer" src="${it.imageUrl}" style="${focusCss(it)}" onerror="this.style.display='none'">`
     :`<div class="wg-ph" style="font-size:${Math.max(9,Math.round(s/6))}px;">${S.name(it).slice(0,s<50?2:6)||'?'}</div>`;
-  return `<div class="wg-th" data-gdrag="${kind}:${it.id}" style="width:${s}px;height:${s}px;${it.released?'opacity:.45;':''}" title="${t}" onclick="GS['${kind}'].open(${it.id})">${inner}</div>`;
+  return `<div class="wg-th${kind==='card'&&isShipping(it)?' ship-glow':''}" data-gdrag="${kind}:${it.id}" style="width:${s}px;height:${s}px;${it.released?'opacity:.45;':''}" title="${t}" onclick="GS['${kind}'].open(${it.id})">${inner}</div>`;
 }
 function gRenderView(kind,data,el){
   if(!el)return;
@@ -4941,11 +5115,12 @@ function gRenderView(kind,data,el){
   h+=`<button type="button" class="wg-card wg-new" data-gdrop="${kind}:new" onclick="gOpenEditor('${kind}',null)"><b>＋</b><span style="font-size:13px;font-weight:700;">그룹 만들기</span></button>`;
   list.forEach(g=>{const arr=data.filter(x=>x[F]===g.id);
     h+=`<div class="wg-card" data-gdrop="${kind}:${g.id}">${head(g,arr)}${g.desc?`<div class="wg-desc">${esc(g.desc)}</div>`:'<div style="height:6px;"></div>'}
-      <div class="wg-thumbs">${arr.length?arr.map(x=>gThumb(kind,x)).join(''):'<span style="font-size:12px;color:var(--text3);align-self:center;">여기로 끌어다 놓으세요</span>'}</div></div>`;});
+      <div class="wg-strip" style="grid-template-rows:repeat(2,${_gSize[kind]}px);grid-auto-columns:${_gSize[kind]}px;">${arr.length?arr.map(x=>gThumb(kind,x)).join(''):'<span style="font-size:12px;color:var(--text3);grid-row:1/3;align-self:center;white-space:nowrap;">여기로 끌어다 놓으세요</span>'}</div></div>`;});
   h+='</div>';
   // 미분류 — 맨 아래 전체 폭, 2줄 가로 슬라이드
   const un=data.filter(x=>!x[F]||!valid.has(x[F]));
   const s=_gSize[kind];
+  h=h; // (그룹 카드도 미분류와 같은 2줄 가로 슬라이드)
   h+=`<div class="wg-card wg-uncat" data-gdrop="${kind}:none">${head(null,un)}
     <div class="wg-strip" style="grid-template-rows:repeat(2,${s}px);grid-auto-columns:${s}px;">${un.length?un.map(x=>gThumb(kind,x)).join(''):'<span style="font-size:12px;color:var(--text3);grid-row:1/3;align-self:center;white-space:nowrap;">모두 그룹에 들어가 있어요</span>'}</div>
   </div>`;
@@ -4991,6 +5166,15 @@ function gAssign(kind,id,target){
   it[S.field]=g.id;autoSave();S.render();showToast(`'${g.name}' 그룹으로 옮겼어요`,'success');
 }
 document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('[data-gzoom-slot]').forEach(el=>{el.style.display='flex';el.style.alignItems='center';el.style.gap='6px';el.innerHTML=gZoomHtml(el.dataset.gzoomSlot);gSyncToolbar(el.dataset.gzoomSlot);});});
+// 썸네일 줄 위에서 휠을 굴리면 좌우로 이동 (끝에 닿으면 페이지 스크롤로 넘김)
+document.addEventListener('wheel',e=>{
+  const s=e.target.closest&&e.target.closest('.wg-strip');if(!s||e.ctrlKey)return;
+  const max=s.scrollWidth-s.clientWidth;if(max<=1)return;
+  const dl=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;
+  const unit=e.deltaMode===1?32:e.deltaMode===2?s.clientWidth:1;
+  if((dl<0&&s.scrollLeft<=0)||(dl>0&&s.scrollLeft>=max-1))return;
+  e.preventDefault();s.scrollLeft+=dl*unit;
+},{passive:false});
 // 피규어 수정 모달의 그룹 선택칸 갱신
 function amGroupOptions(sel){
   return `<option value="">(그룹 없음)</option>`+cardGroups.map(g=>`<option value="${g.id}" ${sel===g.id?'selected':''}>${String(g.name).replace(/</g,'&lt;')}</option>`).join('');
@@ -5919,9 +6103,11 @@ function renderManage(){
     {label:'전액',count:oFull.length,amount:_sumTC(oFull),color:'var(--accent)',fg:'#fff'},
     {label:'중고',count:oUsed.length,amount:_sumTC(oUsed),color:'var(--text3)',fg:'#fff'}
   ];
-  const oNot=orders.filter(o=>!o.released&&o.deliveryState!=='delivered'),oDel=orders.filter(o=>o.deliveryState==='delivered'&&!o.released),oRel=orders.filter(o=>o.released);
+  const oShip=orders.filter(isShipping);
+  const oNot=orders.filter(o=>!o.released&&o.deliveryState!=='delivered'&&o.deliveryState!=='shipping'),oDel=orders.filter(o=>o.deliveryState==='delivered'&&!o.released),oRel=orders.filter(o=>o.released);
   const delSegs=[
     {label:'미도착',count:oNot.length,amount:_sumTC(oNot),color:'var(--text3)',fg:'#fff'},
+    {label:'배송중',count:oShip.length,amount:_sumTC(oShip),color:'#4ecfcf',fg:'#0b1f1f'},
     {label:'배송완료',count:oDel.length,amount:_sumTC(oDel),color:'var(--green)',fg:'#0f2417'},
     {label:'방출',count:oRel.length,amount:_sumTC(oRel),color:'var(--red)',fg:'#fff'}
   ];
@@ -6636,7 +6822,7 @@ function showMakerPop(e, makerName){
       ?`<img referrerpolicy="no-referrer" class="maker-pop-thumb" src="${o.imageUrl}" onerror="this.style.display='none'">`
       :`<div class="maker-pop-thumb" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3);">-</div>`;
     const status=calcStatus(o);
-    const statusColor={'배송완료':'var(--green)','방출완료':'var(--red)','선행예약':'var(--orange)','정식예약':'var(--yellow)','잔금결제':'var(--accent)','전액결제':'var(--accent)','배송출발':'var(--cyan)','중고구매':'var(--text2)'}[status]||'var(--text2)';
+    const statusColor={'배송완료':'var(--green)','방출완료':'var(--red)','선행예약':'var(--orange)','정식예약':'var(--yellow)','잔금결제':'var(--accent)','전액결제':'var(--accent)','배송중':'var(--cyan)','중고구매':'var(--text2)'}[status]||'var(--text2)';
     return`<div class="maker-pop-item" onclick="scrollToOrder(${o.id})" style="cursor:pointer;">
       ${thumb}
       <span class="maker-pop-name">${o.charName}</span>
@@ -8378,7 +8564,7 @@ function renderHistorySlider(){
   track.innerHTML=sorted.map((o,i)=>{
     const tc=totalCost(o);
     const st=calcStatus(o);
-    const stColor={'배송완료':'var(--green)','방출완료':'var(--red)','선행예약':'var(--orange)','정식예약':'var(--yellow)','잔금결제':'var(--accent)','전액결제':'var(--accent)','배송출발':'var(--cyan)','중고구매':'var(--text2)'}[st]||'var(--text2)';
+    const stColor={'배송완료':'var(--green)','방출완료':'var(--red)','선행예약':'var(--orange)','정식예약':'var(--yellow)','잔금결제':'var(--accent)','전액결제':'var(--accent)','배송중':'var(--cyan)','중고구매':'var(--text2)'}[st]||'var(--text2)';
     const isCenter=i===centerIdx;
     const hd=latestPayDate(o);
     return`<div style="flex:0 0 calc((100% - 24px)/3);background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;" onclick="switchTab('order',document.querySelector('.tab[onclick*=\'order\']'));scrollToOrder(${o.id})">
@@ -8735,11 +8921,12 @@ function markImgBroken(id,kind,el){
 function clearImgBroken(id){if(_brokenImg.has(id)){_brokenImg.delete(id);_scheduleWarnBadge();}}
 function imgThumbHtml(o,kind){
   const k=kind||'order';
+  const _sg=(k==='order'&&isShipping(o))?' ship-glow':'';
   if(imgPending(o)){
-    return`<div class="fig-icon no-img" onclick="event.stopPropagation();imgPendingClick(${o.id},'${k}')" title="드라이브 사진 — 구글 동기화 연결 후 표시됩니다" style="color:var(--yellow);border-color:var(--yborder);">${gdCloudSvg(20)}</div>`;
+    return`<div class="fig-icon no-img${_sg}" onclick="event.stopPropagation();imgPendingClick(${o.id},'${k}')" title="드라이브 사진 — 구글 동기화 연결 후 표시됩니다" style="color:var(--yellow);border-color:var(--yborder);">${gdCloudSvg(20)}</div>`;
   }
   if(o.imageUrl){
-    return`<div class="fig-icon has-img"
+    return`<div class="fig-icon has-img${_sg}"
       onmouseenter="showImgPop(event,${o.id},'${k}')"
       onmouseleave="hideImgPop()"
       onclick="event.stopPropagation();openImgViewer(${o.id},'${k}')"
@@ -8749,7 +8936,7 @@ function imgThumbHtml(o,kind){
         onerror="markImgBroken(${o.id},'${k}',this)">
     </div>`;
   }
-  return imgEmptyHtml(o.id,k);
+  return _sg?imgEmptyHtml(o.id,k).replace('class="fig-icon no-img"','class="fig-icon no-img ship-glow"'):imgEmptyHtml(o.id,k);
 }
 function imgEmptyHtml(id,kind){
   return`<div class="fig-icon no-img" onclick="event.stopPropagation();openImgUrlModal(${id},'${kind||'order'}')" title="이미지 추가">＋</div>`;
