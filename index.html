@@ -784,6 +784,92 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
 #ship-drop.near,#ship-drop.over{opacity:1;}
 #ship-drop.over{background:#123033;border-style:solid;transform:translateY(-50%) scale(1.05);}
 @media (max-width:760px){ .ship-toggle{padding:0 8px;font-size:12px;} }
+/* ── 결제카드 탭 ── */
+#pc-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:14px;}
+.pc-stat{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:11px 14px;}
+.pc-stat .l{font-size:12px;color:var(--text2);font-weight:700;}
+.pc-stat .v{font-size:20px;font-weight:700;margin-top:4px;font-family:'Space Mono',monospace;}
+.pc-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;align-items:start;}
+.pc-side{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px;position:sticky;top:70px;}
+.pc-side-head{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700;color:var(--text2);padding:2px 4px 8px;}
+.pc-mini-btn{font-family:inherit;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid var(--aborder);background:var(--adim);color:var(--accent);cursor:pointer;}
+.pc-iss{display:flex;align-items:center;gap:8px;width:100%;padding:9px 10px;margin-bottom:4px;border-radius:var(--rs);border:1px solid transparent;background:transparent;color:var(--text);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;text-align:left;}
+.pc-iss:hover{background:var(--surface);}
+.pc-iss.on{background:var(--surface);border-color:var(--border2);}
+.pc-iss .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.pc-iss .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pc-iss .c{font-size:11px;color:var(--text3);font-family:'Space Mono',monospace;}
+.pc-empty{padding:34px 16px;text-align:center;color:var(--text2);font-size:13px;line-height:1.8;background:var(--surface2);border:1px dashed var(--border2);border-radius:var(--r);}
+.pc-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.pc-head h3{margin:0;font-size:18px;}
+.pc-head .sub{font-size:12px;color:var(--text3);}
+.pc-head .act{margin-left:auto;display:flex;gap:6px;}
+.pc-cards{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 10px;margin-bottom:6px;scrollbar-width:thin;}
+.pc-plastic{flex:0 0 auto;width:212px;height:134px;border-radius:12px;padding:14px 15px;box-sizing:border-box;position:relative;cursor:pointer;color:#fff;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 20px rgba(0,0,0,.35);border:2px solid transparent;transition:transform .12s,border-color .12s;overflow:hidden;}
+.pc-plastic:hover{transform:translateY(-2px);}
+.pc-plastic.on{border-color:#fff;}
+.pc-plastic{isolation:isolate;}
+.pc-plastic::after{content:'';position:absolute;right:-30px;top:-40px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.10);pointer-events:none;z-index:-1;}
+.pc-plastic.add::after{display:none;}
+.pc-plastic .iss{font-size:11px;opacity:.85;font-weight:700;letter-spacing:.3px;}
+.pc-plastic .nm{font-size:15px;font-weight:700;line-height:1.25;text-shadow:0 1px 2px rgba(0,0,0,.3);}
+.pc-plastic .chip{width:30px;height:22px;border-radius:5px;background:linear-gradient(135deg,#f6d77a,#c9a443);opacity:.9;}
+.pc-plastic .bot{display:flex;align-items:flex-end;justify-content:space-between;font-family:'Space Mono',monospace;font-size:12px;}
+.pc-plastic .kind{font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(0,0,0,.25);font-family:'Noto Sans KR',sans-serif;}
+.pc-plastic.add{background:transparent;border:2px dashed var(--border2);color:var(--text3);box-shadow:none;align-items:center;justify-content:center;gap:4px;font-size:13px;font-weight:700;}
+.pc-plastic.add b{font-size:30px;font-weight:400;line-height:1;}
+.pc-plastic.add:hover{color:var(--accent);border-color:var(--aborder);}
+.pc-detail{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
+.pc-dgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px;}
+.pc-f label{display:block;font-size:11px;color:var(--text2);font-weight:700;margin-bottom:4px;}
+.pc-f input,.pc-f select{width:100%;box-sizing:border-box;}
+.pc-caps{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.pc-cap{border-radius:var(--rs);padding:10px 12px;border:1px solid;}
+.pc-cap.d{background:var(--ydim);border-color:var(--yborder);}
+.pc-cap.p{background:var(--cdim);border-color:var(--cborder);}
+.pc-cap .t{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;font-weight:700;}
+.pc-cap .t b{font-size:17px;font-family:'Space Mono',monospace;}
+.pc-bar{height:6px;border-radius:4px;background:rgba(255,255,255,.08);margin-top:7px;overflow:hidden;}
+.pc-bar i{display:block;height:100%;width:0;border-radius:4px;}
+.pc-cap .u{font-size:10px;color:var(--text3);margin-top:4px;}
+.pc-btable{width:100%;border-collapse:separate;border-spacing:0 6px;}
+.pc-btable th{font-size:11px;color:var(--text3);font-weight:700;text-align:left;padding:0 6px;}
+.pc-btable td{padding:0 4px;vertical-align:middle;}
+.pc-btable input{width:100%;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-family:inherit;font-size:13px;padding:7px 8px;outline:none;}
+.pc-btable input:focus{border-color:var(--accent);}
+.pc-btable input.num{text-align:right;font-family:'Space Mono',monospace;}
+.pc-type{display:inline-flex;border:1px solid var(--border2);border-radius:20px;overflow:hidden;}
+.pc-type button{border:none;background:transparent;color:var(--text3);font-family:inherit;font-size:12px;font-weight:700;padding:6px 10px;cursor:pointer;}
+.pc-type button.on.d{background:var(--yellow);color:#1b1500;}
+.pc-type button.on.p{background:var(--cyan);color:#06201f;}
+.pc-addb{width:100%;padding:9px;border:1px dashed var(--border2);border-radius:var(--rs);background:transparent;color:var(--text2);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;}
+.pc-addb:hover{color:var(--accent);border-color:var(--aborder);}
+.pc-colors{display:flex;gap:5px;flex-wrap:wrap;}
+.pc-dgrid .pc-colors span{width:19px;height:19px;}
+.pc-colors span{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;}
+.pc-colors span.on{border-color:#fff;}
+@media (max-width:760px){
+  #pc-summary{grid-template-columns:1fr 1fr;}
+  .pc-layout{grid-template-columns:minmax(0,1fr);}
+  .pc-main,.pc-detail{min-width:0;}
+  .pc-side{position:static;}
+  #pc-issuers{display:flex;gap:6px;overflow-x:auto;}
+  .pc-iss{width:auto;flex:0 0 auto;margin:0;}
+  .pc-dgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+  .pc-dgrid .pc-f[style*="span 2"]{grid-column:1/-1 !important;}
+  .pc-caps{grid-template-columns:minmax(0,1fr);}
+  .pc-btable,.pc-btable tbody{display:block;width:100%;}
+  .pc-btable thead{display:none;}
+  .pc-btable tr{display:grid;grid-template-columns:auto minmax(0,1fr) 28px;grid-template-areas:"ty ti x" "ra ca ca" "co co co";gap:6px;background:var(--surface);border-radius:var(--rs);padding:8px;margin-bottom:8px;}
+  .pc-btable td{padding:0;min-width:0;}
+  .pc-btable td:nth-child(1){grid-area:ty;}
+  .pc-btable td.ti{grid-area:ti;}
+  .pc-btable td.ra{grid-area:ra;}
+  .pc-btable td.ca{grid-area:ca;}
+  .pc-btable td.co{grid-area:co;}
+  .pc-btable td:last-child{grid-area:x;}
+  .pc-btable td.ra input::placeholder{content:'';}
+}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -942,6 +1028,7 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
     <button class="tab" onclick="switchTab('stats',this)">통계</button>
     <button class="tab" onclick="switchTab('ranking',this)">랭킹</button>
     <button class="tab" onclick="switchTab('expbal',this)">잔금</button>
+    <button class="tab" onclick="switchTab('paycard',this)">결제카드</button>
     <button class="tab tab-gear" onclick="switchTab('manage',this)" title="관리" style="padding-left:12px;padding-right:12px;"><span>⚙</span></button>
     <div id="tabs-right" style="display:flex;gap:8px;">
     <button type="button" id="patch-btn" class="ship-toggle patch-btn" onclick="togglePatchNotes(event)" title="최근 변경 사항">패치노트</button>
@@ -1136,6 +1223,18 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
   </div>
 
   <!-- 예상잔금 탭 -->
+  <!-- 결제카드 (카드사 > 카드 > 혜택) -->
+  <div class="panel" id="panel-paycard">
+    <div id="pc-summary"></div>
+    <div class="pc-layout">
+      <aside class="pc-side">
+        <div class="pc-side-head"><span>카드사</span><button type="button" class="pc-mini-btn" onclick="pcEditIssuer(null)">＋ 추가</button></div>
+        <div id="pc-issuers"></div>
+      </aside>
+      <section class="pc-main" id="pc-main"></section>
+    </div>
+  </div>
+
   <div class="panel" id="panel-expbal">
     <div style="font-size:10px;color:var(--text3);text-align:right;margin-bottom:4px;" id="auto-rate-time">환율 자동갱신 대기중...</div>
     <div class="stats-row" id="stats-expbal-tab"></div>
@@ -1479,6 +1578,7 @@ const GROUP_COLORS=['#ff6eb4','#4ecfcf','#ffd166','#ff8c42','#4ecb71','#7b6cff',
 const DELIVERY_STATES=['none','shipping','delivered'];
 
 let nO=260,nW=200,nS=901,openRows={},sortKey='pdate',sortDir=-1;
+let payCards=[]; // 결제카드 [{id,name,color,cards:[{id,name,last4,kind,color,prevReq,fee,memo,benefits:[{id,type,title,rate,cap,cond}]}]}]
 let cardGroups=[]; // 카드보기/구매 그룹 [{id,name,desc}] — o.cgroupId
 let wishGroups=[]; // 위시 그룹 [{id,name,desc}] — 위시 항목은 w.groupId로 소속
 let colFilters={maker:'',charName:'',purchaseType:'',figType:'',scale:'',date:'',pdate:'',status:'',bundle:''};
@@ -3213,8 +3313,126 @@ function renderMemoSide(ex){
   amCropRender();
   setTimeout(amTrackSync,0);
 }
+// ── 결제카드 탭 (카드사 > 카드 > 혜택) — 구매목록과 연동 전, 구성만 ──
+const PC_COLORS=['#2b2d42','#3a86ff','#8338ec','#ff006e','#fb5607','#ffbe0b','#06d6a0','#118ab2','#6c757d','#c1121f'];
+let _pcSel={iss:null,card:null};try{_pcSel=JSON.parse(localStorage.getItem('pcSel')||'null')||_pcSel;}catch(e){}
+function pcSaveSel(){try{localStorage.setItem('pcSel',JSON.stringify(_pcSel));}catch(e){}}
+const pcId=()=>'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const pcEsc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const pcWon=n=>'￦ '+(Number(n)||0).toLocaleString('ko-KR');
+function pcIssuer(id){return payCards.find(x=>x.id===id)||null;}
+function pcCard(iss,id){return iss?(iss.cards||[]).find(x=>x.id===id)||null:null;}
+function pcCaps(card){
+  let d=0,p=0;(card.benefits||[]).forEach(b=>{const c=Number(b.cap)||0;if(b.type==='point')p+=c;else d+=c;});
+  return {d,p};
+}
+function pcGrad(c){return `linear-gradient(135deg,${c} 0%,${c}cc 55%,${c}88 100%)`;}
+function renderPayCards(){
+  const box=document.getElementById('pc-issuers'),main=document.getElementById('pc-main'),sum=document.getElementById('pc-summary');
+  if(!box||!main)return;
+  if(!pcIssuer(_pcSel.iss))_pcSel.iss=payCards[0]?payCards[0].id:null;
+  const iss=pcIssuer(_pcSel.iss);
+  if(iss&&!pcCard(iss,_pcSel.card))_pcSel.card=(iss.cards||[])[0]?iss.cards[0].id:null;
+  // 요약
+  const allCards=payCards.flatMap(i=>i.cards||[]);
+  const tot=allCards.reduce((a,c)=>{const k=pcCaps(c);a.d+=k.d;a.p+=k.p;return a;},{d:0,p:0});
+  sum.innerHTML=`<div class="pc-stat"><div class="l">카드사</div><div class="v sv-a">${payCards.length}</div></div>
+    <div class="pc-stat"><div class="l">카드</div><div class="v">${allCards.length}</div></div>
+    <div class="pc-stat"><div class="l" style="color:var(--yellow);">월 할인 한도 합계</div><div class="v" style="color:var(--yellow);">${pcWon(tot.d)}</div></div>
+    <div class="pc-stat"><div class="l" style="color:var(--cyan);">월 적립 한도 합계</div><div class="v" style="color:var(--cyan);">${pcWon(tot.p)}</div></div>`;
+  // 카드사 목록
+  box.innerHTML=payCards.length?payCards.map(i=>`<button type="button" class="pc-iss ${i.id===_pcSel.iss?'on':''}" onclick="_pcSel.iss='${i.id}';_pcSel.card=null;pcSaveSel();renderPayCards()">
+      <span class="dot" style="background:${i.color||'#6c757d'};"></span><span class="n">${pcEsc(i.name)}</span><span class="c">${(i.cards||[]).length}</span></button>`).join('')
+    :'<div style="font-size:12px;color:var(--text3);padding:8px 4px;line-height:1.6;">카드사를 추가해주세요<br>(예: 신한, 현대, 삼성)</div>';
+  // 본문
+  if(!iss){main.innerHTML=`<div class="pc-empty">왼쪽 <b>＋ 추가</b>로 카드사를 만들고,<br>카드사 안에 카드를 추가해 카드별 할인·적립 한도를 정리해보세요.</div>`;return;}
+  const card=pcCard(iss,_pcSel.card);
+  let h=`<div class="pc-head"><span style="width:14px;height:14px;border-radius:50%;background:${iss.color||'#6c757d'};"></span><h3>${pcEsc(iss.name)}</h3><span class="sub">카드 ${(iss.cards||[]).length}장</span>
+    <div class="act"><button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="pcEditIssuer('${iss.id}')">카드사 수정</button></div></div>`;
+  h+=`<div class="pc-cards">${(iss.cards||[]).map(c=>{const k=pcCaps(c);return `<div class="pc-plastic ${c.id===_pcSel.card?'on':''}" style="background:${pcGrad(c.color||iss.color||'#2b2d42')};" onclick="_pcSel.card='${c.id}';pcSaveSel();renderPayCards()">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;"><span class="iss">${pcEsc(iss.name)}</span><span class="kind">${c.kind==='check'?'체크':'신용'}</span></div>
+      <div class="nm">${pcEsc(c.name)}</div>
+      <div class="bot"><span class="chip"></span><span>${c.last4?'•••• '+pcEsc(c.last4):''}</span></div>
+      <div style="position:absolute;left:15px;bottom:38px;font-size:10px;opacity:.9;font-family:'Space Mono',monospace;">${k.d?'할인 '+(k.d/10000).toFixed(k.d%10000?1:0)+'만':''}${k.d&&k.p?' · ':''}${k.p?'적립 '+(k.p/10000).toFixed(k.p%10000?1:0)+'만':''}</div>
+    </div>`;}).join('')}
+    <div class="pc-plastic add" onclick="pcAddCard('${iss.id}')"><b>＋</b>카드 추가</div></div>`;
+  if(!card){main.innerHTML=h+`<div class="pc-empty">이 카드사에 카드를 추가해주세요.</div>`;return;}
+  const k=pcCaps(card);
+  const cc=card.color||iss.color||'#2b2d42';
+  h+=`<div class="pc-detail">
+    <div class="pc-head" style="margin-bottom:10px;"><h3 style="font-size:16px;">${pcEsc(card.name)}</h3><span class="sub">${card.kind==='check'?'체크카드':'신용카드'}</span>
+      <div class="act"><button type="button" class="btn" style="font-size:12px;padding:5px 12px;color:var(--red);border-color:var(--rborder);" onclick="pcDelCard('${iss.id}','${card.id}')">카드 삭제</button></div></div>
+    <div class="pc-dgrid">
+      <div class="pc-f"><label>카드 이름</label><input class="form-input" value="${pcEsc(card.name)}" onchange="pcSet('name',this.value)"></div>
+      <div class="pc-f"><label>끝 4자리</label><input class="form-input mono" maxlength="4" inputmode="numeric" value="${pcEsc(card.last4)}" placeholder="1234" onchange="pcSet('last4',this.value.replace(/\\D/g,'').slice(0,4))"></div>
+      <div class="pc-f"><label>종류</label><select class="form-select" onchange="pcSet('kind',this.value)"><option value="credit" ${card.kind!=='check'?'selected':''}>신용카드</option><option value="check" ${card.kind==='check'?'selected':''}>체크카드</option></select></div>
+      <div class="pc-f"><label>카드 색상</label><div class="pc-colors">${PC_COLORS.map(c=>`<span style="background:${c};" class="${c===cc?'on':''}" onclick="pcSet('color','${c}')"></span>`).join('')}</div></div>
+      <div class="pc-f"><label>전월 실적 조건</label><input class="form-input mono" inputmode="numeric" value="${card.prevReq||''}" placeholder="300000" onchange="pcSet('prevReq',Number(this.value.replace(/\\D/g,''))||0)"></div>
+      <div class="pc-f"><label>연회비</label><input class="form-input mono" inputmode="numeric" value="${card.fee||''}" placeholder="15000" onchange="pcSet('fee',Number(this.value.replace(/\\D/g,''))||0)"></div>
+      <div class="pc-f" style="grid-column:span 2;"><label>메모</label><input class="form-input" value="${pcEsc(card.memo)}" placeholder="예: 해외결제 전용, 실적 제외 항목 등" onchange="pcSet('memo',this.value)"></div>
+    </div>
+    <div class="pc-caps">
+      <div class="pc-cap d"><div class="t"><span style="color:var(--yellow);">월 할인 한도</span><b style="color:var(--yellow);">${pcWon(k.d)}</b></div><div class="pc-bar"><i style="background:var(--yellow);"></i></div><div class="u">이번 달 사용 ￦ 0 · 구매목록 연동 예정</div></div>
+      <div class="pc-cap p"><div class="t"><span style="color:var(--cyan);">월 적립 한도</span><b style="color:var(--cyan);">${pcWon(k.p)}</b></div><div class="pc-bar"><i style="background:var(--cyan);"></i></div><div class="u">이번 달 적립 0 P · 구매목록 연동 예정</div></div>
+    </div>
+    <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:2px;">혜택 <span style="font-weight:400;color:var(--text3);font-size:12px;">— 할인·적립마다 비율과 월 한도를 따로 정합니다</span></div>
+    <table class="pc-btable"><thead><tr><th style="width:118px;">구분</th><th>혜택 내용</th><th style="width:90px;">비율 %</th><th style="width:130px;">월 한도 ￦</th><th style="width:22%;">조건</th><th style="width:30px;"></th></tr></thead><tbody>
+    ${(card.benefits||[]).map(b=>`<tr>
+      <td><div class="pc-type"><button type="button" class="d ${b.type!=='point'?'on':''}" onclick="pcSetB('${b.id}','type','discount')">할인</button><button type="button" class="p ${b.type==='point'?'on':''}" onclick="pcSetB('${b.id}','type','point')">적립</button></div></td>
+      <td class="ti"><input value="${pcEsc(b.title)}" placeholder="예: 해외 결제, 온라인 쇼핑" onchange="pcSetB('${b.id}','title',this.value)"></td>
+      <td class="ra"><input class="num" inputmode="decimal" value="${b.rate||''}" placeholder="5" onchange="pcSetB('${b.id}','rate',Number(this.value)||0)"></td>
+      <td class="ca"><input class="num" inputmode="numeric" value="${b.cap?Number(b.cap).toLocaleString('ko-KR'):''}" placeholder="10,000" onchange="pcSetB('${b.id}','cap',Number(this.value.replace(/\\D/g,''))||0)"></td>
+      <td class="co"><input value="${pcEsc(b.cond)}" placeholder="예: 건당 1만원 이상" onchange="pcSetB('${b.id}','cond',this.value)"></td>
+      <td><button type="button" class="del-btn" onclick="pcDelB('${b.id}')">✕</button></td></tr>`).join('')}
+    </tbody></table>
+    <button type="button" class="pc-addb" onclick="pcAddB()">＋ 혜택 추가</button>
+  </div>`;
+  main.innerHTML=h;
+}
+function pcCur(){const iss=pcIssuer(_pcSel.iss);return {iss,card:pcCard(iss,_pcSel.card)};}
+function pcSet(f,v){const {card}=pcCur();if(!card)return;card[f]=v;autoSave();renderPayCards();}
+function pcSetB(bid,f,v){const {card}=pcCur();if(!card)return;const b=(card.benefits||[]).find(x=>x.id===bid);if(!b)return;b[f]=v;autoSave();renderPayCards();}
+function pcAddB(){const {card}=pcCur();if(!card)return;if(!card.benefits)card.benefits=[];card.benefits.push({id:pcId(),type:'discount',title:'',rate:0,cap:0,cond:''});autoSave();renderPayCards();}
+function pcDelB(bid){const {card}=pcCur();if(!card)return;card.benefits=(card.benefits||[]).filter(x=>x.id!==bid);autoSave();renderPayCards();}
+function pcEditIssuer(id){
+  const iss=id?pcIssuer(id):null;
+  const col=iss?iss.color:PC_COLORS[payCards.length%PC_COLORS.length];
+  openNoticeModal(iss?'카드사 수정':'카드사 추가',`<div style="text-align:left;">
+    <div style="font-size:12px;color:var(--text2);margin:4px 0;">카드사 이름</div>
+    <input id="pc-in-name" class="form-input" maxlength="20" value="${pcEsc(iss&&iss.name)}" placeholder="예: 신한카드" style="width:100%;box-sizing:border-box;">
+    <div style="font-size:12px;color:var(--text2);margin:10px 0 6px;">대표 색상</div>
+    <div class="pc-colors" id="pc-in-colors">${PC_COLORS.map(c=>`<span data-c="${c}" style="background:${c};" class="${c===col?'on':''}" onclick="this.parentNode.querySelectorAll('span').forEach(s=>s.classList.remove('on'));this.classList.add('on');"></span>`).join('')}</div></div>`,
+    [...(iss?[{label:'삭제',onClick:()=>openNoticeModal('카드사 삭제',`'${pcEsc(iss.name)}'와 안의 카드 ${(iss.cards||[]).length}장을 모두 삭제할까요?`,[{label:'취소'},{label:'삭제',primary:true,onClick:()=>{payCards=payCards.filter(x=>x.id!==iss.id);autoSave();renderPayCards();}}])}]:[]),
+     {label:'취소'},
+     {label:iss?'저장':'추가',primary:true,onClick:()=>{
+       const name=(document.getElementById('pc-in-name').value||'').trim();
+       const c=(document.querySelector('#pc-in-colors span.on')||{}).dataset?.c||col;
+       if(!name){showToast('카드사 이름을 입력해주세요','warn');return;}
+       if(iss){iss.name=name;iss.color=c;}else{const n={id:pcId(),name,color:c,cards:[]};payCards.push(n);_pcSel={iss:n.id,card:null};pcSaveSel();}
+       autoSave();renderPayCards();}}]);
+  setTimeout(()=>{const i=document.getElementById('pc-in-name');if(i)i.focus();},30);
+}
+function pcAddCard(issId){
+  const iss=pcIssuer(issId);if(!iss)return;
+  openNoticeModal('카드 추가',`<div style="text-align:left;">
+    <div style="font-size:12px;color:var(--text2);margin:4px 0;">카드 이름</div>
+    <input id="pc-in-card" class="form-input" maxlength="30" placeholder="예: 트래블 체크" style="width:100%;box-sizing:border-box;">
+    <div style="font-size:12px;color:var(--text2);margin:10px 0 4px;">종류</div>
+    <select id="pc-in-kind" class="form-select" style="width:100%;"><option value="credit">신용카드</option><option value="check">체크카드</option></select></div>`,
+    [{label:'취소'},{label:'추가',primary:true,onClick:()=>{
+      const name=(document.getElementById('pc-in-card').value||'').trim();if(!name){showToast('카드 이름을 입력해주세요','warn');return;}
+      if(!iss.cards)iss.cards=[];
+      const c={id:pcId(),name,kind:document.getElementById('pc-in-kind').value,last4:'',color:iss.color,prevReq:0,fee:0,memo:'',benefits:[]};
+      iss.cards.push(c);_pcSel={iss:iss.id,card:c.id};pcSaveSel();autoSave();renderPayCards();}}]);
+  setTimeout(()=>{const i=document.getElementById('pc-in-card');if(i)i.focus();},30);
+}
+function pcDelCard(issId,cardId){
+  const iss=pcIssuer(issId);const c=pcCard(iss,cardId);if(!c)return;
+  openNoticeModal('카드 삭제',`'${pcEsc(c.name)}' 카드를 삭제할까요?`,[{label:'취소'},{label:'삭제',primary:true,onClick:()=>{iss.cards=iss.cards.filter(x=>x.id!==cardId);_pcSel.card=null;autoSave();renderPayCards();}}]);
+}
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
+  ['26.10.08',['결제카드 탭 신설 — 카드사·카드별 할인·적립 한도 정리','구매목록 결제일 아래 (예상) 발매일 표시']],
   ['26.10.07',['배송중 상태 추가 — 운송장 입력 시 자동 전환','배송중 아이콘 빛 효과 · 배송중 모아보기 토글','해외 운송장 칸 추가 (17TRACK 조회)','운송장 조회 시 번호 자동 복사','썸네일·⠿ 끌어서 배송중 전환','위시 · 카드보기 그룹 기능','그룹 썸네일 2줄 가로 슬라이드 · 휠로 좌우 이동','수정 창에 그룹 선택 추가','검색창 하단 이동 · OR/AND · 여러 검색어 고정','방출 탭 정렬 옵션 확대','할인 탭 단일쿠폰·포인트 카드 · 보기 필터','쿠폰 칸 단일쿠폰 개별 표기']],
   ['26.10.06',['단일쿠폰 부호 통일 (실결제액 유지)','운송장 조회 · 수정 창 하단 총금액','수정 창 하단 버튼 고정','금액 · 날짜 · 기간 검색','총비용 잠금 시 마우스 올리면 할인전 금액','원화·외화 단일쿠폰 분리 계산','구매목록 하단 여백 · 제작 표기']],
   ['26.10.03',['수정 창 썸네일 고해상도 표시']],
@@ -3870,7 +4088,7 @@ function clearColFilter(col){
   if(panel)panel.style.display='none';
   renderOrder();
 }
-function switchTab(t,el){document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.panel').forEach(e=>e.classList.remove('active'));el.classList.add('active');document.getElementById('panel-'+t).classList.add('active');window.scrollTo(0,0);if(t==='manage'){renderManage();syncThemeUI();}if(t==='stats')renderStats();if(t==='ranking')renderRanking();if(t==='expbal')renderExpBalTab();if(t==='bundle')renderBundle();if(t==='cards')renderCards();}
+function switchTab(t,el){document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.panel').forEach(e=>e.classList.remove('active'));el.classList.add('active');document.getElementById('panel-'+t).classList.add('active');window.scrollTo(0,0);if(t==='manage'){renderManage();syncThemeUI();}if(t==='paycard')renderPayCards();if(t==='stats')renderStats();if(t==='ranking')renderRanking();if(t==='expbal')renderExpBalTab();if(t==='bundle')renderBundle();if(t==='cards')renderCards();}
 function toggleRow(id){openRows[id]=!openRows[id];renderOrder();}
 
 // ── 강화 검색: 일반 / 금액 / 날짜 + 기간, 칩으로 중복 검색 ──
@@ -4756,6 +4974,7 @@ function renderOrder(){
         onclick="event.stopPropagation();togglePayDatePopup(event,${o.id})"
 >
         <span style="font-size:14px;font-family:'Space Mono',monospace;white-space:nowrap;">${earliestPayDate(o)||'<span style="color:var(--text3)">-</span>'}</span>
+        ${o.releaseDate?`<div style="font-size:10px;color:var(--text3);white-space:nowrap;margin-top:2px;line-height:1.2;">(예상) 발매일 <span style="font-family:'Space Mono',monospace;color:var(--text2);">${o.releaseDate}</span></div>`:''}
       </td>
       <td style="font-size:15px;position:relative;width:130px;min-width:130px;">
         <div contenteditable="true" spellcheck="false"
@@ -6333,7 +6552,7 @@ const _origRenderOrder=typeof renderOrder==='function'?renderOrder:null;
 function stripBlob(list){return (list||[]).map(o=>(o&&o.imageUrl&&o.imageUrl.indexOf('blob:')===0)?{...o,imageUrl:''}:o);}
 function saveData(){
   try{
-    const payload=JSON.stringify({orders:stripBlob(orders),wishes:stripBlob(wishes),wishGroups,cardGroups,sells,makers,stores,nextStoreId,bundleCoupons,savedAt:new Date().toISOString(),exchangeRates});
+    const payload=JSON.stringify({orders:stripBlob(orders),wishes:stripBlob(wishes),wishGroups,cardGroups,payCards,sells,makers,stores,nextStoreId,bundleCoupons,savedAt:new Date().toISOString(),exchangeRates});
     // 구매목록 개수 변화 감지 → 히스토리 저장
     try{
       const prev=localStorage.getItem(STORAGE_KEY);
@@ -6372,7 +6591,7 @@ function loadData(){
     if(d.makers)makers=d.makers;
     if(d.stores)stores=d.stores;
     if(d.bundleCoupons)bundleCoupons=d.bundleCoupons;
-    wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];
+    wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];payCards=Array.isArray(d.payCards)?d.payCards:[];
     if(d.nextStoreId)nextStoreId=d.nextStoreId;
     if(d.exchangeRates)exchangeRates=d.exchangeRates;
     nO=Math.max(400,...orders.map(o=>o.id+1));
@@ -6520,7 +6739,7 @@ function gdApplyData(d){
   wishes=d.wishes||[];sells=d.sells||[];
   sells.forEach(s=>{if(!s.maker&&s.memo){const m=s.memo.match(/^방출\s*\((.+)\)$/);if(m)s.maker=m[1];}if(s.fromOrder!=null){const oo=orders.find(i=>i.id===s.fromOrder);if(oo){if(!s.date&&oo.releasedDate)s.date=oo.releasedDate;if(!s.maker&&oo.maker)s.maker=oo.maker;}}});
   if(d.makers)makers=d.makers;if(d.stores)stores=d.stores;if(d.bundleCoupons)bundleCoupons=d.bundleCoupons;if(d.nextStoreId)nextStoreId=d.nextStoreId;if(d.exchangeRates)exchangeRates=d.exchangeRates;
-  wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];
+  wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];payCards=Array.isArray(d.payCards)?d.payCards:[];
   nO=Math.max(400,...orders.map(o=>o.id+1));nW=Math.max(400,...wishes.map(w=>w.id+1));nS=Math.max(400,...sells.map(s=>s.id+1));
   openRows={};setSortFixed('pdate',-1);renderWish();renderSell();if(typeof renderStore==='function')renderStore();if(typeof renderManage==='function')renderManage();
   if(typeof resolveDriveImages==='function')resolveDriveImages();
@@ -6537,7 +6756,7 @@ async function gdLoadFromDrive(){
       // 이 계정은 드라이브에 데이터가 없음
       if(differentAcct){
         // 다른 계정 데이터를 올리지 않고, 이 계정은 빈 데이터로 시작
-        const empty={orders:[],wishes:[],wishGroups:[],cardGroups:[],sells:[],makers,stores,nextStoreId,bundleCoupons:{},exchangeRates,savedAt:new Date().toISOString()};
+        const empty={orders:[],wishes:[],wishGroups:[],cardGroups:[],payCards:[],sells:[],makers,stores,nextStoreId,bundleCoupons:{},exchangeRates,savedAt:new Date().toISOString()};
         gdApplyData(empty);localStorage.setItem(STORAGE_KEY,JSON.stringify(empty));localStorage.setItem(GD_OWNER_KEY,acct);
         updateSaveStatus(true,empty.savedAt);await gdFlush(true);
         gdSetStatus('새 계정 · 빈 데이터로 시작 '+gdHH(),'var(--green)');return;
@@ -6605,7 +6824,7 @@ async function gdFlush(silent){
   const seqAtStart=gdSaveSeq;
   try{
     if(!silent)gdSetStatus('동기화 중…','var(--yellow)');
-    const obj=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||{orders:stripBlob(orders),wishes:stripBlob(wishes),wishGroups,cardGroups,sells,makers,stores,nextStoreId,bundleCoupons,exchangeRates,savedAt:new Date().toISOString()};
+    const obj=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')||{orders:stripBlob(orders),wishes:stripBlob(wishes),wishGroups,cardGroups,payCards,sells,makers,stores,nextStoreId,bundleCoupons,exchangeRates,savedAt:new Date().toISOString()};
     if(!obj.savedAt)obj.savedAt=new Date().toISOString();
     let id=await gdFind();if(!id)id=await gdCreate();
     await gdUploadMedia(id,new Blob([JSON.stringify(obj)],{type:'application/json'}));
@@ -9155,7 +9374,7 @@ function importMakers(input){
 }
 
 function exportJSON(){
-  const payload=JSON.stringify({orders:stripBlob(orders),wishes:stripBlob(wishes),wishGroups,cardGroups,sells,makers,stores,nextStoreId,bundleCoupons,savedAt:new Date().toISOString()},null,2);
+  const payload=JSON.stringify({orders:stripBlob(orders),wishes:stripBlob(wishes),wishGroups,cardGroups,payCards,sells,makers,stores,nextStoreId,bundleCoupons,savedAt:new Date().toISOString()},null,2);
   const blob=new Blob([payload],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -9180,7 +9399,7 @@ function importJSON(input){
       if(d.makers)makers=d.makers;
       if(d.stores)stores=d.stores;
       if(d.bundleCoupons)bundleCoupons=d.bundleCoupons;
-      wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];
+      wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];payCards=Array.isArray(d.payCards)?d.payCards:[];
       if(d.nextStoreId)nextStoreId=d.nextStoreId;
       autoSave();
       renderOrder();renderWish();renderSell();renderStore();renderManage();
@@ -9239,7 +9458,7 @@ window.addEventListener('load',()=>{
       if(d.makers&&d.makers.length)makers=d.makers;
       if(d.stores&&d.stores.length)stores=d.stores;
       if(d.bundleCoupons)bundleCoupons=d.bundleCoupons;
-      wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];
+      wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];payCards=Array.isArray(d.payCards)?d.payCards:[];
       if(d.nextStoreId)nextStoreId=d.nextStoreId;
       if(d.exchangeRates)exchangeRates=d.exchangeRates;
       nO=Math.max(400,...[0,...orders.map(o=>o.id+1)]);
