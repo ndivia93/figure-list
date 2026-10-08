@@ -834,6 +834,28 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
 .pc-cap .u{font-size:12px;color:var(--text2);margin-top:6px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;}
 .pc-cap .u b{font-family:'Space Mono',monospace;color:var(--text);}
 .pc-cap .u .note{font-size:11px;color:var(--text3);}
+.pc-caps{grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr)) !important;}
+.pc-cap .t{flex-wrap:wrap;gap:4px 8px;}
+.pc-cap .t b{white-space:nowrap;margin-left:auto;font-size:15px !important;}
+.pc-cap .t>span{white-space:nowrap;}
+.pc-cap .t em{font-style:normal;font-size:10px;font-weight:700;padding:1px 6px;border-radius:9px;border:1px solid currentColor;margin-right:4px;vertical-align:1px;}
+.pc-cap .t .r{font-family:'Space Mono',monospace;font-weight:400;opacity:.85;font-size:11px;}
+.pc-cap .t b small{font-size:12px;color:var(--text2);font-weight:400;}
+.pc-cap.un{border-style:dashed;}
+.pc-bar.un i{width:100%;opacity:.35;background-image:repeating-linear-gradient(45deg,transparent 0 6px,rgba(0,0,0,.25) 6px 12px) !important;}
+.pc-tots{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.pc-tot{flex:1 1 240px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:var(--rs);background:var(--surface2);border:1px solid var(--border);}
+.pc-tot.d{color:var(--yellow);}.pc-tot.p{color:var(--cyan);}
+.pc-tot small{font-weight:400;color:var(--text2);font-size:12px;}
+.pc-tot b{font-family:'Space Mono',monospace;font-size:15px;}
+.pd-wrap{position:relative;display:inline-block;}
+.pd-wrap.has-rel .pd-a{border-bottom:1px dotted var(--text3);}
+.pd-wrap .pd-b{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;text-align:center;line-height:1.25;}
+.pd-wrap .pd-b .l{font-size:10px;color:var(--text3);font-family:inherit;}
+.pd-wrap .pd-b .d{font-size:14px;font-family:'Space Mono',monospace;color:var(--accent);}
+td:hover>.pd-wrap.has-rel .pd-a{visibility:hidden;}
+td:hover>.pd-wrap.has-rel .pd-b{display:block;}
+.cost-field.pc-src{border-color:var(--pcc) !important;box-shadow:0 0 0 2px var(--pcc);}
 .am-cardben{transition:border-color .12s,box-shadow .12s;}
 .am-cardben.pc-hl{border-color:var(--pcc) !important;box-shadow:0 0 0 2px var(--pcc);}
 .pc-btable{width:100%;border-collapse:separate;border-spacing:0 6px;}
@@ -3519,6 +3541,27 @@ function pcCapText(sum,rates,unit){
   if(s&&r)return s+' + '+r;
   return s||(r?r.replace('(상시)',' 상시'):(unit==='P'?'0 P':'￦ 0'));
 }
+// 카드 혜택 섹션 — 혜택마다 하나씩 (한도 있는 것 먼저, 상시 혜택은 따로)
+function pcBenSectionsHtml(card,m){
+  const bens=(card.benefits||[]).filter(b=>b.type==='point'||b.type==='discount'||!b.type);
+  if(!bens.length)return '';
+  const k=pcCaps(card);const ml=pcMonthLabel(m);
+  const isP=b=>b.type==='point';const capd=b=>Number(b.cap)>0;
+  const fmt=(n,pt)=>pt?(Number(n)||0).toLocaleString('ko-KR')+' P':pcWon(n);
+  const ord=[...bens.filter(b=>capd(b)&&!isP(b)),...bens.filter(b=>capd(b)&&isP(b)),...bens.filter(b=>!capd(b)&&!isP(b)),...bens.filter(b=>!capd(b)&&isP(b))];
+  const hasD=bens.some(b=>!isP(b)),hasP=bens.some(isP);
+  const uD=pcUsedType(card.id,'discount',m),uP=pcUsedType(card.id,'point',m);
+  const tot=(pt,u,cap,ul)=>`<div class="pc-tot ${pt?'p':'d'}"><span>${ml} ${pt?'적립':'할인'} 합계 <small>사용 / 한도</small></span><b>${fmt(u,pt)} <small>/ ${cap?fmt(cap,pt):''}${cap&&ul?' + ':''}${ul?'상시혜택':''}${!cap&&!ul?fmt(0,pt):''}</small></b></div>`;
+  let h=`<div class="pc-tots">${hasD?tot(false,uD,k.d,k.dU.length):''}${hasP?tot(true,uP,k.p,k.pU.length):''}</div><div class="pc-caps">`;
+  h+=ord.map(b=>{const pt=isP(b),c=Number(b.cap)||0,u=pcUsed(card.id,b.id,m,null);const col=pt?'var(--cyan)':'var(--yellow)';
+    const nm=pcEsc(b.title||(pt?'적립':'할인'));const rt=b.rate?`<span class="r">${b.rate}%</span>`:'';
+    if(c){const pc=Math.min(100,u/c*100);
+      return `<div class="pc-cap ${pt?'p':'d'}"><div class="t"><span style="color:${col};"><em>${pt?'적립':'할인'}</em> ${nm} ${rt}</span><b style="color:${col};">${fmt(u,pt)} <small>/ ${fmt(c,pt)}</small></b></div><div class="pc-bar"><i style="background:${col};width:${pc}%;"></i></div>
+        <div class="u"><span>${ml} 남은 한도 <b>${fmt(Math.max(0,c-u),pt)}</b></span>${b.cond?`<span class="note">${pcEsc(b.cond)}</span>`:''}</div></div>`;}
+    return `<div class="pc-cap ${pt?'p':'d'} un"><div class="t"><span style="color:${col};"><em>${pt?'적립':'할인'}</em> ${nm} ${rt}</span><b style="color:${col};">${fmt(u,pt)} <small>/ 상시</small></b></div><div class="pc-bar un"><i style="background:${col};"></i></div>
+      <div class="u"><span>상시혜택 · 한도 없이 적용</span>${b.cond?`<span class="note">${pcEsc(b.cond)}</span>`:''}</div></div>`;}).join('');
+  return h+'</div>';
+}
 function pcGrad(c){return `linear-gradient(135deg,${c} 0%,${c}cc 55%,${c}88 100%)`;}
 function renderPayCards(){
   const box=document.getElementById('pc-issuers'),main=document.getElementById('pc-main'),sum=document.getElementById('pc-summary');
@@ -3533,8 +3576,8 @@ function renderPayCards(){
   const tot=actCards.reduce((a,c)=>{const k=pcCaps(c);a.d+=k.d;a.p+=k.p;a.dU+=k.dU.length;a.pU+=k.pU.length;a.uD+=pcUsedType(c.id,'discount',_sm);a.uP+=pcUsedType(c.id,'point',_sm);return a;},{d:0,p:0,dU:0,pU:0,uD:0,uP:0});
   sum.innerHTML=`<div class="pc-stat"><div class="l">카드사</div><div class="v sv-a">${payCards.length}</div></div>
     <div class="pc-stat"><div class="l">카드</div><div class="v">${allCards.length}</div></div>
-    <div class="pc-stat"><div class="l" style="color:var(--yellow);">${pcMonthLabel(_sm)} 할인 <span style="font-weight:400;">사용 / 한도</span> <span style="font-weight:400;color:var(--text3);">· 적용 카드 ${actCards.length}</span></div><div class="v" style="color:var(--yellow);">${pcWon(tot.uD)} <small style="font-size:13px;color:var(--text2);">/ ${pcWon(tot.d)}${tot.dU?' + 상시':''}</small></div></div>
-    <div class="pc-stat"><div class="l" style="color:var(--cyan);">${pcMonthLabel(_sm)} 적립 <span style="font-weight:400;">사용 / 한도</span></div><div class="v" style="color:var(--cyan);">${tot.uP.toLocaleString('ko-KR')} P <small style="font-size:13px;color:var(--text2);">/ ${tot.p.toLocaleString('ko-KR')} P${tot.pU?' + 상시':''}</small></div></div>`;
+    <div class="pc-stat"><div class="l" style="color:var(--yellow);">${pcMonthLabel(_sm)} 할인 <span style="font-weight:400;">사용 / 한도</span> <span style="font-weight:400;color:var(--text3);">· 적용 카드 ${actCards.length}</span></div><div class="v" style="color:var(--yellow);">${pcWon(tot.uD)} <small style="font-size:13px;color:var(--text2);">/ ${tot.d||!tot.dU?pcWon(tot.d):''}${tot.d&&tot.dU?' + ':''}${tot.dU?'상시혜택':''}</small></div></div>
+    <div class="pc-stat"><div class="l" style="color:var(--cyan);">${pcMonthLabel(_sm)} 적립 <span style="font-weight:400;">사용 / 한도</span></div><div class="v" style="color:var(--cyan);">${tot.uP.toLocaleString('ko-KR')} P <small style="font-size:13px;color:var(--text2);">/ ${tot.p||!tot.pU?tot.p.toLocaleString('ko-KR')+' P':''}${tot.p&&tot.pU?' + ':''}${tot.pU?'상시혜택':''}</small></div></div>`;
   // 카드사 목록
   box.innerHTML=payCards.length?payCards.map(i=>`<button type="button" class="pc-iss ${i.id===_pcSel.iss?'on':''}" onclick="_pcSel.iss='${i.id}';_pcSel.card=null;pcSaveSel();renderPayCards()">
       <span class="dot" style="background:${i.color||'#6c757d'};"></span><span class="n">${pcEsc(i.name)}<small>${(()=>{const sp=pcSpend(null,_pcMonth||pcNowMonth(),i.id);return sp?'이 달 '+pcWon(sp):'';})()}</small></span><span class="c">${(i.cards||[]).length}</span></button>`).join('')
@@ -3577,12 +3620,7 @@ function renderPayCards(){
       ${pcMonthToggleHtml(card,_m)}
       <span class="sp">이 달 사용 ${pcWon(pcSpend(card.id,_m))}</span>
     </div>
-    <div class="pc-caps">
-      <div class="pc-cap d"><div class="t"><span style="color:var(--yellow);">월 할인 <span style="font-weight:400;opacity:.8;">사용 / 한도</span></span><b style="color:var(--yellow);">￦ ${uD.toLocaleString('ko-KR')} / ${pcCapText(k.d,k.dU,'₩')}</b></div><div class="pc-bar"><i style="background:var(--yellow);width:${pD}%;"></i></div>
-        <div class="u"><span>${pcMonthLabel(_m)} 남은 한도 <b>${k.d?'￦ '+Math.max(0,k.d-cD).toLocaleString('ko-KR'):(k.dU.length?'상시':'—')}</b>${k.d&&k.dU.length?' + 상시':''}</span><span class="note">묶음 할인에서 이 카드 선택 시 반영</span></div></div>
-      <div class="pc-cap p"><div class="t"><span style="color:var(--cyan);">월 적립 <span style="font-weight:400;opacity:.8;">사용 / 한도</span></span><b style="color:var(--cyan);">${uP.toLocaleString('ko-KR')} P / ${pcCapText(k.p,k.pU,'P')}</b></div><div class="pc-bar"><i style="background:var(--cyan);width:${pP}%;"></i></div>
-        <div class="u"><span>${pcMonthLabel(_m)} 남은 한도 <b>${k.p?Math.max(0,k.p-cP).toLocaleString('ko-KR')+' P':(k.pU.length?'상시':'—')}</b>${k.p&&k.pU.length?' + 상시':''}</span></div></div>
-    </div>
+    ${pcBenSectionsHtml(card,_m)}
     <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:2px;">혜택 <span style="font-weight:400;color:var(--text3);font-size:12px;">— 할인·적립마다 비율과 월 한도를 따로 정합니다</span></div>
     <table class="pc-btable"><thead><tr><th style="width:118px;">구분</th><th>혜택 내용</th><th style="width:90px;">비율 %</th><th style="width:130px;">월 한도 ￦ <span style="font-weight:400;">(빈칸=상시)</span></th><th style="width:22%;">조건</th><th style="width:30px;"></th></tr></thead><tbody>
     ${(card.benefits||[]).map(b=>`<tr>
@@ -3641,7 +3679,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.10.09',['카드 결산 사용/한도 표기 · 적용 중인 카드만 합산','구매목록 결제일 아래 (예상) 발매일 표시 수정','수정 창 카드 칸 호버 시 같은 카드 강조','월 혜택 끄면 전부 취소 · 켜면 전부 다시 적용','카드 할인·적립이 수정 창 쿠폰·포인트 칸에 카드1·카드2로 표시','한도 빈칸 = 상시 혜택','할인 탭 숫자 글꼴 통일','결제카드 탭 → 카드','카드별 월 혜택 적용 스위치 (확인 후 고정 · 소급 적용)','카드사·카드별 이 달 사용금액 표시','할인 탭에서 묶음 결제 카드 설정','할인 탭 단일쿠폰 칸에 쿠폰 개수','묶음 할인에 결제 카드 선택 단계 — 카드 혜택 월 한도 자동 계산','결제카드 탭 이번 달 사용량 표시']],
+  ['26.10.09',['카드 혜택마다 사용량 칸 따로 표시 (상시 혜택 구분)','한도 합계 + 상시혜택 표기','구매목록 결제일에 마우스 올리면 예상발매일 표시','수정 창 카드 칸 호버 시 혜택이 나온 비용 칸도 강조','카드 결산 사용/한도 표기 · 적용 중인 카드만 합산','구매목록 결제일 아래 (예상) 발매일 표시 수정','수정 창 카드 칸 호버 시 같은 카드 강조','월 혜택 끄면 전부 취소 · 켜면 전부 다시 적용','카드 할인·적립이 수정 창 쿠폰·포인트 칸에 카드1·카드2로 표시','한도 빈칸 = 상시 혜택','할인 탭 숫자 글꼴 통일','결제카드 탭 → 카드','카드별 월 혜택 적용 스위치 (확인 후 고정 · 소급 적용)','카드사·카드별 이 달 사용금액 표시','할인 탭에서 묶음 결제 카드 설정','할인 탭 단일쿠폰 칸에 쿠폰 개수','묶음 할인에 결제 카드 선택 단계 — 카드 혜택 월 한도 자동 계산','결제카드 탭 이번 달 사용량 표시']],
   ['26.10.08',['결제카드 탭 신설 — 카드사·카드별 할인·적립 한도 정리','구매목록 결제일 아래 (예상) 발매일 표시']],
   ['26.10.07',['배송중 상태 추가 — 운송장 입력 시 자동 전환','배송중 아이콘 빛 효과 · 배송중 모아보기 토글','해외 운송장 칸 추가 (17TRACK 조회)','운송장 조회 시 번호 자동 복사','썸네일·⠿ 끌어서 배송중 전환','위시 · 카드보기 그룹 기능','그룹 썸네일 2줄 가로 슬라이드 · 휠로 좌우 이동','수정 창에 그룹 선택 추가','검색창 하단 이동 · OR/AND · 여러 검색어 고정','방출 탭 정렬 옵션 확대','할인 탭 단일쿠폰·포인트 카드 · 보기 필터','쿠폰 칸 단일쿠폰 개별 표기']],
   ['26.10.06',['단일쿠폰 부호 통일 (실결제액 유지)','운송장 조회 · 수정 창 하단 총금액','수정 창 하단 버튼 고정','금액 · 날짜 · 기간 검색','총비용 잠금 시 마우스 올리면 할인전 금액','원화·외화 단일쿠폰 분리 계산','구매목록 하단 여백 · 제작 표기']],
@@ -3822,13 +3860,28 @@ function amCardBens(key){
 }
 function amCardBenHtml(x,i,type){
   const pt=type==='point';const col=pt?'var(--cyan)':'var(--yellow)';
-  return `<div class="cost-card am-cardben" data-pcard="${x.cid}" style="--pcc:${x.color};padding:8px 9px;min-width:0;overflow:hidden;border-color:${pt?'var(--cborder)':'var(--yborder)'};" onmouseenter="document.querySelectorAll('.am-cardben[data-pcard=&quot;${x.cid}&quot;]').forEach(e=>e.classList.add('pc-hl'))" onmouseleave="document.querySelectorAll('.am-cardben.pc-hl').forEach(e=>e.classList.remove('pc-hl'))" title="묶음 ${pcEsc(x.alias)} · ${pcEsc(x.name)} 카드 ${pt?'적립':'할인'}">
+  return `<div class="cost-card am-cardben" data-pcard="${x.cid}" data-code="${pcEsc(x.code)}" style="--pcc:${x.color};padding:8px 9px;min-width:0;overflow:hidden;border-color:${pt?'var(--cborder)':'var(--yborder)'};" onmouseenter="pcHl(this,true)" onmouseleave="pcHl(this,false)" title="묶음 ${pcEsc(x.alias)} · ${pcEsc(x.name)} 카드 ${pt?'적립':'할인'}">
     <div style="display:flex;align-items:center;gap:6px;">
       <span class="cost-label" style="margin:0;flex-shrink:0;color:${col};font-size:12px;">카드${i+1}</span>
       <span style="flex:1;min-width:0;font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${x.color};margin-right:4px;vertical-align:1px;"></i>${pcEsc(x.name)}</span>
       <b class="mono" style="font-size:13px;color:${col};white-space:nowrap;">${pt?x.amount.toLocaleString('ko-KR')+' P':'−￦ '+x.amount.toLocaleString('ko-KR')}</b>
       <button type="button" onclick="pcRemoveBen('${x.code}','${pt?'point':'disc'}')" title="삭제" style="flex-shrink:0;width:22px;height:28px;padding:0;line-height:1;background:transparent;border:none;color:var(--text3);cursor:pointer;font-family:inherit;">✕</button>
     </div></div>`;
+}
+// 카드 칸 호버: 같은 카드의 할인·적립 칸 + 그 혜택이 나온 비용 칸 강조
+const PC_FIELD_ID={shipping:'ship',fullPayment:'full'};
+function pcHl(el,on){
+  document.querySelectorAll('.am-cardben.pc-hl').forEach(e=>e.classList.remove('pc-hl'));
+  document.querySelectorAll('.cost-field.pc-src').forEach(e=>{e.classList.remove('pc-src');e.style.removeProperty('--pcc');});
+  if(!on)return;
+  const cid=el.dataset.pcard,col=el.style.getPropertyValue('--pcc');
+  const slots=[...document.querySelectorAll('.am-cardben')].filter(e=>e.dataset.pcard===cid);
+  slots.forEach(e=>e.classList.add('pc-hl'));
+  const codes=new Set(slots.map(e=>e.dataset.code));
+  const o=_addEditId!=null?orders.find(x=>x.id===_addEditId):null;if(!o)return;
+  Object.entries(o.costGroups||{}).forEach(([f,c])=>{if(!codes.has(String(c)))return;
+    const inp=document.getElementById('cf-'+(PC_FIELD_ID[f]||f)+'-grp');const box=inp&&inp.closest('.cost-field');
+    if(box){box.style.setProperty('--pcc',col);box.classList.add('pc-src');}});
 }
 // 카드 혜택 삭제 — 같은 묶음의 모든 항목에서 함께 제거
 function pcRemoveBen(code,key){
@@ -5243,8 +5296,7 @@ function renderOrder(){
       <td class="mono${colorIdx?` grp-date-${colorIdx}`:''}" style="font-size:14px;cursor:pointer;text-align:center;"
         onclick="event.stopPropagation();togglePayDatePopup(event,${o.id})"
 >
-        <span style="font-size:14px;font-family:'Space Mono',monospace;white-space:nowrap;">${earliestPayDate(o)||'<span style="color:var(--text3)">-</span>'}</span>
-        ${o.date?`<div style="font-size:10px;color:var(--text3);white-space:nowrap;margin-top:2px;line-height:1.2;">(예상) 발매일 <span style="font-family:'Space Mono',monospace;color:var(--text2);">${o.date}</span></div>`:''}
+        <span class="pd-wrap${o.date?' has-rel':''}"${o.date?' title="예상발매일 '+o.date+'"':''}><span class="pd-a" style="font-size:14px;font-family:'Space Mono',monospace;white-space:nowrap;">${earliestPayDate(o)||'<span style="color:var(--text3)">-</span>'}</span>${o.date?`<span class="pd-b"><div class="l">예상발매일</div><div class="d">${o.date}</div></span>`:''}</span>
       </td>
       <td style="font-size:15px;position:relative;width:130px;min-width:130px;">
         <div contenteditable="true" spellcheck="false"
