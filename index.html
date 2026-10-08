@@ -884,6 +884,15 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
 .pc-mtog .sw.on{background:var(--green);}
 .pc-mtog .sw.on i{left:20px;}
 .pc-mtog .sw:disabled{opacity:.6;cursor:not-allowed;}
+/* 할인 탭 숫자 글꼴·크기 통일 */
+#bundle-list .bundle-group-header > span:last-child,#bundle-list .bundle-group-header > span:last-child *{font-family:'Space Mono',monospace !important;font-size:13px !important;font-weight:700;}
+#bundle-list .bundle-item > div:nth-child(4) div,#bundle-list .bundle-item > div:nth-child(5) div{font-family:'Space Mono',monospace !important;}
+#bundle-list .bundle-item > div:nth-child(4) div:first-child:not(:last-child),#bundle-list .bundle-item > div:nth-child(5) div:first-child:not(:last-child){font-size:12px !important;}
+#bundle-list .bundle-item > div:nth-child(4) div:last-child,#bundle-list .bundle-item > div:nth-child(5) div:last-child{font-size:13px !important;}
+#bundle-list .bundle-item > div:nth-child(4) > span,#bundle-list .bundle-item > div:nth-child(5) > span{font-size:12px !important;}
+#bundle-list .bundle-coupon-row span,#bundle-list .bundle-coupon-row input,#bundle-list .bundle-coupon-row select{font-size:13px !important;}
+#bundle-list .bundle-coupon-row .mono,#bundle-list .bundle-coupon-row input[type=number]{font-family:'Space Mono',monospace !important;}
+#bundle-list .mono{font-family:'Space Mono',monospace;}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -3229,11 +3238,9 @@ function openAddModal(editId){
   updateCostFields(isEdit?editId:null,ex);
   // 모달-로컬 쿠폰 배열 초기화 (최대 4개) — 기존 항목의 쿠폰을 복제, 없으면 기본 1개
   _amCoupons=(isEdit?couponsOf(ex):[]).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩'}));
-  if(!_amCoupons.length)_amCoupons=[{amount:0,currency:'₩'}];
   renderAmCoupons();
   // 포인트 배열 초기화 (기록용, 최대 4개)
   _amPoints=(isEdit?pointsOf(ex):[]).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩'}));
-  if(!_amPoints.length)_amPoints=[{amount:0,currency:'₩'}];
   renderAmPoints();
   // 메모·사진 별도 창 (왼쪽 아래)
   renderMemoSide(ex);
@@ -3474,7 +3481,7 @@ function bmwCardStepHtml(){
       <input type="checkbox" ${x.on?'checked':''} onchange="bmwToggleBen('${x.b.id}',this.checked)" style="width:18px;height:18px;accent-color:${pt?'#4ecfcf':'#ffd166'};grid-row:1/3;">
       <span style="font-size:16px;font-weight:700;color:${x.on?col:'var(--text3)'};">${pt?'적립':'할인'} · ${pcEsc(x.b.title||'(이름 없음)')} <span style="font-weight:400;color:var(--text2);">${Number(x.b.rate)||0}%</span></span>
       <b class="mono" style="font-size:17px;color:${x.on?col:'var(--text3)'};">${pt?'':'▼ ￦ '}${x.applied.toLocaleString('ko-KR')}${pt?' P':''}</b>
-      <span style="font-size:12px;color:var(--text3);grid-column:2/4;">계산 ${x.calc.toLocaleString('ko-KR')} · 월 한도 ${x.cap?'￦ '+x.cap.toLocaleString('ko-KR'):'없음'}${x.cap?` · 이번 달 사용 ${x.used.toLocaleString('ko-KR')} · 남음 ${x.left.toLocaleString('ko-KR')}`:''}${x.b.cond?' · '+pcEsc(x.b.cond):''}${x.on&&x.cap&&x.calc>x.left?' · <span style="color:var(--red);">한도 초과분 제외</span>':''}</span>
+      <span style="font-size:12px;color:var(--text3);grid-column:2/4;">계산 ${x.calc.toLocaleString('ko-KR')} · ${x.cap?'월 한도 ￦ '+x.cap.toLocaleString('ko-KR'):'상시 (한도 없음)'}${x.cap?` · 이번 달 사용 ${x.used.toLocaleString('ko-KR')} · 남음 ${x.left.toLocaleString('ko-KR')}`:''}${x.b.cond?' · '+pcEsc(x.b.cond):''}${x.on&&x.cap&&x.calc>x.left?' · <span style="color:var(--red);">한도 초과분 제외</span>':''}</span>
     </label>`;}).join('');
   h+=`<div style="display:flex;gap:10px;margin-top:10px;">
     <div style="flex:1;padding:11px 14px;border-radius:10px;background:var(--ydim);border:1px solid var(--yborder);display:flex;justify-content:space-between;align-items:baseline;"><span style="font-size:15px;color:var(--yellow);font-weight:700;">할인 합계</span><b class="mono" style="font-size:19px;color:var(--yellow);">▼ ￦ ${r.disc.toLocaleString('ko-KR')}</b></div>
@@ -3492,8 +3499,17 @@ const pcWon=n=>'￦ '+(Number(n)||0).toLocaleString('ko-KR');
 function pcIssuer(id){return payCards.find(x=>x.id===id)||null;}
 function pcCard(iss,id){return iss?(iss.cards||[]).find(x=>x.id===id)||null:null;}
 function pcCaps(card){
-  let d=0,p=0;(card.benefits||[]).forEach(b=>{const c=Number(b.cap)||0;if(b.type==='point')p+=c;else d+=c;});
-  return {d,p};
+  let d=0,p=0;const dU=[],pU=[];
+  (card.benefits||[]).forEach(b=>{const c=Number(b.cap)||0;const r=Number(b.rate)||0;
+    if(b.type==='point'){if(c)p+=c;else if(r)pU.push(r);}else{if(c)d+=c;else if(r)dU.push(r);}});
+  return {d,p,dU,pU};
+}
+// 한도 표기: '￦ 50,000 + 0.7%(상시)' / '0.7% 상시' / '￦ 0'
+function pcCapText(sum,rates,unit){
+  const r=rates.length?rates.map(x=>x+'%').join(' · ')+'(상시)':'';
+  const s=sum?(unit==='P'?sum.toLocaleString('ko-KR')+' P':'￦ '+sum.toLocaleString('ko-KR')):'';
+  if(s&&r)return s+' + '+r;
+  return s||(r?r.replace('(상시)',' 상시'):(unit==='P'?'0 P':'￦ 0'));
 }
 function pcGrad(c){return `linear-gradient(135deg,${c} 0%,${c}cc 55%,${c}88 100%)`;}
 function renderPayCards(){
@@ -3504,11 +3520,11 @@ function renderPayCards(){
   if(iss&&!pcCard(iss,_pcSel.card))_pcSel.card=(iss.cards||[])[0]?iss.cards[0].id:null;
   // 요약
   const allCards=payCards.flatMap(i=>i.cards||[]);
-  const tot=allCards.reduce((a,c)=>{const k=pcCaps(c);a.d+=k.d;a.p+=k.p;return a;},{d:0,p:0});
+  const tot=allCards.reduce((a,c)=>{const k=pcCaps(c);a.d+=k.d;a.p+=k.p;a.dU+=k.dU.length;a.pU+=k.pU.length;return a;},{d:0,p:0,dU:0,pU:0});
   sum.innerHTML=`<div class="pc-stat"><div class="l">카드사</div><div class="v sv-a">${payCards.length}</div></div>
     <div class="pc-stat"><div class="l">카드</div><div class="v">${allCards.length}</div></div>
-    <div class="pc-stat"><div class="l" style="color:var(--yellow);">월 할인 한도 합계</div><div class="v" style="color:var(--yellow);">${pcWon(tot.d)}</div></div>
-    <div class="pc-stat"><div class="l" style="color:var(--cyan);">월 적립 한도 합계</div><div class="v" style="color:var(--cyan);">${pcWon(tot.p)}</div></div>`;
+    <div class="pc-stat"><div class="l" style="color:var(--yellow);">월 할인 한도 합계</div><div class="v" style="color:var(--yellow);">${pcWon(tot.d)}${tot.dU?`<small style="font-size:12px;"> + 상시 ${tot.dU}</small>`:''}</div></div>
+    <div class="pc-stat"><div class="l" style="color:var(--cyan);">월 적립 한도 합계</div><div class="v" style="color:var(--cyan);">${pcWon(tot.p)}${tot.pU?`<small style="font-size:12px;"> + 상시 ${tot.pU}</small>`:''}</div></div>`;
   // 카드사 목록
   box.innerHTML=payCards.length?payCards.map(i=>`<button type="button" class="pc-iss ${i.id===_pcSel.iss?'on':''}" onclick="_pcSel.iss='${i.id}';_pcSel.card=null;pcSaveSel();renderPayCards()">
       <span class="dot" style="background:${i.color||'#6c757d'};"></span><span class="n">${pcEsc(i.name)}<small>${(()=>{const sp=pcSpend(null,_pcMonth||pcNowMonth(),i.id);return sp?'이 달 '+pcWon(sp):'';})()}</small></span><span class="c">${(i.cards||[]).length}</span></button>`).join('')
@@ -3551,16 +3567,16 @@ function renderPayCards(){
       <span class="sp">이 달 사용 ${pcWon(pcSpend(card.id,_m))}</span>
     </div>
     <div class="pc-caps">
-      <div class="pc-cap d"><div class="t"><span style="color:var(--yellow);">월 할인 한도</span><b style="color:var(--yellow);">${pcWon(k.d)}</b></div><div class="pc-bar"><i style="background:var(--yellow);width:${pD}%;"></i></div><div class="u">${pcMonthLabel(_m)} 사용 ￦ ${uD.toLocaleString('ko-KR')}${k.d?` · 남음 ￦ ${Math.max(0,k.d-uD).toLocaleString('ko-KR')}`:''} · 묶음 할인에서 이 카드 선택 시 반영</div></div>
-      <div class="pc-cap p"><div class="t"><span style="color:var(--cyan);">월 적립 한도</span><b style="color:var(--cyan);">${pcWon(k.p)}</b></div><div class="pc-bar"><i style="background:var(--cyan);width:${pP}%;"></i></div><div class="u">${pcMonthLabel(_m)} 적립 ${uP.toLocaleString('ko-KR')} P${k.p?` · 남음 ${Math.max(0,k.p-uP).toLocaleString('ko-KR')} P`:''}</div></div>
+      <div class="pc-cap d"><div class="t"><span style="color:var(--yellow);">월 할인 한도</span><b style="color:var(--yellow);">${pcCapText(k.d,k.dU,'₩')}</b></div><div class="pc-bar"><i style="background:var(--yellow);width:${pD}%;"></i></div><div class="u">${pcMonthLabel(_m)} 사용 ￦ ${uD.toLocaleString('ko-KR')}${k.d?` · 남음 ￦ ${Math.max(0,k.d-uD).toLocaleString('ko-KR')}`:''} · 묶음 할인에서 이 카드 선택 시 반영</div></div>
+      <div class="pc-cap p"><div class="t"><span style="color:var(--cyan);">월 적립 한도</span><b style="color:var(--cyan);">${pcCapText(k.p,k.pU,'P')}</b></div><div class="pc-bar"><i style="background:var(--cyan);width:${pP}%;"></i></div><div class="u">${pcMonthLabel(_m)} 적립 ${uP.toLocaleString('ko-KR')} P${k.p?` · 남음 ${Math.max(0,k.p-uP).toLocaleString('ko-KR')} P`:''}</div></div>
     </div>
     <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:2px;">혜택 <span style="font-weight:400;color:var(--text3);font-size:12px;">— 할인·적립마다 비율과 월 한도를 따로 정합니다</span></div>
-    <table class="pc-btable"><thead><tr><th style="width:118px;">구분</th><th>혜택 내용</th><th style="width:90px;">비율 %</th><th style="width:130px;">월 한도 ￦</th><th style="width:22%;">조건</th><th style="width:30px;"></th></tr></thead><tbody>
+    <table class="pc-btable"><thead><tr><th style="width:118px;">구분</th><th>혜택 내용</th><th style="width:90px;">비율 %</th><th style="width:130px;">월 한도 ￦ <span style="font-weight:400;">(빈칸=상시)</span></th><th style="width:22%;">조건</th><th style="width:30px;"></th></tr></thead><tbody>
     ${(card.benefits||[]).map(b=>`<tr>
       <td><div class="pc-type"><button type="button" class="d ${b.type!=='point'?'on':''}" onclick="pcSetB('${b.id}','type','discount')">할인</button><button type="button" class="p ${b.type==='point'?'on':''}" onclick="pcSetB('${b.id}','type','point')">적립</button></div></td>
       <td class="ti"><input value="${pcEsc(b.title)}" placeholder="예: 해외 결제, 온라인 쇼핑" onchange="pcSetB('${b.id}','title',this.value)"></td>
       <td class="ra"><input class="num" inputmode="decimal" value="${b.rate||''}" placeholder="5" onchange="pcSetB('${b.id}','rate',Number(this.value)||0)"></td>
-      <td class="ca"><input class="num" inputmode="numeric" value="${b.cap?Number(b.cap).toLocaleString('ko-KR'):''}" placeholder="10,000" onchange="pcSetB('${b.id}','cap',Number(this.value.replace(/\\D/g,''))||0)"></td>
+      <td class="ca"><input class="num" inputmode="numeric" value="${b.cap?Number(b.cap).toLocaleString('ko-KR'):''}" placeholder="비우면 상시" onchange="pcSetB('${b.id}','cap',Number(this.value.replace(/\\D/g,''))||0)"></td>
       <td class="co"><input value="${pcEsc(b.cond)}" placeholder="예: 건당 1만원 이상" onchange="pcSetB('${b.id}','cond',this.value)"></td>
       <td><button type="button" class="del-btn" onclick="pcDelB('${b.id}')">✕</button></td></tr>`).join('')}
     </tbody></table>
@@ -3612,7 +3628,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.10.09',['결제카드 탭 → 카드','카드별 월 혜택 적용 스위치 (확인 후 고정 · 소급 적용)','카드사·카드별 이 달 사용금액 표시','할인 탭에서 묶음 결제 카드 설정','할인 탭 단일쿠폰 칸에 쿠폰 개수','묶음 할인에 결제 카드 선택 단계 — 카드 혜택 월 한도 자동 계산','결제카드 탭 이번 달 사용량 표시']],
+  ['26.10.09',['카드 할인·적립이 수정 창 쿠폰·포인트 칸에 카드1·카드2로 표시','한도 빈칸 = 상시 혜택','할인 탭 숫자 글꼴 통일','결제카드 탭 → 카드','카드별 월 혜택 적용 스위치 (확인 후 고정 · 소급 적용)','카드사·카드별 이 달 사용금액 표시','할인 탭에서 묶음 결제 카드 설정','할인 탭 단일쿠폰 칸에 쿠폰 개수','묶음 할인에 결제 카드 선택 단계 — 카드 혜택 월 한도 자동 계산','결제카드 탭 이번 달 사용량 표시']],
   ['26.10.08',['결제카드 탭 신설 — 카드사·카드별 할인·적립 한도 정리','구매목록 결제일 아래 (예상) 발매일 표시']],
   ['26.10.07',['배송중 상태 추가 — 운송장 입력 시 자동 전환','배송중 아이콘 빛 효과 · 배송중 모아보기 토글','해외 운송장 칸 추가 (17TRACK 조회)','운송장 조회 시 번호 자동 복사','썸네일·⠿ 끌어서 배송중 전환','위시 · 카드보기 그룹 기능','그룹 썸네일 2줄 가로 슬라이드 · 휠로 좌우 이동','수정 창에 그룹 선택 추가','검색창 하단 이동 · OR/AND · 여러 검색어 고정','방출 탭 정렬 옵션 확대','할인 탭 단일쿠폰·포인트 카드 · 보기 필터','쿠폰 칸 단일쿠폰 개별 표기']],
   ['26.10.06',['단일쿠폰 부호 통일 (실결제액 유지)','운송장 조회 · 수정 창 하단 총금액','수정 창 하단 버튼 고정','금액 · 날짜 · 기간 검색','총비용 잠금 시 마우스 올리면 할인전 금액','원화·외화 단일쿠폰 분리 계산','구매목록 하단 여백 · 제작 표기']],
@@ -3784,16 +3800,53 @@ function couponAddCardHtml(){
     <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px dashed var(--border2);border-radius:var(--rs);color:var(--text2);font-size:20px;font-weight:700;">＋</div>
   </div>`;
 }
+// 수정 창: 이 항목에 들어온 카드 할인·적립 (묶음 결제 카드)
+function amCardBens(key){
+  const o=_addEditId!=null?orders.find(x=>x.id===_addEditId):null;if(!o||!o.cardBen)return [];
+  return Object.entries(o.cardBen).filter(([c,v])=>(Number(v&&v[key])||0)>0).map(([code,v])=>{
+    const bc=bundleCoupons[code]||{};const is=bc.card?pcIssuer(bc.card.iss):null;const cd=bc.card?pcCard(is,bc.card.card):null;
+    return {code,amount:Number(v[key])||0,name:cd?cd.name:'카드',alias:bc.name||code};});
+}
+function amCardBenHtml(x,i,type){
+  const pt=type==='point';const col=pt?'var(--cyan)':'var(--yellow)';
+  return `<div class="cost-card" style="padding:8px 9px;min-width:0;overflow:hidden;border-color:${pt?'var(--cborder)':'var(--yborder)'};" title="묶음 ${pcEsc(x.alias)} · ${pcEsc(x.name)} 카드 ${pt?'적립':'할인'}">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span class="cost-label" style="margin:0;flex-shrink:0;color:${col};font-size:12px;">카드${i+1}</span>
+      <span style="flex:1;min-width:0;font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${pcEsc(x.name)}</span>
+      <b class="mono" style="font-size:13px;color:${col};white-space:nowrap;">${pt?x.amount.toLocaleString('ko-KR')+' P':'−￦ '+x.amount.toLocaleString('ko-KR')}</b>
+      <button type="button" onclick="pcRemoveBen('${x.code}','${pt?'point':'disc'}')" title="삭제" style="flex-shrink:0;width:22px;height:28px;padding:0;line-height:1;background:transparent;border:none;color:var(--text3);cursor:pointer;font-family:inherit;">✕</button>
+    </div></div>`;
+}
+// 카드 혜택 삭제 — 같은 묶음의 모든 항목에서 함께 제거
+function pcRemoveBen(code,key){
+  const pt=key==='point';
+  const n=orders.filter(o=>o.cardBen&&o.cardBen[code]&&(Number(o.cardBen[code][key])||0)>0).length;
+  openNoticeModal(pt?'카드 적립 삭제':'카드 할인 삭제',`함께 결제된 모든 항목(${n}건)의 ${pt?'포인트':'쿠폰'}이 제거됩니다.`,[{label:'취소'},{label:'제거',primary:true,onClick:()=>{
+    const bc=bundleCoupons[code];
+    if(bc&&bc.card){
+      bc.card.applied=(bc.card.applied||[]).filter(a=>(a.type==='point')!==pt);
+      if(pt)bc.card.point=0;else bc.card.disc=0;
+      // 다시 계산해도 살아나지 않도록 해당 종류 혜택을 꺼둠
+      const is=pcIssuer(bc.card.iss),cd=pcCard(is,bc.card.card);
+      if(cd)(cd.benefits||[]).forEach(b=>{if((b.type==='point')===pt&&!(bc.card.off||[]).includes(b.id))(bc.card.off=bc.card.off||[]).push(b.id);});
+    }
+    orders.forEach(o=>{if(o.cardBen&&o.cardBen[code]){o.cardBen[code][key]=0;if(!o.cardBen[code].disc&&!o.cardBen[code].point)delete o.cardBen[code];if(!Object.keys(o.cardBen).length)delete o.cardBen;}});
+    renderAmCoupons();renderAmPoints();renderOrder();if(typeof renderBundle==='function')renderBundle();autoSave();
+    showToast(pt?'카드 적립을 제거했어요':'카드 할인을 제거했어요','success');
+  }}]);
+}
 function renderAmCoupons(){
   const box=document.getElementById('am-coupon-box');if(!box)return;
-  if(!_amCoupons.length)_amCoupons=[{amount:0,currency:'₩'}]; // 기본 1개 활성화
+  const cb=amCardBens('disc');
+  if(!_amCoupons.length&&!cb.length)_amCoupons=[{amount:0,currency:'₩'}]; // 기본 1개 활성화
   let cards='';
   _amCoupons.forEach((c,i)=>{cards+=couponCardHtml(c,i);});
-  if(_amCoupons.length<MAX_COUPONS)cards+=couponAddCardHtml();
+  cb.forEach((x,i)=>{cards+=amCardBenHtml(x,i,'disc');});
+  if(_amCoupons.length+cb.length<MAX_COUPONS)cards+=couponAddCardHtml();
   box.innerHTML=`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">${cards}</div>`;
 }
-function amAddCoupon(){if(_amCoupons.length>=MAX_COUPONS)return;_amCoupons.push({amount:0,currency:'₩'});renderAmCoupons();}
-function amRemoveCoupon(i){_amCoupons.splice(i,1);if(!_amCoupons.length)_amCoupons=[{amount:0,currency:'₩'}];renderAmCoupons();}
+function amAddCoupon(){if(_amCoupons.length+amCardBens('disc').length>=MAX_COUPONS)return;_amCoupons.push({amount:0,currency:'₩'});renderAmCoupons();}
+function amRemoveCoupon(i){_amCoupons.splice(i,1);if(!_amCoupons.length&&!amCardBens('disc').length)_amCoupons=[{amount:0,currency:'₩'}];renderAmCoupons();}
 function amSetCoupon(i,field,val){
   if(!_amCoupons[i])return;
   if(field==='amount'){
@@ -3823,14 +3876,16 @@ function pointAddCardHtml(){
 }
 function renderAmPoints(){
   const box=document.getElementById('am-point-box');if(!box)return;
-  if(!_amPoints.length)_amPoints=[{amount:0,currency:'₩'}];
+  const cb=amCardBens('point');
+  if(!_amPoints.length&&!cb.length)_amPoints=[{amount:0,currency:'₩'}];
   let cards='';
   _amPoints.forEach((c,i)=>{cards+=pointCardHtml(c,i);});
-  if(_amPoints.length<MAX_POINTS)cards+=pointAddCardHtml();
+  cb.forEach((x,i)=>{cards+=amCardBenHtml(x,i,'point');});
+  if(_amPoints.length+cb.length<MAX_POINTS)cards+=pointAddCardHtml();
   box.innerHTML=`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">${cards}</div>`;
 }
-function amAddPoint(){if(_amPoints.length>=MAX_POINTS)return;_amPoints.push({amount:0,currency:'₩'});renderAmPoints();}
-function amRemovePoint(i){_amPoints.splice(i,1);if(!_amPoints.length)_amPoints=[{amount:0,currency:'₩'}];renderAmPoints();}
+function amAddPoint(){if(_amPoints.length+amCardBens('point').length>=MAX_POINTS)return;_amPoints.push({amount:0,currency:'₩'});renderAmPoints();}
+function amRemovePoint(i){_amPoints.splice(i,1);if(!_amPoints.length&&!amCardBens('point').length)_amPoints=[{amount:0,currency:'₩'}];renderAmPoints();}
 function amSetPoint(i,field,val){
   if(!_amPoints[i])return;
   if(field==='amount'){_amPoints[i].amount=Number(val)||0;}
@@ -8015,9 +8070,10 @@ function renderBundle(){
       <div class="bundle-group-header">
         <span class="bundle-group-tag" title="${letter}" style="color:${grpColor||'var(--pink)'};background:${grpColor?grpColor+'28':'var(--pdim)'};border-color:${grpColor?grpColor+'66':'var(--pborder)'};max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle;">그룹 ${bundleEditLabel(letter)}</span>
         <span style="font-size:13px;color:var(--text2);">${items.length}개 항목</span>
+        ${coupon.card?'':`<button type="button" class="pc-mini-btn" onclick="pcBundleCard('${letter}')">＋ 결제 카드 설정</button>`}
         <span style="font-family:'Space Mono',monospace;font-size:13px;font-weight:700;margin-left:auto;">
           ${hasCoupon
-            ?`<span style="color:var(--text2);font-size:12px;">할인전 ￦ ${originalKrwTotal.toLocaleString('ko-KR')}</span>
+            ?`<span style="color:var(--text2);">￦ ${originalKrwTotal.toLocaleString('ko-KR')}</span>
                <span style="color:var(--yellow);margin-left:6px;">− ￦ ${couponKrwAmt.toLocaleString('ko-KR')}</span>
                <span style="color:var(--text2);margin:0 4px;">=</span>
                <span style="color:var(--green);">￦ ${totalKrw.toLocaleString('ko-KR')}</span>`
@@ -8052,7 +8108,7 @@ function renderBundle(){
           `:''}
         </div>
       </div>
-      ${(()=>{const pc=coupon.card;if(!pc)return `<div style="display:flex;justify-content:flex-end;margin:-4px 0 8px;"><button type="button" class="pc-mini-btn" onclick="pcBundleCard('${letter}')">＋ 결제 카드 설정</button></div>`;const is=pcIssuer(pc.iss),cd=pcCard(is,pc.card);
+      ${(()=>{const pc=coupon.card;if(!pc)return '';const is=pcIssuer(pc.iss),cd=pcCard(is,pc.card);
         return `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;margin:-4px 0 8px;padding:6px 10px;border-radius:var(--rs);background:var(--surface);border:1px solid var(--border);">
           <span style="width:9px;height:9px;border-radius:50%;background:${(cd&&cd.color)||(is&&is.color)||'#6c757d'};"></span><b>${is?pcEsc(is.name):'(삭제된 카드사)'} · ${cd?pcEsc(cd.name):'(삭제된 카드)'}</b>
           ${pc.disc?`<span class="mono" style="color:var(--yellow);">카드할인 ▼ ￦ ${Number(pc.disc).toLocaleString('ko-KR')}</span>`:''}${pc.point?`<span class="mono" style="color:var(--cyan);">적립 ${Number(pc.point).toLocaleString('ko-KR')} P</span>`:''}${cd&&!pcMonthOn(cd,pc.month)?`<span style="color:var(--text3);">${pcMonthLabel(pc.month)} 혜택 미적용</span>`:''}<span style="color:var(--text3);margin-left:auto;">${pc.month||''}</span><button type="button" class="pc-mini-btn" onclick="pcBundleCard('${letter}')">카드 변경</button></div>`;})()}
@@ -8079,7 +8135,7 @@ function renderBundle(){
         <span class="bundle-group-tag" style="color:var(--yellow);background:var(--ydim);border-color:var(--yborder);">🎟 단일쿠폰</span>
         <span style="font-size:12px;color:var(--text3);font-family:'Space Mono',monospace;">${sc.date||''}</span>
         <span style="font-family:'Space Mono',monospace;font-size:13px;font-weight:700;margin-left:auto;">${kDisc>0
-          ?`<span style="color:var(--text2);font-size:12px;">할인전 ${bdKrw(kPre)}</span><span style="color:var(--yellow);margin-left:6px;">− ${bdKrw(kDisc)}</span><span style="color:var(--text2);margin:0 4px;">=</span><span style="color:var(--green);">${bdKrw(tc)}</span>`
+          ?`<span style="color:var(--text2);">${bdKrw(kPre)}</span><span style="color:var(--yellow);margin-left:6px;">− ${bdKrw(kDisc)}</span><span style="color:var(--text2);margin:0 4px;">=</span><span style="color:var(--green);">${bdKrw(tc)}</span>`
           :bdKrw(tc)}</span>
       </div>
       <div class="bundle-item">
