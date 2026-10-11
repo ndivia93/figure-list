@@ -860,6 +860,13 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
 .pd-wrap .pd-b .d{font-size:14px;font-family:'Space Mono',monospace;color:var(--accent);}
 td:hover>.pd-wrap.has-rel .pd-a{visibility:hidden;}
 td:hover>.pd-wrap.has-rel .pd-b{display:block;}
+.am-cpn.pc-hl{border-color:var(--pcc) !important;box-shadow:0 0 0 2px var(--pcc);}
+.am-drag{cursor:grab;user-select:none;}
+.am-drag:active{cursor:grabbing;}
+.am-link{flex-shrink:0;font-size:10px;font-weight:700;padding:1px 6px;border-radius:9px;border:1px solid currentColor;color:var(--accent);cursor:pointer;white-space:nowrap;line-height:1.5;}
+.am-link:hover{text-decoration:line-through;}
+body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-offset:1px;}
+#am-costs .cost-field.am-drop{outline:2px solid var(--accent) !important;background:var(--adim);}
 .am-cardbtn{flex-shrink:0;font-family:inherit;font-size:11px;font-weight:700;padding:2px 7px;line-height:1.5;border-radius:10px;cursor:pointer;background:transparent;border:1px solid var(--border2);color:var(--text2);}
 .am-cardbtn:hover{border-color:var(--accent);color:var(--accent);}
 .am-cardbtn.on{border-color:var(--accent);color:var(--accent);background:var(--adim);}
@@ -3271,10 +3278,10 @@ function openAddModal(editId){
   });
   updateCostFields(isEdit?editId:null,ex);
   // 모달-로컬 쿠폰 배열 초기화 (최대 4개) — 기존 항목의 쿠폰을 복제, 없으면 기본 1개
-  _amCoupons=(isEdit?couponsOf(ex):[]).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩'}));
+  _amCoupons=(isEdit?couponsOf(ex):[]).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩',...(c.field?{field:c.field}:{})}));
   renderAmCoupons();
   // 포인트 배열 초기화 (기록용, 최대 4개)
-  _amPoints=(isEdit?pointsOf(ex):[]).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩'}));
+  _amPoints=(isEdit?pointsOf(ex):[]).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩',...(c.field?{field:c.field}:{})}));
   renderAmPoints();
   // 메모·사진 별도 창 (왼쪽 아래)
   renderMemoSide(ex);
@@ -3785,7 +3792,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.10.11',['수정 창 카드 칸 호버 강조를 같은 결제에서 나온 칸끼리만','할인 탭: 카드 적립을 포인트 총합·포인트 필터에, 카드 할인을 할인 총합·묶음/단일 필터에 반영','수정 창 결제칸·카드 칸에 카드 버튼 — 묶음 없이 단일 결제에도 카드 혜택 적용','할인 탭 결제 카드 설정 버튼 아래로 이동','카드 정보 보호 — 예전 버전 저장본이 들어와도 카드 목록 유지','카드 탭에서 사라진 카드 복구 (이전 저장 기록 · 드라이브 이전 버전)','스냅샷 복원 시 카드·묶음쿠폰·그룹도 함께 복원','수정 창에서 묶음 코드 입력 후 저장 시 묶음 할인 마법사 진행 여부 확인','묶음 할인 마법사에서 등록된 카드사·카드를 한 화면에서 선택 · 최종 확인 단계에서도 카드 변경','한화 없이 결제일+외화만 입력된 결제칸도 묶음 목록에 표시']],
+  ['26.10.11',['수정 창 쿠폰·포인트 이름을 끌어 결제 항목에 놓으면 연동 (호버 시 서로 강조)','묶음 코드 자동 지정: 같은 결제일 안에서 A부터','수정 창 카드 칸 호버 강조를 같은 결제에서 나온 칸끼리만','할인 탭: 카드 적립을 포인트 총합·포인트 필터에, 카드 할인을 할인 총합·묶음/단일 필터에 반영','수정 창 결제칸·카드 칸에 카드 버튼 — 묶음 없이 단일 결제에도 카드 혜택 적용','할인 탭 결제 카드 설정 버튼 아래로 이동','카드 정보 보호 — 예전 버전 저장본이 들어와도 카드 목록 유지','카드 탭에서 사라진 카드 복구 (이전 저장 기록 · 드라이브 이전 버전)','스냅샷 복원 시 카드·묶음쿠폰·그룹도 함께 복원','수정 창에서 묶음 코드 입력 후 저장 시 묶음 할인 마법사 진행 여부 확인','묶음 할인 마법사에서 등록된 카드사·카드를 한 화면에서 선택 · 최종 확인 단계에서도 카드 변경','한화 없이 결제일+외화만 입력된 결제칸도 묶음 목록에 표시']],
   ['26.10.09',['카드 혜택마다 사용량 칸 따로 표시 (상시 혜택 구분)','한도 합계 + 상시혜택 표기','구매목록 결제일에 마우스 올리면 예상발매일 표시','수정 창 카드 칸 호버 시 혜택이 나온 비용 칸도 강조','카드 결산 사용/한도 표기 · 적용 중인 카드만 합산','구매목록 결제일 아래 (예상) 발매일 표시 수정','수정 창 카드 칸 호버 시 같은 카드 강조','월 혜택 끄면 전부 취소 · 켜면 전부 다시 적용','카드 할인·적립이 수정 창 쿠폰·포인트 칸에 카드1·카드2로 표시','한도 빈칸 = 상시 혜택','할인 탭 숫자 글꼴 통일','결제카드 탭 → 카드','카드별 월 혜택 적용 스위치 (확인 후 고정 · 소급 적용)','카드사·카드별 이 달 사용금액 표시','할인 탭에서 묶음 결제 카드 설정','할인 탭 단일쿠폰 칸에 쿠폰 개수','묶음 할인에 결제 카드 선택 단계 — 카드 혜택 월 한도 자동 계산','결제카드 탭 이번 달 사용량 표시']],
   ['26.10.08',['결제카드 탭 신설 — 카드사·카드별 할인·적립 한도 정리','구매목록 결제일 아래 (예상) 발매일 표시']],
   ['26.10.07',['배송중 상태 추가 — 운송장 입력 시 자동 전환','배송중 아이콘 빛 효과 · 배송중 모아보기 토글','해외 운송장 칸 추가 (17TRACK 조회)','운송장 조회 시 번호 자동 복사','썸네일·⠿ 끌어서 배송중 전환','위시 · 카드보기 그룹 기능','그룹 썸네일 2줄 가로 슬라이드 · 휠로 좌우 이동','수정 창에 그룹 선택 추가','검색창 하단 이동 · OR/AND · 여러 검색어 고정','방출 탭 정렬 옵션 확대','할인 탭 단일쿠폰·포인트 카드 · 보기 필터','쿠폰 칸 단일쿠폰 개별 표기']],
@@ -3937,13 +3944,42 @@ function amOpenImgEditor(){
   const inp=document.getElementById('am-imgurl');if(inp){const v=inp.value.trim();if(v){o.imageUrl=v;if(o.imgFileId){delete o.imgFileId;delete o.imgThumbId;}}else if(!o.imgFileId)o.imageUrl='';} // 패널 URL을 먼저 반영 (빈 칸 + 업로드 사진이면 유지)
   openImgUrlModal(id,'order');
 }
+// ── 쿠폰·포인트 ↔ 결제 항목 연동 (라벨을 끌어 결제칸에 놓기) ──
+const AM_FIELD_SHORT={pre:'선행',official:'정식',balance:'잔금',shipping:'배송',fullPayment:'전액',used:'거래',extra:'기타1',extra2:'기타2',extra3:'기타3',extra4:'기타4',extra5:'기타5',extra6:'기타6'};
+let _amDrag=null;
+function amLinkChip(c,kind,i){if(!c||!c.field)return '';return `<span class="am-link" onclick="event.stopPropagation();amUnlink('${kind}',${i})" title="${BM_FIELDS[c.field]||c.field} 결제와 연동됨 · 클릭하면 해제">${AM_FIELD_SHORT[c.field]||c.field}</span>`;}
+function amFieldBox(f){const inp=document.getElementById('cf-'+(PC_FIELD_ID[f]||f)+'-grp');return inp?inp.closest('.cost-field'):null;}
+function amLinkDrag(e,kind,i){_amDrag={kind,i};try{e.dataTransfer.setData('text/plain','link:'+kind+':'+i);e.dataTransfer.effectAllowed='link';}catch(x){}document.body.classList.add('am-linking');}
+function amLinkDragEnd(){_amDrag=null;document.body.classList.remove('am-linking');document.querySelectorAll('.cost-field.am-drop').forEach(e=>e.classList.remove('am-drop'));}
+function amLinkDrop(f){
+  if(!_amDrag)return;const {kind,i}=_amDrag;const arr=kind==='pt'?_amPoints:_amCoupons;const c=arr[i];amLinkDragEnd();if(!c)return;
+  c.field=f;kind==='pt'?renderAmPoints():renderAmCoupons();
+  showToast(`${kind==='pt'?'포인트':'쿠폰'}${i+1}을 ${BM_FIELDS[f]||f}에 연동했어요 — 수정을 눌러 저장`,'success');
+}
+function amUnlink(kind,i){const arr=kind==='pt'?_amPoints:_amCoupons;if(arr[i]){delete arr[i].field;kind==='pt'?renderAmPoints():renderAmCoupons();}}
+function amLinkHl(el,on){
+  document.querySelectorAll('.cost-field.pc-src').forEach(e=>{e.classList.remove('pc-src');e.style.removeProperty('--pcc');});
+  document.querySelectorAll('.am-cpn.pc-hl').forEach(e=>e.classList.remove('pc-hl'));
+  if(!on||!el.dataset.link)return;
+  el.classList.add('pc-hl');const box=amFieldBox(el.dataset.link);
+  if(box){box.style.setProperty('--pcc',getComputedStyle(el).getPropertyValue('--pcc'));box.classList.add('pc-src');}
+}
+// 결제칸 호버 → 그 결제에 연동된 쿠폰·포인트·카드 칸 강조
+function amFieldHl(f,on){
+  document.querySelectorAll('.am-cpn.pc-hl,.am-cardben.pc-hl').forEach(e=>e.classList.remove('pc-hl'));
+  if(!on)return;
+  document.querySelectorAll('.am-cpn').forEach(e=>{if(e.dataset.link===f)e.classList.add('pc-hl');});
+  const o=_addEditId!=null?orders.find(x=>x.id===_addEditId):null;if(!o)return;
+  const code=String((o.costGroups||{})[f]||''),sc='@'+o.id+':'+f;
+  document.querySelectorAll('.am-cardben').forEach(e=>{if(e.dataset.code===sc||(code&&e.dataset.code===code))e.classList.add('pc-hl');});
+}
 // ── 모달 쿠폰 편집기 (모달-로컬 _amCoupons, 최대 4개) ──────────
 let _amCoupons=[];
 // 쿠폰 카드 1장 (구매금액 카드처럼 2열 배치)
 function couponCardHtml(c,i){
-  return `<div class="cost-card" style="padding:8px 9px;min-width:0;overflow:hidden;">
+  return `<div class="cost-card am-cpn" data-link="${c.field||''}" style="--pcc:var(--yellow);padding:8px 9px;min-width:0;overflow:hidden;" onmouseenter="amLinkHl(this,true)" onmouseleave="amLinkHl(this,false)">
     <div style="display:flex;align-items:center;gap:5px;">
-      <span class="cost-label" style="margin:0;flex-shrink:0;color:var(--yellow);font-size:12px;">쿠폰${i+1}</span>
+      <span class="cost-label am-drag" draggable="true" ondragstart="amLinkDrag(event,'cpn',${i})" ondragend="amLinkDragEnd()" title="끌어서 결제 항목(정식예약 등)에 놓으면 그 결제와 연동돼요" style="margin:0;flex-shrink:0;color:var(--yellow);font-size:12px;">쿠폰${i+1}</span>${amLinkChip(c,'cpn',i)}
       <select class="form-select" style="width:58px;flex-shrink:0;padding:6px 2px;font-size:11px;" onchange="amSetCoupon(${i},'currency',this.value)">${CURRENCIES.map(cu=>`<option ${(c.currency||'₩')===cu?'selected':''}>${cu}</option>`).join('')}</select>
       <input type="number" class="mono" value="${c.amount||''}" placeholder="0" style="flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:13px;font-weight:600;padding:6px 6px;text-align:right;outline:none;" oninput="amSetCoupon(${i},'amount',this.value)">
       <button type="button" onclick="amRemoveCoupon(${i})" title="삭제" style="flex-shrink:0;width:22px;height:28px;padding:0;line-height:1;background:transparent;border:none;color:var(--text3);cursor:pointer;font-family:inherit;">✕</button>
@@ -3999,7 +4035,15 @@ function amInjectCardBtns(){
   const box=document.getElementById('am-costs');if(!box)return;
   const o=_addEditId!=null?orders.find(x=>x.id===_addEditId):null;
   box.querySelectorAll('input[id^="cf-"][id$="-grp"]').forEach(inp=>{
-    const fid=inp.id.slice(3,-4),f=PC_FIELD_REV[fid]||fid,row=inp.parentElement;if(!row||row.querySelector('.am-cardbtn'))return;
+    const fid=inp.id.slice(3,-4),f=PC_FIELD_REV[fid]||fid,row=inp.parentElement;
+    const fb=inp.closest('.cost-field');
+    if(fb&&!fb.dataset.lf){fb.dataset.lf=f;
+      fb.addEventListener('dragover',e=>{if(!_amDrag)return;e.preventDefault();fb.classList.add('am-drop');});
+      fb.addEventListener('dragleave',()=>fb.classList.remove('am-drop'));
+      fb.addEventListener('drop',e=>{if(!_amDrag)return;e.preventDefault();amLinkDrop(f);});
+      fb.addEventListener('mouseenter',()=>{if(!_amDrag)amFieldHl(f,true);});
+      fb.addEventListener('mouseleave',()=>amFieldHl(f,false));}
+    if(!row||row.querySelector('.am-cardbtn'))return;
     const code=o?String((o.costGroups||{})[f]||''):'';
     const has=o&&((code&&bundleCoupons[code]&&bundleCoupons[code].card)||(bundleCoupons['@'+o.id+':'+f]&&bundleCoupons['@'+o.id+':'+f].card));
     const b=document.createElement('button');b.type='button';b.className='am-cardbtn'+(has?' on':'');b.textContent='카드';
@@ -4068,9 +4112,9 @@ function amSetCoupon(i,field,val){
 // ── 모달 포인트 편집기 (기록용, 쿠폰과 동일 형식, 최대 4개) ──────
 let _amPoints=[];
 function pointCardHtml(c,i){
-  return `<div class="cost-card" style="padding:8px 9px;min-width:0;overflow:hidden;">
+  return `<div class="cost-card am-cpn" data-link="${c.field||''}" style="--pcc:var(--cyan);padding:8px 9px;min-width:0;overflow:hidden;" onmouseenter="amLinkHl(this,true)" onmouseleave="amLinkHl(this,false)">
     <div style="display:flex;align-items:center;gap:5px;">
-      <span class="cost-label" style="margin:0;flex-shrink:0;color:var(--cyan);font-size:12px;">포인트${i+1}</span>
+      <span class="cost-label am-drag" draggable="true" ondragstart="amLinkDrag(event,'pt',${i})" ondragend="amLinkDragEnd()" title="끌어서 결제 항목(정식예약 등)에 놓으면 그 결제와 연동돼요" style="margin:0;flex-shrink:0;color:var(--cyan);font-size:12px;">포인트${i+1}</span>${amLinkChip(c,'pt',i)}
       <select class="form-select" style="width:58px;flex-shrink:0;padding:6px 2px;font-size:11px;" onchange="amSetPoint(${i},'currency',this.value)">${CURRENCIES.map(cu=>`<option ${(c.currency||'₩')===cu?'selected':''}>${cu}</option>`).join('')}</select>
       <input type="number" class="mono" value="${c.amount||''}" placeholder="0" style="flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:13px;font-weight:600;padding:6px 6px;text-align:right;outline:none;" oninput="amSetPoint(${i},'amount',this.value)">
       <button type="button" onclick="amRemovePoint(${i})" title="삭제" style="flex-shrink:0;width:22px;height:28px;padding:0;line-height:1;background:transparent;border:none;color:var(--text3);cursor:pointer;font-family:inherit;">✕</button>
@@ -4294,9 +4338,9 @@ function submitAdd(editId){
   const localAmt=Number(document.getElementById('am-local-amt')?.value)||0;
   const localPrice=localAmt?{currency:localCur,amount:localAmt}:null;
   // 쿠폰 (최대 4개): 모달-로컬 배열에서 금액 있는 것만
-  const coupons=(_amCoupons||[]).filter(c=>Number(c.amount)).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩'}));
+  const coupons=(_amCoupons||[]).filter(c=>Number(c.amount)).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩',...(c.field?{field:c.field}:{})}));
   // 포인트 (최대 4개, 기록용)
-  const points=(_amPoints||[]).filter(c=>Number(c.amount)).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩'}));
+  const points=(_amPoints||[]).filter(c=>Number(c.amount)).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩',...(c.field?{field:c.field}:{})}));
   // 사진 URL (썸네일 초점은 이미지 편집 창에서 관리하므로 여기서 건드리지 않음)
   const imgUrl=(document.getElementById('am-imgurl')?.value||'').trim();
   const trackCourier=document.getElementById('am-track-courier')?.value||'';
@@ -4880,12 +4924,16 @@ let _bmChecked=new Set();   // "orderId:field" — 묶기 대상 체크
 let _bmDate='';             // 현재 묶기 대상 결제일(YYMMDD). 비어있으면 '초기' 상태(체크박스 없음)
 let _bmCode='';             // 부여될(또는 픽업된) 할인 코드 — 창 오른쪽 위에 표기
 
-function nextBundleLetter(){
-  const used=new Set();
+// 같은 결제일(YYMMDD) 안에서만 알파벳을 셈 — 그 날짜에 묶음이 없으면 A부터
+function nextBundleLetter(dd){
+  const used=new Set();dd=String(dd||'').replace(/\D/g,'');
   orders.forEach(o=>Object.values(o.costGroups||{}).forEach(v=>{
-    if(!v)return; const m=String(v).toUpperCase().match(/[A-Z]$/); if(m)used.add(m[0]);
+    if(!v)return;const c=String(v).toUpperCase();
+    if(dd&&!c.startsWith(dd))return;
+    const m=c.slice(dd.length).match(/^([A-Z]{1,2})$/);if(m)used.add(m[1]);
   }));
   for(let i=0;i<26;i++){const L=String.fromCharCode(65+i);if(!used.has(L))return L;}
+  for(let i=0;i<26;i++)for(let j=0;j<26;j++){const L=String.fromCharCode(65+i)+String.fromCharCode(65+j);if(!used.has(L))return L;}
   return 'A';
 }
 function openBundleMake(){
@@ -4925,7 +4973,7 @@ function _bmLoadDateItems(dd){
 function bmLoadDate(dd,checkKey){
   if(!dd)return;
   _bmDate=dd;
-  _bmCode=dd+nextBundleLetter();   // 등록될 예정 코드 미리 표기
+  _bmCode=dd+nextBundleLetter(dd);   // 등록될 예정 코드 미리 표기
   _bmLoadDateItems(dd);
   _bmChecked=new Set(checkKey?[checkKey]:[]);  // 추적한 상품만 체크
   renderBundleMake();
@@ -5003,7 +5051,7 @@ function bmBundle(){
   const dd=_bmDate||bmFieldDate(checked[0]);
   if(!dd){showToast('결제일이 없는 항목이 있습니다','error');return;}
   if(checked.some(k=>bmFieldDate(k)!==dd)){showToast('같은 날짜끼리만 묶을 수 있습니다','error');return;}
-  const code=_bmCode||(dd+nextBundleLetter());
+  const code=_bmCode||(dd+nextBundleLetter(dd));
   const checkedSet=new Set(checked);
   // 제거: target 코드였는데 체크 해제된 항목
   const removed=[];
@@ -5048,6 +5096,8 @@ function bmwShares(){
   return sh;
 }
 function bmwStart(code,keys,removed,dd){
+  if(!code.startsWith('@')&&bundleCoupons[code]&&!orders.some(o=>Object.values(o.costGroups||{}).map(String).includes(code))){
+    if(bundleCoupons[code].card)pcApplyToBundle(code,null);delete bundleCoupons[code];}   // 비어 있던 옛 묶음 정보는 새 묶음에 이어받지 않음
   const curCount={};
   keys.forEach(k=>{const {o,f}=bmwItem(k);const e=(o&&o.localPrices||{})[f];if(e&&e.currency&&!isKRW(e.currency))curCount[e.currency]=(curCount[e.currency]||0)+1;});
   let cur='$(달러)',mx=0;Object.entries(curCount).forEach(([c,n])=>{if(n>mx){mx=n;cur=c;}});
