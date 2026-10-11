@@ -843,6 +843,11 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
 .pc-cap .t b small{font-size:12px;color:var(--text2);font-weight:400;}
 .pc-cap.un{border-style:dashed;}
 .pc-bar.un i{width:100%;opacity:.35;background-image:repeating-linear-gradient(45deg,transparent 0 6px,rgba(0,0,0,.25) 6px 12px) !important;}
+.pc-recover{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 14px;margin-bottom:14px;border-radius:var(--rs);border:1px solid var(--yborder);background:var(--ydim);}
+.pc-recover b{display:block;color:var(--yellow);font-size:14px;margin-bottom:2px;}
+.pc-recover span{font-size:12px;color:var(--text2);}
+.pc-recover .act{display:flex;gap:6px;flex-wrap:wrap;}
+.pc-recover .btn{font-size:12px;padding:6px 12px;}
 .pc-tots{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
 .pc-tot{flex:1 1 240px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:var(--rs);background:var(--surface2);border:1px solid var(--border);}
 .pc-tot.d{color:var(--yellow);}.pc-tot.p{color:var(--cyan);}
@@ -855,6 +860,9 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
 .pd-wrap .pd-b .d{font-size:14px;font-family:'Space Mono',monospace;color:var(--accent);}
 td:hover>.pd-wrap.has-rel .pd-a{visibility:hidden;}
 td:hover>.pd-wrap.has-rel .pd-b{display:block;}
+.am-cardbtn{flex-shrink:0;font-family:inherit;font-size:11px;font-weight:700;padding:2px 7px;line-height:1.5;border-radius:10px;cursor:pointer;background:transparent;border:1px solid var(--border2);color:var(--text2);}
+.am-cardbtn:hover{border-color:var(--accent);color:var(--accent);}
+.am-cardbtn.on{border-color:var(--accent);color:var(--accent);background:var(--adim);}
 .cost-field.pc-src{border-color:var(--pcc) !important;box-shadow:0 0 0 2px var(--pcc);}
 .am-cardben{transition:border-color .12s,box-shadow .12s;}
 .am-cardben.pc-hl{border-color:var(--pcc) !important;box-shadow:0 0 0 2px var(--pcc);}
@@ -3368,11 +3376,13 @@ function bmwMonth(){
   if(s.length===6)return '20'+s.slice(0,2)+'-'+s.slice(2,4);
   const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');
 }
+// 단일 결제 카드 혜택(묶음 없이): bundleCoupons['@주문id:필드'] = {solo:{id,f}, card:{...}} — 할인 탭 묶음 목록엔 안 나옴
+function pcBcLive(bc){return !!bc&&(!bc.solo||orders.some(o=>o.id===bc.solo.id));}
 // 이 카드·혜택이 해당 월에 이미 쓴 금액 (다른 묶음들에서)
 function pcUsed(cardId,bid,month,exceptCode){
   let s=0;
   Object.entries(bundleCoupons||{}).forEach(([code,bc])=>{
-    if(code===exceptCode||!bc||!bc.card||bc.card.card!==cardId||bc.card.month!==month)return;
+    if(code===exceptCode||!pcBcLive(bc)||!bc.card||bc.card.card!==cardId||bc.card.month!==month)return;
     (bc.card.applied||[]).forEach(a=>{if(!bid||a.bid===bid)s+=Number(a.amount)||0;});
   });
   return s;
@@ -3380,7 +3390,7 @@ function pcUsed(cardId,bid,month,exceptCode){
 // 한도가 있는 혜택에서만 쓴 금액 (남은 한도 계산용)
 function pcUsedCapped(card,type,month){let s=0;(card.benefits||[]).forEach(b=>{if(!(Number(b.cap)>0)||((b.type==='point')!==(type==='point')))return;s+=pcUsed(card.id,b.id,month,null);});return s;}
 function pcUsedType(cardId,type,month){
-  let s=0;Object.values(bundleCoupons||{}).forEach(bc=>{if(!bc||!bc.card||bc.card.card!==cardId||bc.card.month!==month)return;(bc.card.applied||[]).forEach(a=>{if((a.type==='point')===(type==='point'))s+=Number(a.amount)||0;});});return s;
+  let s=0;Object.values(bundleCoupons||{}).forEach(bc=>{if(!pcBcLive(bc)||!bc.card||bc.card.card!==cardId||bc.card.month!==month)return;(bc.card.applied||[]).forEach(a=>{if((a.type==='point')===(type==='point'))s+=Number(a.amount)||0;});});return s;
 }
 function bmwBase(){
   const t=Number(_bmw.totalKrw)||0;if(t>0)return t;
@@ -3421,6 +3431,7 @@ function pcApplyToBundle(code,info){
   bc.card={iss:info.iss,card:info.card,month:info.month,base:info.base,off:(info.off||[]).slice(),date:info.date||'',
     applied:info.rows.filter(r=>r.on&&r.applied>0).map(r=>({bid:r.b.id,type:r.b.type==='point'?'point':'discount',title:r.b.title||'',amount:r.applied})),disc:info.disc,point:info.point};
   if(!(info.disc||info.point))return;
+  if(bc.solo){const o=orders.find(x=>x.id===bc.solo.id);if(o){if(!o.cardBen)o.cardBen={};o.cardBen[code]={disc:info.disc,point:info.point,card:info.card};}return;}
   const per={};let tot=0;
   orders.forEach(o=>{Object.entries(o.costGroups||{}).forEach(([f,c])=>{if(c!==code)return;const v=Number((o.costs||{})[f])||0;per[o.id]=(per[o.id]||0)+v;tot+=v;});});
   const ids=Object.keys(per);let accD=0,accP=0;
@@ -3432,14 +3443,14 @@ function pcApplyToBundle(code,info){
 // 이 카드·월을 쓴 묶음들의 혜택 다시 계산 (날짜순으로 한도 차감)
 function pcRecalcMonth(cardId,month){
   const iss=payCards.find(i=>(i.cards||[]).some(c=>c.id===cardId));const card=pcCard(iss,cardId);if(!card)return 0;
-  const list=Object.entries(bundleCoupons||{}).filter(([c,bc])=>bc&&bc.card&&bc.card.card===cardId&&bc.card.month===month)
+  const list=Object.entries(bundleCoupons||{}).filter(([c,bc])=>pcBcLive(bc)&&bc.card&&bc.card.card===cardId&&bc.card.month===month)
     .sort((a,b)=>String(a[1].card.date||'').localeCompare(String(b[1].card.date||''))||a[0].localeCompare(b[0]));
   list.forEach(([c,bc])=>{bc.card.applied=[];});
   list.forEach(([code,bc])=>{const r=pcCalc(card,Number(bc.card.base)||0,month,bc.card.off,code);
     pcApplyToBundle(code,{iss:iss.id,card:cardId,month,base:bc.card.base,off:bc.card.off,date:bc.card.date,...r});});
   return list.length;
 }
-function pcBundlesIn(cardId,month){return Object.values(bundleCoupons||{}).filter(bc=>bc&&bc.card&&bc.card.card===cardId&&bc.card.month===month);}
+function pcBundlesIn(cardId,month){return Object.values(bundleCoupons||{}).filter(bc=>pcBcLive(bc)&&bc.card&&bc.card.card===cardId&&bc.card.month===month);}
 // 월 혜택 켜기/끄기 — 켤 때 확인 후 고정, 같은 달 기존 묶음 소급 적용 여부 확인
 function pcSetMonth(cardId,month,on,after){
   const iss=payCards.find(i=>(i.cards||[]).some(c=>c.id===cardId));const card=pcCard(iss,cardId);if(!card)return;
@@ -3469,7 +3480,7 @@ function pcUnlockMonth(cardId,month){
 }
 // 이 카드·월 결제(사용)금액 합계
 function pcSpend(cardId,month,issId){
-  let s=0;Object.values(bundleCoupons||{}).forEach(bc=>{if(!bc||!bc.card||bc.card.month!==month)return;if(cardId?bc.card.card===cardId:bc.card.iss===issId)s+=Number(bc.card.base)||0;});return s;
+  let s=0;Object.values(bundleCoupons||{}).forEach(bc=>{if(!pcBcLive(bc)||!bc.card||bc.card.month!==month)return;if(cardId?bc.card.card===cardId:bc.card.iss===issId)s+=Number(bc.card.base)||0;});return s;
 }
 function pcNowMonth(){const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');}
 function pcMonthToggleHtml(card,month,ctx){
@@ -3484,22 +3495,34 @@ function pcMonthToggleHtml(card,month,ctx){
 function bmwPickIss(id){_bmw.pcIss=id;const iss=pcIssuer(id);_bmw.pcCard=iss&&iss.cards&&iss.cards.length===1?iss.cards[0].id:null;_bmw.pcOff=[];bmwRender();}
 function bmwPickCard(id){_bmw.pcCard=id;_bmw.pcOff=[];bmwRender();}
 function bmwToggleBen(bid,on){_bmw.pcOff=_bmw.pcOff.filter(x=>x!==bid);if(!on)_bmw.pcOff.push(bid);bmwRender();}
+// 카드 고르기 — 등록된 카드사·카드를 모두 한 화면에
+function bmwPickBoth(iss,card){_bmw.pcIss=iss||null;_bmw.pcCard=card||null;_bmw.pcOff=[];bmwRender();}
+function bmwCardPickerHtml(){
+  const none=!_bmw.pcCard;
+  let h=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span style="font-size:14px;color:var(--text3);">결제 카드 선택</span>
+    <button type="button" onclick="bmwPickBoth(null,null)" style="margin-left:auto;font-family:inherit;font-size:14px;font-weight:700;padding:6px 14px;border-radius:20px;cursor:pointer;border:1px solid ${none?'var(--accent)':'var(--border2)'};background:${none?'var(--adim)':'transparent'};color:${none?'var(--accent)':'var(--text2)'};">카드 안 씀</button></div>`;
+  h+=`<div style="max-height:300px;overflow-y:auto;margin-bottom:12px;">`+payCards.map(iss=>`<div style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;color:var(--text2);margin-bottom:6px;"><span style="width:9px;height:9px;border-radius:50%;background:${iss.color||'#6c757d'};"></span>${pcEsc(iss.name)}<span style="font-weight:400;color:var(--text3);font-size:12px;">${(iss.cards||[]).length}장</span></div>
+      <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;">${(iss.cards||[]).length?(iss.cards||[]).map(c=>`<div class="pc-plastic ${_bmw.pcCard===c.id?'on':''}" data-bmw-card="${c.id}" style="flex:0 0 170px;width:170px;height:104px;padding:11px 12px;background:${pcGrad(c.color||iss.color||'#2b2d42')};" onclick="bmwPickBoth('${iss.id}','${c.id}')">
+        <div style="display:flex;justify-content:space-between;"><span class="iss">${pcEsc(iss.name)}</span><span class="kind">${c.kind==='check'?'체크':'신용'}</span></div>
+        <div class="nm" style="font-size:14px;">${pcEsc(c.name)}</div>
+        <div class="bot"><span class="chip" style="width:24px;height:17px;"></span><span>${c.last4?'•••• '+pcEsc(c.last4):''}</span></div></div>`).join(''):'<span style="color:var(--text3);font-size:13px;">등록된 카드가 없어요</span>'}</div></div>`).join('')+`</div>`;
+  return h;
+}
+// 최종 단계에서 바로 바꿀 수 있는 카드 선택 목록
+function bmwCardSelectHtml(){
+  const opts=payCards.flatMap(i=>(i.cards||[]).map(c=>`<option value="${i.id}|${c.id}" ${_bmw.pcCard===c.id?'selected':''}>${pcEsc(i.name)} · ${pcEsc(c.name)}${c.last4?' ('+pcEsc(c.last4)+')':''}</option>`)).join('');
+  return `<select id="bmw-card-sel" onchange="const v=this.value.split('|');bmwPickBoth(v[0]||null,v[1]||null)" style="font-family:inherit;font-size:16px;font-weight:700;padding:4px 8px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);max-width:60%;"><option value="" ${!_bmw.pcCard?'selected':''}>카드 안 씀</option>${opts}</select>`;
+}
 function bmwCardStepHtml(){
   const base=bmwBase();
   let h=`<div style="font-size:18px;color:var(--text2);margin-bottom:14px;line-height:1.6;">결제한 <b style="color:var(--text);">카드</b>를 고르면 카드 혜택(할인·적립)을 월 한도에 맞춰 자동으로 계산합니다. <span style="color:var(--text3);">(카드 안 씀이면 그냥 다음)</span></div>`;
   if(!payCards.length){
     return h+`<div style="padding:22px;text-align:center;border:1px dashed var(--border2);border-radius:10px;color:var(--text2);font-size:16px;line-height:1.7;">등록된 결제카드가 없어요.<br><span style="font-size:14px;color:var(--text3);">결제카드 탭에서 카드사와 카드를 먼저 추가하면 여기서 고를 수 있어요.</span></div>`;
   }
-  h+=`<div style="font-size:14px;color:var(--text3);margin-bottom:6px;">① 카드사</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
-    <button type="button" onclick="_bmw.pcIss=null;_bmw.pcCard=null;bmwRender()" style="font-family:inherit;font-size:15px;font-weight:700;padding:8px 14px;border-radius:20px;cursor:pointer;border:1px solid ${!_bmw.pcIss?'var(--accent)':'var(--border2)'};background:${!_bmw.pcIss?'var(--adim)':'transparent'};color:${!_bmw.pcIss?'var(--accent)':'var(--text2)'};">카드 안 씀</button>
-    ${payCards.map(i=>`<button type="button" onclick="bmwPickIss('${i.id}')" style="font-family:inherit;font-size:15px;font-weight:700;padding:8px 14px;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid ${_bmw.pcIss===i.id?'var(--accent)':'var(--border2)'};background:${_bmw.pcIss===i.id?'var(--adim)':'transparent'};color:${_bmw.pcIss===i.id?'var(--text)':'var(--text2)'};"><span style="width:9px;height:9px;border-radius:50%;background:${i.color||'#6c757d'};"></span>${pcEsc(i.name)}</button>`).join('')}</div>`;
-  const iss=pcIssuer(_bmw.pcIss);if(!iss)return h;
-  h+=`<div style="font-size:14px;color:var(--text3);margin-bottom:6px;">② 카드</div><div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;">${(iss.cards||[]).length?(iss.cards||[]).map(c=>`<div class="pc-plastic ${_bmw.pcCard===c.id?'on':''}" style="width:170px;height:104px;padding:11px 12px;background:${pcGrad(c.color||iss.color||'#2b2d42')};" onclick="bmwPickCard('${c.id}')">
-      <div style="display:flex;justify-content:space-between;"><span class="iss">${pcEsc(iss.name)}</span><span class="kind">${c.kind==='check'?'체크':'신용'}</span></div>
-      <div class="nm" style="font-size:14px;">${pcEsc(c.name)}</div>
-      <div class="bot"><span class="chip" style="width:24px;height:17px;"></span><span>${c.last4?'•••• '+pcEsc(c.last4):''}</span></div></div>`).join(''):'<span style="color:var(--text3);font-size:14px;">이 카드사에 등록된 카드가 없어요</span>'}</div>`;
+  h+=bmwCardPickerHtml();
   const r=bmwCardCalc();if(!r)return h;
-  h+=`<div style="font-size:14px;color:var(--text3);margin-bottom:6px;">③ 결제금액 · 혜택 확인 <span style="color:var(--text3);">(${r.month} 기준 월 한도)</span></div>
+  h+=`<div style="font-size:14px;color:var(--text3);margin-bottom:6px;">결제금액 · 혜택 확인 <span style="color:var(--text3);">(${r.month} 기준 월 한도)</span></div>
     <div style="display:flex;justify-content:space-between;align-items:baseline;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 16px;margin-bottom:8px;">
       <span style="font-size:16px;color:var(--text2);">결제금액 ${Number(_bmw.totalKrw)>0?'(한화 총액)':'(각 결제칸 합계)'}</span><b class="mono" style="font-size:20px;">￦ ${base.toLocaleString('ko-KR')}</b></div>`;
   h+=`<div style="margin-bottom:8px;">${pcMonthToggleHtml(r.card,r.month,'bmwRender')}</div>`;
@@ -3522,6 +3545,88 @@ function bmwCardStepHtml(){
 // ── 결제카드 탭 (카드사 > 카드 > 혜택) — 구매목록과 연동 전, 구성만 ──
 const PC_COLORS=['#2b2d42','#3a86ff','#8338ec','#ff006e','#fb5607','#ffbe0b','#06d6a0','#118ab2','#6c757d','#c1121f'];
 let _pcSel={iss:null,card:null};let _pcMonth=null;try{_pcSel=JSON.parse(localStorage.getItem('pcSel')||'null')||_pcSel;}catch(e){}
+// ── 카드 정보 보호 · 복구 ──
+// 묶음들이 가리키는 카드 id
+function pcRefIds(bcs){const r=new Map();Object.entries(bcs||{}).forEach(([code,bc])=>{if(bc&&bc.card&&bc.card.card){if(!r.has(bc.card.card))r.set(bc.card.card,{iss:bc.card.iss,codes:[]});r.get(bc.card.card).codes.push(code);}});return r;}
+// 들어온 데이터의 카드 목록 결정 — 카드 정보가 비어 있는데(예전 버전 저장 등) 묶음은 지금 카드를 가리키면 지금 카드를 유지
+function pcIncoming(d){
+  const inc=Array.isArray(d&&d.payCards)?d.payCards:[];
+  if(inc.length)return inc;
+  const ref=pcRefIds(d&&d.bundleCoupons);
+  if(payCards.length&&ref.size&&payCards.some(i=>(i.cards||[]).some(c=>ref.has(c.id)))){
+    setTimeout(()=>showToast('불러온 데이터에 카드 정보가 없어 지금 카드 목록을 유지했어요','warn'),600);
+    return payCards;
+  }
+  return inc;
+}
+// 지금 없는 카드를 가리키는 묶음
+function pcOrphans(){const out=[];pcRefIds(bundleCoupons).forEach((v,cid)=>{const is=pcIssuer(v.iss);if(!pcCard(is,cid)&&!payCards.some(i=>(i.cards||[]).some(c=>c.id===cid)))out.push({cid,iss:v.iss,codes:v.codes});});return out;}
+function pcOrphanBannerHtml(){
+  const o=pcOrphans();if(!o.length)return '';
+  const n=o.reduce((a,x)=>a+x.codes.length,0);
+  return `<div class="pc-recover"><div><b>카드 정보가 사라진 것 같아요</b><span>묶음 ${n}개가 지금 목록에 없는 카드 ${o.length}장을 가리키고 있어요. 이전 저장 기록에서 찾아 되살릴 수 있어요.</span></div>
+    <div class="act"><button type="button" class="btn primary" onclick="pcRecover()">이전 기록에서 복구</button><button type="button" class="btn" onclick="pcRebuildAsk()">빈 카드로 다시 만들기</button></div></div>`;
+}
+// 저장 기록 모으기: 이 브라우저 저장본 · 스냅샷 · (연결 시) 드라이브 이전 버전
+function pcScanLocal(){
+  const out=[];const ks=[STORAGE_KEY,'figure_v125','figure_v125_user'].filter((k,i,a)=>a.indexOf(k)===i);
+  ks.forEach(k=>{
+    try{const raw=localStorage.getItem(k);if(raw){const d=JSON.parse(raw);out.push({src:'이 브라우저 저장본',at:d.savedAt||'',d});}}catch(e){}
+    try{(JSON.parse(localStorage.getItem(k+'_snapshots')||'[]')||[]).forEach(sn=>{try{const d=JSON.parse(sn.data);out.push({src:'자동 스냅샷',at:d.savedAt||sn.time||'',d});}catch(e){}});}catch(e){}
+  });
+  return out;
+}
+function pcScore(c,orph){const ids=new Set((c.d.payCards||[]).flatMap(i=>(i.cards||[]).map(x=>x.id)));return orph.filter(o=>ids.has(o.cid)).length;}
+function pcBest(list,orph){let best=null;list.forEach(c=>{if(!Array.isArray(c.d.payCards)||!c.d.payCards.length)return;const sc=pcScore(c,orph);if(!sc)return;if(!best||sc>best.sc||(sc===best.sc&&String(c.at)>String(best.at)))best={...c,sc};});return best;}
+async function pcScanDrive(orph){
+  if(typeof gdToken==='undefined'||!gdToken)return null;
+  try{
+    const id=await gdFind();if(!id)return null;
+    const r=await fetch(`https://www.googleapis.com/drive/v3/files/${id}/revisions?fields=revisions(id,modifiedTime)&pageSize=200`,{headers:gdH()});
+    if(!r.ok)return null;const revs=((await r.json()).revisions||[]).reverse().slice(0,60);
+    for(const rv of revs){
+      try{const x=await fetch(`https://www.googleapis.com/drive/v3/files/${id}/revisions/${rv.id}?alt=media`,{headers:gdH()});if(!x.ok)continue;
+        const d=JSON.parse(await x.text());const c={src:'드라이브 이전 버전',at:d.savedAt||rv.modifiedTime,d};
+        if(Array.isArray(d.payCards)&&d.payCards.length&&pcScore(c,orph))return {...c,sc:pcScore(c,orph)};}catch(e){}
+    }
+  }catch(e){}
+  return null;
+}
+async function pcRecover(){
+  const orph=pcOrphans();if(!orph.length){showToast('되살릴 카드가 없어요','success');return;}
+  showToast('저장 기록에서 카드를 찾는 중…','warn');
+  let best=pcBest(pcScanLocal(),orph);
+  if(!best||best.sc<orph.length){const dv=await pcScanDrive(orph);if(dv&&(!best||dv.sc>best.sc||(dv.sc===best.sc&&String(dv.at)>String(best.at))))best=dv;}
+  if(!best){
+    openNoticeModal('카드 복구',`이 브라우저와 ${(typeof gdToken!=='undefined'&&gdToken)?'드라이브 ':''}저장 기록에서 사라진 카드를 찾지 못했어요.${(typeof gdToken!=='undefined'&&gdToken)?'':'<br><span style="color:var(--text3);font-size:12px;">구글 드라이브에 연결하면 드라이브 이전 버전도 찾아봐요.</span>'}<br>대신 같은 카드 자리를 빈 카드로 다시 만들어 이름·혜택만 다시 넣을 수 있어요.`,
+      [{label:'취소'},{label:'빈 카드로 다시 만들기',primary:true,onClick:()=>pcRebuild()}]);return;}
+  const dt=best.at?formatDate(best.at):'';
+  const list=best.d.payCards.map(i=>`<div style="margin-top:4px;"><b>${pcEsc(i.name)}</b> <span style="color:var(--text2);">${(i.cards||[]).map(c=>pcEsc(c.name)).join(', ')||'카드 없음'}</span></div>`).join('');
+  openNoticeModal('카드 복구',`<b>${best.src}</b>${dt?' ('+dt+')':''}에서 카드를 찾았어요.<br>사라진 카드 ${orph.length}장 중 <b>${best.sc}장</b>이 들어 있어요.<div style="text-align:left;margin-top:10px;font-size:13px;line-height:1.6;">${list}</div><div style="margin-top:10px;font-size:12px;color:var(--text3);">지금 있는 카드는 그대로 두고, 없는 카드사·카드만 추가해요.</div>`,
+    [{label:'취소'},{label:'복구',primary:true,onClick:()=>pcRestoreFrom(best.d.payCards)}]);
+}
+function pcRestoreFrom(list){
+  let ni=0,nc=0;
+  JSON.parse(JSON.stringify(list||[])).forEach(i=>{const ex=pcIssuer(i.id);
+    if(!ex){payCards.push(i);ni++;nc+=(i.cards||[]).length;return;}
+    (i.cards||[]).forEach(c=>{if(!(ex.cards||[]).some(x=>x.id===c.id)){(ex.cards=ex.cards||[]).push(c);nc++;}});});
+  autoSave();renderPayCards();if(typeof renderBundle==='function')renderBundle();renderOrder();
+  showToast(`카드사 ${ni}곳 · 카드 ${nc}장을 되살렸어요`,'success');
+}
+function pcRebuildAsk(){openNoticeModal('빈 카드로 다시 만들기','사라진 카드 자리에 이름 없는 카드를 만들어 묶음과의 연결을 되살려요.<br>혜택 이름은 묶음 기록에서 가져오고, <b>비율·한도는 다시 입력</b>해야 해요.<br><span style="color:var(--text3);font-size:12px;">먼저 \'이전 기록에서 복구\'를 해보는 걸 추천해요.</span>',[{label:'취소'},{label:'만들기',primary:true,onClick:()=>pcRebuild()}]);}
+function pcRebuild(){
+  const orph=pcOrphans();if(!orph.length)return;let n=0;
+  orph.forEach(o=>{let is=pcIssuer(o.iss);
+    if(!is){is={id:o.iss||pcId(),name:'복구된 카드사',color:'#6c757d',cards:[]};payCards.push(is);}
+    const bens=new Map();const months={};
+    o.codes.forEach(code=>{const c=(bundleCoupons[code]||{}).card||{};if(c.month)months[c.month]={on:true,locked:true};
+      (c.applied||[]).forEach(a=>{if(a.bid&&!bens.has(a.bid))bens.set(a.bid,{id:a.bid,type:a.type==='point'?'point':'discount',title:a.title||'',rate:0,cap:0,cond:''});});});
+    (is.cards=is.cards||[]).push({id:o.cid,name:'복구된 카드 '+(++n),kind:'credit',color:'#6c757d',last4:'',prevReq:0,fee:0,memo:'복구됨 — 이름·비율·한도를 다시 입력해주세요',months,benefits:[...bens.values()]});
+  });
+  _pcSel={iss:payCards[payCards.length-1].id,card:null};pcSaveSel();
+  autoSave();renderPayCards();if(typeof renderBundle==='function')renderBundle();renderOrder();
+  showToast(`카드 ${n}장을 다시 만들었어요 — 이름과 혜택 비율·한도를 채워주세요`,'success');
+}
 function pcSaveSel(){try{localStorage.setItem('pcSel',JSON.stringify(_pcSel));}catch(e){}}
 const pcId=()=>'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const pcEsc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
@@ -3583,9 +3688,10 @@ function renderPayCards(){
       <span class="dot" style="background:${i.color||'#6c757d'};"></span><span class="n">${pcEsc(i.name)}<small>${(()=>{const sp=pcSpend(null,_pcMonth||pcNowMonth(),i.id);return sp?'이 달 '+pcWon(sp):'';})()}</small></span><span class="c">${(i.cards||[]).length}</span></button>`).join('')
     :'<div style="font-size:12px;color:var(--text3);padding:8px 4px;line-height:1.6;">카드사를 추가해주세요<br>(예: 신한, 현대, 삼성)</div>';
   // 본문
-  if(!iss){main.innerHTML=`<div class="pc-empty">왼쪽 <b>＋ 추가</b>로 카드사를 만들고,<br>카드사 안에 카드를 추가해 카드별 할인·적립 한도를 정리해보세요.</div>`;return;}
+  const _rb=pcOrphanBannerHtml();
+  if(!iss){main.innerHTML=_rb+`<div class="pc-empty">왼쪽 <b>＋ 추가</b>로 카드사를 만들고,<br>카드사 안에 카드를 추가해 카드별 할인·적립 한도를 정리해보세요.</div>`;return;}
   const card=pcCard(iss,_pcSel.card);
-  let h=`<div class="pc-head"><span style="width:14px;height:14px;border-radius:50%;background:${iss.color||'#6c757d'};"></span><h3>${pcEsc(iss.name)}</h3><span class="sub">카드 ${(iss.cards||[]).length}장</span>
+  let h=_rb+`<div class="pc-head"><span style="width:14px;height:14px;border-radius:50%;background:${iss.color||'#6c757d'};"></span><h3>${pcEsc(iss.name)}</h3><span class="sub">카드 ${(iss.cards||[]).length}장</span>
     <div class="act"><button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="pcEditIssuer('${iss.id}')">카드사 수정</button></div></div>`;
   h+=`<div class="pc-cards">${(iss.cards||[]).map(c=>{const k=pcCaps(c);return `<div class="pc-plastic ${c.id===_pcSel.card?'on':''}" style="background:${pcGrad(c.color||iss.color||'#2b2d42')};" onclick="_pcSel.card='${c.id}';pcSaveSel();renderPayCards()">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;"><span class="iss">${pcEsc(iss.name)}</span><span class="kind">${c.kind==='check'?'체크':'신용'}</span></div>
@@ -3679,6 +3785,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
+  ['26.10.11',['할인 탭: 카드 적립을 포인트 총합·포인트 필터에, 카드 할인을 할인 총합·묶음/단일 필터에 반영','수정 창 결제칸·카드 칸에 카드 버튼 — 묶음 없이 단일 결제에도 카드 혜택 적용','할인 탭 결제 카드 설정 버튼 아래로 이동','카드 정보 보호 — 예전 버전 저장본이 들어와도 카드 목록 유지','카드 탭에서 사라진 카드 복구 (이전 저장 기록 · 드라이브 이전 버전)','스냅샷 복원 시 카드·묶음쿠폰·그룹도 함께 복원','수정 창에서 묶음 코드 입력 후 저장 시 묶음 할인 마법사 진행 여부 확인','묶음 할인 마법사에서 등록된 카드사·카드를 한 화면에서 선택 · 최종 확인 단계에서도 카드 변경','한화 없이 결제일+외화만 입력된 결제칸도 묶음 목록에 표시']],
   ['26.10.09',['카드 혜택마다 사용량 칸 따로 표시 (상시 혜택 구분)','한도 합계 + 상시혜택 표기','구매목록 결제일에 마우스 올리면 예상발매일 표시','수정 창 카드 칸 호버 시 혜택이 나온 비용 칸도 강조','카드 결산 사용/한도 표기 · 적용 중인 카드만 합산','구매목록 결제일 아래 (예상) 발매일 표시 수정','수정 창 카드 칸 호버 시 같은 카드 강조','월 혜택 끄면 전부 취소 · 켜면 전부 다시 적용','카드 할인·적립이 수정 창 쿠폰·포인트 칸에 카드1·카드2로 표시','한도 빈칸 = 상시 혜택','할인 탭 숫자 글꼴 통일','결제카드 탭 → 카드','카드별 월 혜택 적용 스위치 (확인 후 고정 · 소급 적용)','카드사·카드별 이 달 사용금액 표시','할인 탭에서 묶음 결제 카드 설정','할인 탭 단일쿠폰 칸에 쿠폰 개수','묶음 할인에 결제 카드 선택 단계 — 카드 혜택 월 한도 자동 계산','결제카드 탭 이번 달 사용량 표시']],
   ['26.10.08',['결제카드 탭 신설 — 카드사·카드별 할인·적립 한도 정리','구매목록 결제일 아래 (예상) 발매일 표시']],
   ['26.10.07',['배송중 상태 추가 — 운송장 입력 시 자동 전환','배송중 아이콘 빛 효과 · 배송중 모아보기 토글','해외 운송장 칸 추가 (17TRACK 조회)','운송장 조회 시 번호 자동 복사','썸네일·⠿ 끌어서 배송중 전환','위시 · 카드보기 그룹 기능','그룹 썸네일 2줄 가로 슬라이드 · 휠로 좌우 이동','수정 창에 그룹 선택 추가','검색창 하단 이동 · OR/AND · 여러 검색어 고정','방출 탭 정렬 옵션 확대','할인 탭 단일쿠폰·포인트 카드 · 보기 필터','쿠폰 칸 단일쿠폰 개별 표기']],
@@ -3856,16 +3963,17 @@ function amCardBens(key){
   const o=_addEditId!=null?orders.find(x=>x.id===_addEditId):null;if(!o||!o.cardBen)return [];
   return Object.entries(o.cardBen).filter(([c,v])=>(Number(v&&v[key])||0)>0).map(([code,v])=>{
     const bc=bundleCoupons[code]||{};const is=bc.card?pcIssuer(bc.card.iss):null;const cd=bc.card?pcCard(is,bc.card.card):null;
-    return {code,amount:Number(v[key])||0,name:cd?cd.name:'카드',alias:bc.name||code,cid:cd?cd.id:'',color:(cd&&cd.color)||(is&&is.color)||'#8a8aa0'};});
+    return {code,amount:Number(v[key])||0,name:cd?cd.name:'카드',alias:bc.solo?'단일 · '+(BM_FIELDS[bc.solo.f]||bc.solo.f):(bc.name||code),cid:cd?cd.id:'',color:(cd&&cd.color)||(is&&is.color)||'#8a8aa0'};});
 }
 function amCardBenHtml(x,i,type){
   const pt=type==='point';const col=pt?'var(--cyan)':'var(--yellow)';
-  return `<div class="cost-card am-cardben" data-pcard="${x.cid}" data-code="${pcEsc(x.code)}" style="--pcc:${x.color};padding:8px 9px;min-width:0;overflow:hidden;border-color:${pt?'var(--cborder)':'var(--yborder)'};" onmouseenter="pcHl(this,true)" onmouseleave="pcHl(this,false)" title="묶음 ${pcEsc(x.alias)} · ${pcEsc(x.name)} 카드 ${pt?'적립':'할인'}">
+  return `<div class="cost-card am-cardben" data-pcard="${x.cid}" data-code="${pcEsc(x.code)}" style="--pcc:${x.color};padding:8px 9px;min-width:0;overflow:hidden;border-color:${pt?'var(--cborder)':'var(--yborder)'};" onmouseenter="pcHl(this,true)" onmouseleave="pcHl(this,false)" title="${x.code.startsWith('@')?'':'묶음 '}${pcEsc(x.alias)} · ${pcEsc(x.name)} 카드 ${pt?'적립':'할인'}">
     <div style="display:flex;align-items:center;gap:6px;">
       <span class="cost-label" style="margin:0;flex-shrink:0;color:${col};font-size:12px;">카드${i+1}</span>
       <span style="flex:1;min-width:0;font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${x.color};margin-right:4px;vertical-align:1px;"></i>${pcEsc(x.name)}</span>
       <b class="mono" style="font-size:13px;color:${col};white-space:nowrap;">${pt?x.amount.toLocaleString('ko-KR')+' P':'−￦ '+x.amount.toLocaleString('ko-KR')}</b>
       <button type="button" onclick="pcRemoveBen('${x.code}','${pt?'point':'disc'}')" title="삭제" style="flex-shrink:0;width:22px;height:28px;padding:0;line-height:1;background:transparent;border:none;color:var(--text3);cursor:pointer;font-family:inherit;">✕</button>
+      <button type="button" class="am-cardbtn on" onclick="pcSlotCard('${x.code}')" title="카드 혜택 다시 설정">카드</button>
     </div></div>`;
 }
 // 카드 칸 호버: 같은 카드의 할인·적립 칸 + 그 혜택이 나온 비용 칸 강조
@@ -3879,10 +3987,46 @@ function pcHl(el,on){
   slots.forEach(e=>e.classList.add('pc-hl'));
   const codes=new Set(slots.map(e=>e.dataset.code));
   const o=_addEditId!=null?orders.find(x=>x.id===_addEditId):null;if(!o)return;
-  Object.entries(o.costGroups||{}).forEach(([f,c])=>{if(!codes.has(String(c)))return;
-    const inp=document.getElementById('cf-'+(PC_FIELD_ID[f]||f)+'-grp');const box=inp&&inp.closest('.cost-field');
-    if(box){box.style.setProperty('--pcc',col);box.classList.add('pc-src');}});
+  const mark=f=>{const inp=document.getElementById('cf-'+(PC_FIELD_ID[f]||f)+'-grp');const box=inp&&inp.closest('.cost-field');
+    if(box){box.style.setProperty('--pcc',col);box.classList.add('pc-src');}};
+  Object.entries(o.costGroups||{}).forEach(([f,c])=>{if(codes.has(String(c)))mark(f);});
+  codes.forEach(c=>{const bc=bundleCoupons[c];if(bc&&bc.solo&&bc.solo.id===o.id)mark(bc.solo.f);});
 }
+// ── 수정 창 결제칸 '카드' 버튼 → 카드 혜택 마법사 ──
+const PC_FIELD_REV={ship:'shipping',full:'fullPayment'};
+function pcSoloLabel(so){const o=orders.find(x=>x.id===so.id);return (o?(o.charName||'(이름없음)')+' · ':'')+(BM_FIELDS[so.f]||so.f);}
+function amInjectCardBtns(){
+  const box=document.getElementById('am-costs');if(!box)return;
+  const o=_addEditId!=null?orders.find(x=>x.id===_addEditId):null;
+  box.querySelectorAll('input[id^="cf-"][id$="-grp"]').forEach(inp=>{
+    const fid=inp.id.slice(3,-4),f=PC_FIELD_REV[fid]||fid,row=inp.parentElement;if(!row||row.querySelector('.am-cardbtn'))return;
+    const code=o?String((o.costGroups||{})[f]||''):'';
+    const has=o&&((code&&bundleCoupons[code]&&bundleCoupons[code].card)||(bundleCoupons['@'+o.id+':'+f]&&bundleCoupons['@'+o.id+':'+f].card));
+    const b=document.createElement('button');b.type='button';b.className='am-cardbtn'+(has?' on':'');b.textContent='카드';
+    b.title=code?'묶음 '+bundleEditLabel(code)+'의 결제 카드 혜택 설정':'이 결제의 카드 혜택 설정 (묶음 없이)';
+    b.onclick=e=>{e.stopPropagation();amCardFor(f);};
+    const x=row.firstElementChild;
+    if(x&&x.tagName==='SPAN'&&x.textContent.trim()==='✕')x.after(b);else{b.style.marginRight='auto';row.prepend(b);}
+  });
+}
+function amCardRefresh(){if(!document.getElementById('am-costs'))return;try{renderAmCoupons();renderAmPoints();}catch(e){}document.querySelectorAll('#am-costs .am-cardbtn').forEach(e=>e.remove());amInjectCardBtns();}
+function amCardFor(f){
+  if(_addEditId==null){showToast('먼저 저장한 뒤 카드 혜택을 적용할 수 있어요','warn');return;}
+  const o=orders.find(x=>x.id===_addEditId);if(!o)return;
+  if(!payCards.some(i=>(i.cards||[]).length)){showToast('카드 탭에서 카드를 먼저 등록해주세요','warn');return;}
+  const fid=PC_FIELD_ID[f]||f;
+  const code=String((o.costGroups||{})[f]||'');
+  if(code){pcBundleCard(code);return;}
+  const gi=document.getElementById('cf-'+fid+'-grp');
+  if(gi&&gi.value.trim()){showToast('묶음 코드가 입력된 결제예요 — 저장 후 묶음으로 진행해주세요','warn');return;}
+  const ai=document.getElementById('cf-'+fid);const amt=Number(ai&&ai.value)||Number((o.costs||{})[f])||0;
+  if(amt<=0){showToast('이 결제의 한화 금액을 먼저 입력해주세요','warn');return;}
+  const di=document.getElementById('cf-'+fid+'-date');const dt=(di&&di.value.trim())||(o.costDates||{})[f]||o.paymentDate||'';
+  const sc='@'+o.id+':'+f;
+  bmwStart(sc,[o.id+':'+f],[],dt.replace(/-/g,''));
+  _bmw.cardOnly=true;_bmw.solo={id:o.id,f};_bmw.totalKrw=amt;_bmw.step=4;bmwRender();
+}
+function pcSlotCard(code){const bc=bundleCoupons[code];if(bc&&bc.solo){amCardFor(bc.solo.f);return;}pcBundleCard(code);}
 // 카드 혜택 삭제 — 같은 묶음의 모든 항목에서 함께 제거
 function pcRemoveBen(code,key){
   const pt=key==='point';
@@ -4020,7 +4164,7 @@ function addExtraField(){
   _extraShown++;
   updateCostFields(_addEditId,null);
 }
-function updateCostFields(editId,ex){
+function updateCostFields(editId,ex){setTimeout(amInjectCardBtns,0);
   const pt=document.getElementById('am-pt')?.value||'예약구매';
   if(!ex&&editId!=null)ex=orders.find(o=>o.id==editId);
   const c=ex?.costs||{};
@@ -4217,6 +4361,8 @@ function submitAdd(editId){
     }
   });
   let _savedO=null;
+  const _oldCodes=new Set(editId!=null?Object.values((orders.find(i=>i.id===editId)||{}).costGroups||{}).map(String):[]);
+  const _newCodes=[...new Set(Object.values(newCostGroups).map(String).filter(c=>c&&!_oldCodes.has(c)))];
   const doSave=(finalName)=>{
     const finalStoreName=storeName;
     // paymentDate = costDates 최솟값으로 자동 계산
@@ -4252,7 +4398,8 @@ function submitAdd(editId){
     }
     closeAddModal();renderOrder();showToast(editId!=null?'✅ 수정 완료!':'✅ 추가 완료!','success');autoSave();
     if(_savedO&&!cpnMixed(_savedO))delete _savedO.cpnMixOk;
-    if(_savedO)cpnAskUnify(_savedO);
+    if(_savedO)cpnAskUnify(_savedO,()=>bmwAskAfterSave(_newCodes));
+    else bmwAskAfterSave(_newCodes);
   };
   if(editId==null){const s=findSimilar(charName);if(s.length)showSimModal(charName,s,doSave);else doSave(charName);}
   else doSave(charName);
@@ -4713,6 +4860,12 @@ function restoreSnapshot(idx){
     orders=(data.orders||[]).map(o=>({imageUrl:'',localPrice:null,costDates:{},costGroups:{},subName:'',...o}));
     wishes=data.wishes||[];sells=data.sells||[];stores=data.stores||[];makers=data.makers||[];
     nextStoreId=data.nextStoreId||1;nO=data.nO||1;nW=data.nW||1;nS=data.nS||1;
+    if(data.bundleCoupons)bundleCoupons=data.bundleCoupons;
+    if(Array.isArray(data.wishGroups))wishGroups=data.wishGroups;
+    if(Array.isArray(data.cardGroups))cardGroups=data.cardGroups;
+    payCards=pcIncoming(data);
+    nO=Math.max(nO,400,...orders.map(o=>o.id+1));nW=Math.max(nW,400,...wishes.map(w=>w.id+1));nS=Math.max(nS,400,...sells.map(s=>s.id+1));
+    autoSave();if(typeof renderPayCards==='function')renderPayCards();if(typeof renderBundle==='function')renderBundle();
     document.getElementById('snapshot-modal').classList.remove('show');
     renderOrder();renderWish();renderSell();renderStore();renderManage();
     showToast(`✅ ${dateStr} ${timeStr} 데이터로 복원됐어요`,'success');
@@ -4755,9 +4908,15 @@ function bundleListLabel(code){return bundleAlias(code)||code;}                 
 
 // ── 불러오기 로직 ──
 // 같은 날짜 결제 건을 '표시 대상'에만 추가(체크는 하지 않음)
+// 묶음 후보: 한화 금액이 있거나, 한화가 비어도 결제일과 외화가 입력된 결제칸
+function bmFieldOk(o,f){
+  if((Number((o.costs||{})[f])||0)>0)return true;
+  const lp=(o.localPrices||{})[f];const dt=(o.costDates||{})[f]||o.paymentDate||'';
+  return !!(dt&&lp&&Number(lp.amount)>0&&!isKRW(lp.currency));
+}
 function _bmLoadDateItems(dd){
   orders.forEach(o=>{const cd=o.costDates||{},c=o.costs||{};Object.keys(BM_FIELDS).forEach(f=>{
-    if((Number(c[f])||0)<=0)return;
+    if(!bmFieldOk(o,f))return;
     const fd=(cd[f]||o.paymentDate||'').replace(/-/g,'');
     if(fd===dd)_bmLoaded.add(o.id);
   });});
@@ -4903,6 +5062,23 @@ function bmwStart(code,keys,removed,dd){
   document.getElementById('bmw-modal').classList.add('show');
   bmwRender();
 }
+// 수정 창에서 묶음 코드를 새로 넣고 저장 → 마법사 진행 여부
+function bmwAskAfterSave(codes){
+  codes=(codes||[]).filter(c=>orders.some(o=>Object.values(o.costGroups||{}).map(String).includes(c)));
+  if(!codes.length)return;
+  const code=codes[0],rest=codes.slice(1);
+  const nm=bundleAlias(code);
+  setTimeout(()=>bmDialog(`묶음 코드 <b style="color:var(--pink);font-family:'Space Mono',monospace;">${code}</b>${nm?' ('+pcEsc(nm)+')':''}가 입력됐어요.<br>묶음 할인 마법사를 진행할까요?`,[
+    {label:'아니 나중에',fn:()=>bmwAskAfterSave(rest)},
+    {label:'지금하기',primary:true,fn:()=>bmwStartCode(code)}]),250);
+}
+function bmwStartCode(code){
+  const keys=[];let dd='';
+  orders.forEach(o=>Object.entries(o.costGroups||{}).forEach(([f,c])=>{if(String(c)!==code)return;keys.push(o.id+':'+f);const dt=((o.costDates||{})[f]||o.paymentDate||'').replace(/-/g,'');if(dt>dd)dd=dt;}));
+  if(!keys.length){showToast('묶음 항목이 없어요','warn');return;}
+  if(/^\d{6}/.test(code))dd=code.slice(0,6);
+  bmwStart(code,keys,[],dd);
+}
 function bmwClose(){document.getElementById('bmw-modal').classList.remove('show');_bmw=null;}
 function bmwUpdCpnKrw(){const e=document.getElementById('bmw-cpn-krw');if(e&&_bmw)e.textContent=(_bmw.couponForeign&&_bmw.couponRate)?('= ￦ '+Math.round(_bmw.couponForeign*_bmw.couponRate).toLocaleString('ko-KR')):'';}
 function bmwCouponKrw(){ // 쿠폰 원화 = 적용환율 우선, 없으면 실시간 시세
@@ -4921,14 +5097,21 @@ function pcBundleCard(code){
 }
 function bmwApplyCardOnly(){
   const code=_bmw.code;const cr=bmwCardCalc();
+  if(_bmw.solo){
+    if(!cr){if(bundleCoupons[code]){pcApplyToBundle(code,null);delete bundleCoupons[code];}}
+    else{if(!bundleCoupons[code])bundleCoupons[code]={solo:{..._bmw.solo}};bundleCoupons[code].solo={..._bmw.solo};
+      pcApplyToBundle(code,{iss:cr.iss.id,card:cr.card.id,month:cr.month,base:cr.base,off:_bmw.pcOff,date:String(_bmw.dd||''),rows:cr.rows,disc:cr.disc,point:cr.point});}
+    bmwClose();renderOrder();if(typeof renderBundle==='function')renderBundle();autoSave();amCardRefresh();
+    showToast(cr?`${cr.card.name} 카드 혜택을 적용했어요`:'카드 혜택을 해제했어요','success');return;
+  }
   if(!bundleCoupons[code])bundleCoupons[code]={totalForeign:0,couponForeign:0,currency:'₩',couponCurrency:'₩'};
   pcApplyToBundle(code,cr?{iss:cr.iss.id,card:cr.card.id,month:cr.month,base:cr.base,off:_bmw.pcOff,date:String(_bmw.dd||''),rows:cr.rows,disc:cr.disc,point:cr.point}:null);
-  bmwClose();renderOrder();renderBundle();autoSave();showToast(cr?`${cr.card.name} 카드를 설정했어요`:'카드 설정을 해제했어요','success');
+  bmwClose();renderOrder();renderBundle();autoSave();amCardRefresh();showToast(cr?`${cr.card.name} 카드를 설정했어요`:'카드 설정을 해제했어요','success');
 }
 function bmwRender(){
   if(!_bmw)return;
   const alias=(_bmw.alias||'').trim();
-  document.getElementById('bmw-title').innerHTML=`묶음 할인 <span style="font-family:'Space Mono',monospace;font-size:19px;color:var(--pink);">${alias||_bmw.code}</span>`;
+  document.getElementById('bmw-title').innerHTML=_bmw.solo?`카드 혜택 <span style="font-size:17px;color:var(--text2);">${pcEsc(pcSoloLabel(_bmw.solo))}</span>`:`묶음 할인 <span style="font-family:'Space Mono',monospace;font-size:19px;color:var(--pink);">${alias||_bmw.code}</span>`;
   document.getElementById('bmw-step').textContent=_bmw.cardOnly?'카드 설정':`${_bmw.step} / 6`;
   const sym=curSym(_bmw.cur), fsum=bmwForeignSum();
   let h='';
@@ -5005,7 +5188,7 @@ function bmwRender(){
         ${redist?`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">외화 합계</span><b class="mono" style="color:var(--yellow);">${sym} ${fmtForeign(fsum)}</b></div>
         <div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">한화 총액</span><b class="mono" style="color:var(--accent);">￦ ${_bmw.totalKrw.toLocaleString('ko-KR')}</b></div>
         ${disc>0?`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">시세 대비 절감</span><b class="mono" style="color:var(--green);">▼ ￦ ${disc.toLocaleString('ko-KR')}</b></div>`:''}`:'<div style="color:var(--text3);font-size:16px;margin-top:4px;">외화·한화 미입력 — 금액 변경 없이 묶기만 적용됩니다.</div>'}
-        ${(()=>{const r=bmwCardCalc();if(!r)return '';return `<div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">결제 카드</span><b>${pcEsc(r.iss.name)} · ${pcEsc(r.card.name)}</b></div>${r.disc?`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">카드 할인</span><b class="mono" style="color:var(--yellow);">▼ ￦ ${r.disc.toLocaleString('ko-KR')}</b></div>`:''}${r.point?`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">카드 적립</span><b class="mono" style="color:var(--cyan);">${r.point.toLocaleString('ko-KR')} P</b></div>`:''}`;})()}
+        ${(()=>{const r=bmwCardCalc();const row=`<div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:var(--text2);">결제 카드</span>${payCards.some(i=>(i.cards||[]).length)?bmwCardSelectHtml():'<b style="color:var(--text3);font-weight:400;">등록된 카드 없음</b>'}</div>`;if(!r)return row;return row+`${r.disc?`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">카드 할인</span><b class="mono" style="color:var(--yellow);">▼ ￦ ${r.disc.toLocaleString('ko-KR')}</b></div>`:''}${r.point?`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">카드 적립</span><b class="mono" style="color:var(--cyan);">${r.point.toLocaleString('ko-KR')} P</b></div>`:''}`;})()}
         ${_bmw.couponForeign>0?`<div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">쿠폰 할인</span><b class="mono" style="color:var(--pink);">${sym} ${fmtForeign(_bmw.couponForeign)} <span style="color:var(--text3);font-weight:400;font-size:16px;">(￦ ${bmwCouponKrw().toLocaleString('ko-KR')}${_bmw.couponRate?` · 고시 ${_bmw.couponRate}`:''})</span></b></div>`:''}
       </div>
       <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;">
@@ -5019,6 +5202,7 @@ function bmwRender(){
 function bmwApply(){
   if(!_bmw)return;
   const {code,keys,removed}=_bmw;const fsum=bmwForeignSum();const redist=(Number(_bmw.totalKrw)||0)>0&&fsum>0;const sh=bmwShares();
+  keys.forEach(k=>{const sc='@'+k;if(bundleCoupons[sc]){pcApplyToBundle(sc,null);delete bundleCoupons[sc];}});
   keys.forEach(k=>{const {o,f}=bmwItem(k);if(!o)return;if(!o.costGroups)o.costGroups={};o.costGroups[f]=code;
     const fa=Number(_bmw.foreign[k])||0;if(fa>0){if(!o.localPrices)o.localPrices={};o.localPrices[f]={amount:fa,currency:_bmw.cur};}
     if(redist){if(!o.costs)o.costs={};o.costs[f]=Math.max(0,sh[k]||0);}});
@@ -5038,7 +5222,7 @@ function bmwApply(){
   }
   _bmChecked=new Set();_bmDate='';_bmCode='';
   bmwClose();
-  renderOrder();if(typeof renderBundle==='function')renderBundle();autoSave();
+  renderOrder();if(typeof renderBundle==='function')renderBundle();autoSave();amCardRefresh();
   if(typeof renderBundleMake==='function')renderBundleMake();
   showToast(`${code} 로 묶었어요`,'success');
 }
@@ -5083,7 +5267,7 @@ function renderBundleMake(){
   let rows='',checkedCount=0,hasRow=false;
   orders.filter(o=>_bmLoaded.has(o.id)).forEach(o=>{
     const c=o.costs||{},cd=o.costDates||{},cg=o.costGroups||{},lp=o.localPrices||{};
-    const fields=Object.keys(BM_FIELDS).filter(f=>(Number(c[f])||0)>0);
+    const fields=Object.keys(BM_FIELDS).filter(f=>bmFieldOk(o,f));
     if(!fields.length)return;
     hasRow=true;
     const thumb=o.imageUrl
@@ -6913,7 +7097,7 @@ function loadData(){
     if(d.makers)makers=d.makers;
     if(d.stores)stores=d.stores;
     if(d.bundleCoupons)bundleCoupons=d.bundleCoupons;
-    wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];payCards=Array.isArray(d.payCards)?d.payCards:[];
+    wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];payCards=pcIncoming(d);
     if(d.nextStoreId)nextStoreId=d.nextStoreId;
     if(d.exchangeRates)exchangeRates=d.exchangeRates;
     nO=Math.max(400,...orders.map(o=>o.id+1));
@@ -7061,7 +7245,7 @@ function gdApplyData(d){
   wishes=d.wishes||[];sells=d.sells||[];
   sells.forEach(s=>{if(!s.maker&&s.memo){const m=s.memo.match(/^방출\s*\((.+)\)$/);if(m)s.maker=m[1];}if(s.fromOrder!=null){const oo=orders.find(i=>i.id===s.fromOrder);if(oo){if(!s.date&&oo.releasedDate)s.date=oo.releasedDate;if(!s.maker&&oo.maker)s.maker=oo.maker;}}});
   if(d.makers)makers=d.makers;if(d.stores)stores=d.stores;if(d.bundleCoupons)bundleCoupons=d.bundleCoupons;if(d.nextStoreId)nextStoreId=d.nextStoreId;if(d.exchangeRates)exchangeRates=d.exchangeRates;
-  wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];payCards=Array.isArray(d.payCards)?d.payCards:[];
+  wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];payCards=pcIncoming(d);
   nO=Math.max(400,...orders.map(o=>o.id+1));nW=Math.max(400,...wishes.map(w=>w.id+1));nS=Math.max(400,...sells.map(s=>s.id+1));
   openRows={};setSortFixed('pdate',-1);renderWish();renderSell();if(typeof renderStore==='function')renderStore();if(typeof renderManage==='function')renderManage();
   if(typeof resolveDriveImages==='function')resolveDriveImages();
@@ -8036,15 +8220,20 @@ function renderBundle(){
 
   // 단일쿠폰 항목 수집 (그룹 없고 쿠폰 있는 항목 — 부호 무관, 절댓값을 할인으로)
   const couponAbsKrw=o=>validCoupons(o).reduce((a,c)=>a+Math.abs(toKRW(Number(c.amount),c.currency||'₩',exchangeRates)),0);
-  const singleCoupons=orders.filter(o=>validCoupons(o).length>0).map(o=>({
+  // 카드 혜택 목록 (단일 결제 = '@' 코드, 묶음 = 묶음 코드)
+  const bdCardBens=(o,key,solo)=>Object.entries(o.cardBen||{}).filter(([c,v])=>(Number(v&&v[key])||0)>0&&(solo==null||(c[0]==='@')===solo)).map(([c,v])=>{
+    const bc=bundleCoupons[c]||{};const is=bc.card?pcIssuer(bc.card.iss):null;const cd=bc.card?pcCard(is,bc.card.card):null;
+    return {code:c,amount:Number(v[key])||0,name:cd?cd.name:'카드'};});
+  const soloDisc=o=>bdCardBens(o,'disc',true).reduce((a,x)=>a+x.amount,0);
+  const singleCoupons=orders.filter(o=>validCoupons(o).length>0||soloDisc(o)>0).map(o=>({
     type:'single',
     order:o,
     date:o.paymentDate||o.date||'',
-    couponKrw:couponAbsKrw(o)
+    couponKrw:couponAbsKrw(o)+soloDisc(o)
   }));
 
   const letters=Object.keys(groupMap).sort();
-  if(!letters.length&&!singleCoupons.length&&!orders.some(o=>validPoints(o).length)){
+  if(!letters.length&&!singleCoupons.length&&!orders.some(o=>validPoints(o).length||cardBenSum(o,'point')>0)){
     document.getElementById('bundle-list').innerHTML='<div style="padding:30px;text-align:center;color:var(--text2);font-size:13px;">금액 상세에서 🔗 그룹 알파벳을 입력하면 여기에 묶음구매 정보가 표시됩니다</div>';
     return;
   }
@@ -8135,7 +8324,6 @@ function renderBundle(){
       <div class="bundle-group-header">
         <span class="bundle-group-tag" title="${letter}" style="color:${grpColor||'var(--pink)'};background:${grpColor?grpColor+'28':'var(--pdim)'};border-color:${grpColor?grpColor+'66':'var(--pborder)'};max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle;">그룹 ${bundleEditLabel(letter)}</span>
         <span style="font-size:13px;color:var(--text2);">${items.length}개 항목</span>
-        ${coupon.card?'':`<button type="button" class="pc-mini-btn" onclick="pcBundleCard('${letter}')">＋ 결제 카드 설정</button>`}
         <span style="font-family:'Space Mono',monospace;font-size:13px;font-weight:700;margin-left:auto;">
           ${hasCoupon
             ?`<span style="color:var(--text2);">￦ ${originalKrwTotal.toLocaleString('ko-KR')}</span>
@@ -8173,7 +8361,7 @@ function renderBundle(){
           `:''}
         </div>
       </div>
-      ${(()=>{const pc=coupon.card;if(!pc)return '';const is=pcIssuer(pc.iss),cd=pcCard(is,pc.card);
+      ${(()=>{const pc=coupon.card;if(!pc)return `<div style="margin:-4px 0 8px;"><button type="button" class="pc-mini-btn" onclick="pcBundleCard('${letter}')">＋ 결제 카드 설정</button></div>`;const is=pcIssuer(pc.iss),cd=pcCard(is,pc.card);
         return `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;margin:-4px 0 8px;padding:6px 10px;border-radius:var(--rs);background:var(--surface);border:1px solid var(--border);">
           <span style="width:9px;height:9px;border-radius:50%;background:${(cd&&cd.color)||(is&&is.color)||'#6c757d'};"></span><b>${is?pcEsc(is.name):'(삭제된 카드사)'} · ${cd?pcEsc(cd.name):'(삭제된 카드)'}</b>
           ${pc.disc?`<span class="mono" style="color:var(--yellow);">카드할인 ▼ ￦ ${Number(pc.disc).toLocaleString('ko-KR')}</span>`:''}${pc.point?`<span class="mono" style="color:var(--cyan);">적립 ${Number(pc.point).toLocaleString('ko-KR')} P</span>`:''}${cd&&!pcMonthOn(cd,pc.month)?`<span style="color:var(--text3);">${pcMonthLabel(pc.month)} 혜택 미적용</span>`:''}<span style="color:var(--text3);margin-left:auto;">${pc.month||''}</span><button type="button" class="pc-mini-btn" onclick="pcBundleCard('${letter}')">카드 변경</button></div>`;})()}
@@ -8190,14 +8378,16 @@ function renderBundle(){
     const o=sc.order;
     const tc=totalCost(o);
     const k=cpnSums(o,true);
-    const kPre=tc+k.pos+k.neg, kDisc=k.pos+k.neg;
+    const sd=soloDisc(o),sdl=bdCardBens(o,'disc',true);
+    const kPre=tc+k.pos+k.neg+sd, kDisc=k.pos+k.neg+sd;
     const f=foreignTotal(o);
     let fx='<span style="font-size:11px;color:var(--text3);">외화 없음</span>';
     if(f){const sym=curSym(f.currency);const s=cpnSums(o,false,sym);const post=f.amount-s.neg;fx=bdSplit(f.amount+s.pos,s.pos+s.neg,post,n=>fmtForeignU(n,f.currency));}
-    const cpnTxt=bdAmtList(validCoupons(o));
+    const cpnTxt=[bdAmtList(validCoupons(o)),...sdl.map(x=>x.name+' 카드할인 −￦ '+x.amount.toLocaleString('ko-KR'))].filter(Boolean).join(' · ');
+    const nC=validCoupons(o).length;
     return{kind:'single',html:`<div class="bundle-group" style="border-color:var(--yborder);">
       <div class="bundle-group-header">
-        <span class="bundle-group-tag" style="color:var(--yellow);background:var(--ydim);border-color:var(--yborder);">🎟 단일쿠폰</span>
+        <span class="bundle-group-tag" style="color:var(--yellow);background:var(--ydim);border-color:var(--yborder);">${nC?'🎟 단일쿠폰':'카드 할인'}</span>
         <span style="font-size:12px;color:var(--text3);font-family:'Space Mono',monospace;">${sc.date||''}</span>
         <span style="font-family:'Space Mono',monospace;font-size:13px;font-weight:700;margin-left:auto;">${kDisc>0
           ?`<span style="color:var(--text2);">${bdKrw(kPre)}</span><span style="color:var(--yellow);margin-left:6px;">− ${bdKrw(kDisc)}</span><span style="color:var(--text2);margin:0 4px;">=</span><span style="color:var(--green);">${bdKrw(tc)}</span>`
@@ -8209,15 +8399,16 @@ function renderBundle(){
           <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.charName||''}</div>
           <div style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.maker||''}</div>
         </div>
-        <div style="justify-self:start;font-size:12px;color:var(--yellow);padding:2px 8px;background:var(--ydim);border-radius:10px;white-space:nowrap;" title="${cpnTxt}">쿠폰 ${validCoupons(o).length}장</div>
+        <div style="justify-self:start;font-size:12px;color:var(--yellow);padding:2px 8px;background:var(--ydim);border-radius:10px;white-space:nowrap;" title="${pcEsc(cpnTxt)}">${nC?'쿠폰 '+nC+'장'+(sd?' · 카드':''):'카드 할인'}</div>
         <div style="text-align:left;white-space:nowrap;font-family:'Space Mono',monospace;padding-right:10px;">${fx}</div>
         <div style="text-align:left;white-space:nowrap;font-family:'Space Mono',monospace;border-left:1px solid var(--border2);padding-left:12px;">${bdSplit(kPre,kDisc,tc,bdKrw)}</div>
       </div>
     </div>`,date:sc.date||''};
   });
   // 포인트 카드
-  const pointCards=orders.filter(o=>validPoints(o).length).map(o=>{
-    const pk=pointTotalKrw(o);const ptxt=bdAmtList(validPoints(o));const date=o.paymentDate||o.date||'';
+  const pointCards=orders.filter(o=>validPoints(o).length||cardBenSum(o,'point')>0).map(o=>{
+    const cpl=bdCardBens(o,'point',null);
+    const pk=pointTotalKrw(o);const ptxt=[bdAmtList(validPoints(o)),...cpl.map(x=>'<span title="'+pcEsc(x.name)+' 카드 적립">카드 '+x.amount.toLocaleString('ko-KR')+' P</span>')].filter(Boolean).join(' · ');const date=o.paymentDate||o.date||'';
     return{kind:'point',html:`<div class="bundle-group" style="border-color:var(--cborder);">
       <div class="bundle-group-header">
         <span class="bundle-group-tag" style="color:var(--cyan);background:var(--cdim);border-color:var(--cborder);">🎯 포인트</span>
@@ -8230,7 +8421,7 @@ function renderBundle(){
           <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.charName||''}</div>
           <div style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.maker||''}</div>
         </div>
-        <div style="justify-self:start;font-size:11px;color:var(--cyan);padding:2px 6px;background:var(--cdim);border-radius:10px;white-space:nowrap;">포인트</div>
+        <div style="justify-self:start;font-size:11px;color:var(--cyan);padding:2px 6px;background:var(--cdim);border-radius:10px;white-space:nowrap;">${validPoints(o).length&&cpl.length?'포인트 · 카드적립':cpl.length?'카드 적립':'포인트'}</div>
         <div style="text-align:left;white-space:nowrap;font-family:'Space Mono',monospace;padding-right:10px;font-size:13px;color:var(--cyan);font-weight:700;">${ptxt}</div>
         <div style="text-align:left;white-space:nowrap;font-family:'Space Mono',monospace;border-left:1px solid var(--border2);padding-left:12px;font-size:12px;color:var(--text2);">총비용 ${bdKrw(totalCost(o))}</div>
       </div>
@@ -8262,10 +8453,12 @@ function renderBundle(){
       totalDiscount+=toKRW(couponForeign,cur,exchangeRates);
     }
   });
-  // 단일쿠폰
+  // 묶음 결제 카드 할인
+  letters.forEach(letter=>{const bc=bundleCoupons[letter];if(bc&&bc.card)totalDiscount+=Number(bc.card.disc)||0;});
+  // 단일쿠폰 + 단일 결제 카드 할인
   singleCoupons.forEach(sc=>{totalDiscount+=sc.couponKrw;});
   // 포인트 총합 (전체 항목, 기록용 · 원화환산 합)
-  const pointsTotal=orders.reduce((a,o)=>a+validPoints(o).reduce((s,c)=>s+toKRW(Number(c.amount),c.currency||'₩',exchangeRates),0),0);
+  const pointsTotal=orders.reduce((a,o)=>a+validPoints(o).reduce((s,c)=>s+toKRW(Number(c.amount),c.currency||'₩',exchangeRates),0)+cardBenSum(o,'point'),0);
 
   const summaryEl=document.getElementById('bundle-summary');
   if(summaryEl){
@@ -9726,7 +9919,7 @@ function importJSON(input){
       if(d.makers)makers=d.makers;
       if(d.stores)stores=d.stores;
       if(d.bundleCoupons)bundleCoupons=d.bundleCoupons;
-      wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];payCards=Array.isArray(d.payCards)?d.payCards:[];
+      wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];payCards=pcIncoming(d);
       if(d.nextStoreId)nextStoreId=d.nextStoreId;
       autoSave();
       renderOrder();renderWish();renderSell();renderStore();renderManage();
@@ -9785,7 +9978,7 @@ window.addEventListener('load',()=>{
       if(d.makers&&d.makers.length)makers=d.makers;
       if(d.stores&&d.stores.length)stores=d.stores;
       if(d.bundleCoupons)bundleCoupons=d.bundleCoupons;
-      wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];payCards=Array.isArray(d.payCards)?d.payCards:[];
+      wishGroups=Array.isArray(d.wishGroups)?d.wishGroups:[];cardGroups=Array.isArray(d.cardGroups)?d.cardGroups:[];payCards=pcIncoming(d);
       if(d.nextStoreId)nextStoreId=d.nextStoreId;
       if(d.exchangeRates)exchangeRates=d.exchangeRates;
       nO=Math.max(400,...[0,...orders.map(o=>o.id+1)]);
@@ -10392,14 +10585,16 @@ function closeWarnPop(){const wp=document.getElementById('warn-pop');if(wp)wp.st
       <button class="btn primary" id="bm-apply" onclick="bmBundle()">묶기</button>
     </div>
   </div>
+</div>
+
+
   <!-- 안내 다이얼로그 (여러 선택지) -->
-  <div id="bm-dialog" style="display:none;position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,.5);align-items:center;justify-content:center;" onclick="if(event.target===this)closeBmDialog()">
+  <div id="bm-dialog" style="display:none;position:fixed;inset:0;z-index:2400;background:rgba(0,0,0,.5);align-items:center;justify-content:center;" onclick="if(event.target===this)closeBmDialog()">
     <div class="modal" style="max-width:340px;width:88%;" onclick="event.stopPropagation()">
       <div id="bm-dialog-msg" style="font-size:14px;line-height:1.7;margin-bottom:18px;text-align:center;"></div>
       <div id="bm-dialog-btns" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;"></div>
     </div>
   </div>
-</div>
 
 <!-- 묶음 할인 마법사 (4단계) -->
 <div class="modal-overlay" id="bmw-modal" style="z-index:2300;" onclick="if(event.target===this)bmwClose()">
