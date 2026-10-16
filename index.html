@@ -867,6 +867,19 @@ td:hover>.pd-wrap.has-rel .pd-b{display:block;}
 #sc-pop button:hover{border-color:var(--accent);color:var(--accent);}
 #sc-pop button.on{background:var(--adim);border-color:var(--accent);color:var(--accent);}
 #sc-pop button.none{grid-column:1/3;font-family:inherit;font-size:12px;color:var(--text2);}
+.dup-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.dup-list label{display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface2);font-size:13px;cursor:pointer;}
+.dup-list label.wide{grid-column:1/3;}
+.dup-list label.dis{opacity:.45;cursor:default;}
+.dup-list label small{margin-left:auto;font-size:11px;color:var(--text3);}
+.dup-list input{width:15px;height:15px;margin:0;accent-color:#7b6cff;}
+.dup-card{border:1px solid var(--aborder);border-radius:var(--rs);padding:9px 12px;background:var(--surface);font-size:12px;}
+.dup-card>span{color:var(--text3);}
+.dup-card .r{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.dup-card .r i{width:8px;height:8px;border-radius:50%;}
+.dup-card .r em{font-style:normal;color:var(--text3);}
+.dup-card .r .v{margin-left:auto;font-family:'Space Mono',monospace;font-weight:700;}
+.dup-card .r .w{flex-basis:100%;color:var(--yellow);font-size:11px;}
 .am-cpn.pc-hl{border-color:var(--pcc) !important;box-shadow:0 0 0 2px var(--pcc);}
 .am-drag{cursor:grab;user-select:none;}
 .am-drag:active{cursor:grabbing;}
@@ -1039,6 +1052,7 @@ body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-o
       <div class="modal-title" style="display:flex;align-items:center;gap:8px;">
         <button type="button" id="am-memo-toggle" onclick="toggleMemoSide()" title="메모·사진 패널 열기/닫기" style="flex-shrink:0;width:24px;height:24px;padding:0;line-height:1;background:transparent;border:none;color:var(--accent);cursor:pointer;font-family:inherit;font-size:14px;">◀</button>
         <span id="add-modal-title">피규어 추가</span>
+        <button type="button" id="am-dup-btn" onclick="dupOpen()" title="이 항목을 복제 — 복제할 내용을 고를 수 있어요" style="display:none;margin-left:auto;height:24px;padding:0 16px;font-family:inherit;font-size:13px;font-weight:700;line-height:1;border-radius:7px;border:1px solid var(--aborder);background:var(--adim);color:var(--accent);cursor:pointer;">복제</button>
       </div>
       <div id="add-modal-content"></div>
     </div>
@@ -3218,7 +3232,7 @@ function openAddModal(editId){
   // 모바일에서 4단계 안으로 옮겨둔 메모·사진 패널을 내용 재작성 전에 원래 자리로 되돌림(안 하면 함께 지워짐)
   {const sd=document.getElementById('am-memo-side'),wr=document.getElementById('am-modal-wrap');if(sd&&wr&&sd.parentElement!==wr)wr.appendChild(sd);}
   const isEdit=editId!=null;const ex=isEdit?orders.find(o=>o.id===editId):null;
-  document.getElementById('add-modal-title').textContent=isEdit?'피규어 수정':'피규어 추가';
+  document.getElementById('add-modal-title').textContent=isEdit?'피규어 수정':'피규어 추가';{const db=document.getElementById('am-dup-btn');if(db)db.style.display=isEdit?'':'none';}
   const defPt=ex?.purchaseType||'예약구매',defFt=ex?.figType||'PVC피규어',defGrp=ex?.groupId||'',defPdate=ex?.paymentDate||'';
   const existingGroups=[...new Set(orders.map(o=>o.groupId).filter(Boolean))];
   const storeOpts=stores.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
@@ -3820,7 +3834,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.10.16',['세부 스케일 추가 (1/2.5 ~ 1/8.5) — 스케일 고르는 창 2열 (1/4 옆에 1/4.5)']],
+  ['26.10.16',['항목 복제 — 수정 창 제목 오른쪽 복제 버튼, 복제할 내용 선택 (카드 혜택은 월 한도에 맞춰 다시 계산)','세부 스케일 추가 (1/2.5 ~ 1/8.5) — 스케일 고르는 창 2열 (1/4 옆에 1/4.5)']],
   ['26.10.15',['수정 창 카드 버튼: 저장 안 한 입력이 있으면 자동 저장 후 바로 카드 설정','+추가 시 새 항목 수정 창 자동으로 열림','카드 혜택이 들어오면 빈 쿠폰1·포인트1 자리를 대신']],
   ['26.10.14',['검색에 운송장 모드 추가 (국내·해외, 일부 번호로도 검색)','금액 검색에 결제 파트별 금액(선행·정식·잔금·배송비 등, 원화·외화) 포함']],
   ['26.10.11',['수정 창 쿠폰·포인트 이름을 끌어 결제 항목에 놓으면 연동 (호버 시 서로 강조)','묶음 코드 자동 지정: 같은 결제일 안에서 A부터','수정 창 카드 칸 호버 강조를 같은 결제에서 나온 칸끼리만','할인 탭: 카드 적립을 포인트 총합·포인트 필터에, 카드 할인을 할인 총합·묶음/단일 필터에 반영','수정 창 결제칸·카드 칸에 카드 버튼 — 묶음 없이 단일 결제에도 카드 혜택 적용','할인 탭 결제 카드 설정 버튼 아래로 이동','카드 정보 보호 — 예전 버전 저장본이 들어와도 카드 목록 유지','카드 탭에서 사라진 카드 복구 (이전 저장 기록 · 드라이브 이전 버전)','스냅샷 복원 시 카드·묶음쿠폰·그룹도 함께 복원','수정 창에서 묶음 코드 입력 후 저장 시 묶음 할인 마법사 진행 여부 확인','묶음 할인 마법사에서 등록된 카드사·카드를 한 화면에서 선택 · 최종 확인 단계에서도 카드 변경','한화 없이 결제일+외화만 입력된 결제칸도 묶음 목록에 표시']],
@@ -4365,6 +4379,76 @@ function updateCostFields(editId,ex){setTimeout(amInjectCardBtns,0);
 </div>`;}
 }
 
+// ── 항목 복제 ── (수정 창 제목 오른쪽 '복제' 버튼)
+const DUP_OPTS=[['ptype','구매유형',1],['ftype','피규어 유형',1],['scale','스케일',1],['maker','상호명 (메이커)',1],['char','캐릭터명',1],['sub','추가 명칭',1],['date','(예상) 발매일',1],['store','구매처',1],['img','사진',1],['group','그룹',1],['pay','결제정보 (금액 · 결제일 · 현지가)',1],['coupon','쿠폰',0],['point','포인트',0],['card','카드 할인 · 적립',0],['memo','메모',0]];
+let _dupSel=null;
+function dupSrc(){return _addEditId!=null?orders.find(o=>o.id===_addEditId):null;}
+// 원본의 카드 혜택을 복제본 결제칸별로 다시 계산 (월 한도 반영 — 이미 쓴 금액 + 앞서 계산한 복제분 차감)
+function dupCardPlan(o){
+  const out=[];const extra={};
+  Object.keys(o.cardBen||{}).forEach(code=>{
+    const bc=bundleCoupons[code];if(!pcBcLive(bc)||!bc.card)return;
+    const iss=pcIssuer(bc.card.iss),card=pcCard(iss,bc.card.card);if(!card)return;
+    const fields=bc.solo?(bc.solo.id===o.id?[bc.solo.f]:[]):Object.entries(o.costGroups||{}).filter(([f,c])=>String(c)===code).map(([f])=>f);
+    fields.forEach(f=>{
+      const base=Number((o.costs||{})[f])||0;if(base<=0)return;
+      const month=bc.card.month,active=pcMonthOn(card,month),off=bc.card.off||[];let disc=0,point=0;
+      const rows=(card.benefits||[]).map(b=>{const on=!off.includes(b.id);const calc=Math.floor(base*(Number(b.rate)||0)/100);const cap=Number(b.cap)||0;
+        const k=card.id+'|'+b.id+'|'+month;const used=pcUsed(card.id,b.id,month,null)+(extra[k]||0);const left=cap?Math.max(0,cap-used):Infinity;
+        const applied=(on&&active)?Math.min(calc,left):0;extra[k]=(extra[k]||0)+applied;if(b.type==='point')point+=applied;else disc+=applied;
+        return {b,on,calc,cap,used,left,applied};});
+      out.push({f,iss,card,month,base,off,date:String((o.costDates||{})[f]||o.paymentDate||'').replace(/-/g,''),rows,disc,point,active,full:rows.reduce((a,r)=>a+(r.on&&active?r.calc:0),0)});
+    });
+  });
+  return out;
+}
+function dupOpen(){
+  const o=dupSrc();if(!o){showToast('저장된 항목만 복제할 수 있어요','warn');return;}
+  const has={coupon:validCoupons(o).length>0,point:validPoints(o).length>0,card:Object.keys(o.cardBen||{}).length>0,memo:!!(o.memo||'').trim(),img:!!(o.imageUrl||o.imgFileId),group:!!o.cgroupId};
+  _dupSel={};DUP_OPTS.forEach(([k,,d])=>{_dupSel[k]=!!d&&(has[k]!==false);});
+  let ov=document.getElementById('dup-modal');
+  if(!ov){ov=document.createElement('div');ov.id='dup-modal';ov.className='modal-overlay';ov.style.zIndex='2500';ov.onclick=e=>{if(e.target===ov)dupClose();};document.body.appendChild(ov);}
+  ov.innerHTML=`<div class="modal" style="max-width:440px;width:94%;" onclick="event.stopPropagation()">
+    <div class="modal-title" style="display:flex;align-items:center;gap:8px;"><span>항목 복제</span><span style="font-size:12px;font-weight:400;color:var(--text3);">${pcEsc(o.charName||'(이름없음)')}</span>
+      <label style="margin-left:auto;font-size:12px;font-weight:400;color:var(--text2);display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" id="dup-all" onchange="dupAll(this.checked)">전체</label></div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">복제할 내용을 고르세요. 저장된 내용 기준이며, 묶음 코드·배송 상태는 복제하지 않아요.</div>
+    <div id="dup-list" class="dup-list"></div>
+    <div id="dup-card" style="margin-top:10px;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;"><button class="btn" onclick="dupClose()">취소</button><button class="btn primary" onclick="dupRun()">복제</button></div></div>`;
+  ov._has=has;ov.classList.add('show');dupRender();
+}
+function dupRender(){
+  const ov=document.getElementById('dup-modal');if(!ov)return;const has=ov._has||{};
+  if(!_dupSel.pay)_dupSel.card=false;
+  document.getElementById('dup-list').innerHTML=DUP_OPTS.map(([k,lab])=>{const dis=has[k]===false||(k==='card'&&!_dupSel.pay);
+    return `<label class="${dis?'dis':''}${k==='pay'||k==='card'?' wide':''}"><input type="checkbox" ${_dupSel[k]?'checked':''} ${dis?'disabled':''} onchange="_dupSel['${k}']=this.checked;dupRender()"><span>${lab}</span>${has[k]===false?'<small>없음</small>':(k==='card'&&!_dupSel.pay?'<small>결제정보 필요</small>':'')}</label>`;}).join('');
+  const all=DUP_OPTS.every(([k])=>has[k]===false||(k==='card'&&!_dupSel.pay)||_dupSel[k]);const ac=document.getElementById('dup-all');if(ac)ac.checked=all;
+  const box=document.getElementById('dup-card');
+  if(!_dupSel.card){box.innerHTML='';return;}
+  const plan=dupCardPlan(dupSrc());
+  box.innerHTML=`<div class="dup-card"><b>카드 혜택 다시 계산</b> <span>— 그 달 남은 한도에 맞춰 새로 적용돼요</span>${plan.length?plan.map(p=>`<div class="r"><i style="background:${p.card.color||'#888'}"></i>${pcEsc(p.card.name)} · ${BM_FIELDS[p.f]||p.f} <em>${pcMonthLabel(p.month)}</em><span class="v">${p.disc?'<span style="color:var(--yellow);">−￦ '+p.disc.toLocaleString('ko-KR')+'</span>':''}${p.point?' <span style="color:var(--cyan);">'+p.point.toLocaleString('ko-KR')+' P</span>':''}${!p.disc&&!p.point?'<span style="color:var(--text3);">0</span>':''}</span>${!p.active?'<div class="w">이 달 혜택이 꺼져 있어 0으로 적용돼요</div>':(p.disc+p.point<p.full?'<div class="w">한도가 부족해 일부만 적용돼요</div>':'')}</div>`).join(''):'<div class="r" style="color:var(--text3);">다시 계산할 카드 혜택이 없어요</div>'}</div>`;
+}
+function dupAll(on){const has=(document.getElementById('dup-modal')||{})._has||{};DUP_OPTS.forEach(([k])=>{if(has[k]!==false)_dupSel[k]=on;});dupRender();}
+function dupClose(){const ov=document.getElementById('dup-modal');if(ov)ov.classList.remove('show');}
+function dupRun(){
+  const o=dupSrc();if(!o)return;const S=_dupSel;const cp=x=>JSON.parse(JSON.stringify(x));
+  const n={id:nO++,purchaseType:S.ptype?o.purchaseType:'예약구매',figType:S.ftype?o.figType:'PVC피규어',scale:S.scale?(o.scale||''):'',
+    maker:S.maker?(o.maker||''):'',charName:S.char?(o.charName||''):'',subName:S.sub?(o.subName||''):'',date:S.date?(o.date||''):'',releaseDate:'',
+    storeName:S.store?(o.storeName||''):'',groupId:'',memo:S.memo?(o.memo||''):'',deliveryState:'none',released:false,deliveredDate:'',releasedDate:'',
+    imageUrl:'',costDates:{},costGroups:{},costs:{pre:0,official:0,balance:0,shipping:0,expectedBalance:0,extra:0},coupon:null,coupons:[],points:[],localPrice:null,groupCoupon:null,paymentDate:''};
+  if(S.img){n.imageUrl=o.imageUrl||'';['imgFocus','imgFileId','imgThumbId','imgSrcUrl'].forEach(k=>{if(o[k]!=null)n[k]=cp(o[k]);});}
+  if(S.group&&o.cgroupId)n.cgroupId=o.cgroupId;
+  if(S.pay){n.costs=cp(o.costs||{});n.costDates=cp(o.costDates||{});if(o.localPrices)n.localPrices=cp(o.localPrices);if(o.localPrice)n.localPrice=cp(o.localPrice);n.paymentDate=o.paymentDate||'';}
+  if(S.coupon)n.coupons=cp(validCoupons(o));
+  if(S.point)n.points=cp(validPoints(o));
+  const plan=S.card&&S.pay?dupCardPlan(o):[];
+  const idx=orders.indexOf(o);orders.splice(idx+1,0,n);
+  plan.forEach(p=>{const sc='@'+n.id+':'+p.f;bundleCoupons[sc]={solo:{id:n.id,f:p.f}};
+    pcApplyToBundle(sc,{iss:p.iss.id,card:p.card.id,month:p.month,base:p.base,off:p.off,date:p.date,rows:p.rows,disc:p.disc,point:p.point});});
+  dupClose();closeAddModal();renderOrder();if(typeof renderBundle==='function')renderBundle();autoSave();
+  setTimeout(()=>openAddModal(n.id),150);
+  showToast(`복제했어요 — 복제본을 열었어요${plan.length?' (카드 혜택은 한도에 맞춰 다시 계산)':''}`,'success');
+}
 function closeAddModal(){document.getElementById('add-modal').classList.remove('show');const s=document.getElementById('am-fx-side');if(s){s.style.display='none';s.innerHTML='';}const m=document.getElementById('am-memo-side');if(m){m.style.display='none';m.innerHTML='';}}
 
 function submitAdd(editId){
