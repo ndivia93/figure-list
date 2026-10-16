@@ -867,6 +867,9 @@ td:hover>.pd-wrap.has-rel .pd-b{display:block;}
 #sc-pop button:hover{border-color:var(--accent);color:var(--accent);}
 #sc-pop button.on{background:var(--adim);border-color:var(--accent);color:var(--accent);}
 #sc-pop button.none{grid-column:1/3;font-family:inherit;font-size:12px;color:var(--text2);}
+#sell-fee-pop{display:none;position:fixed;z-index:9000;width:220px;padding:10px 12px;background:var(--surface2);border:1px solid var(--accent);border-radius:var(--rs);box-shadow:0 10px 28px rgba(0,0,0,.45);}
+#sell-fee-pop label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--text2);margin-top:5px;}
+#sell-fee-pop input{width:110px;text-align:right;padding:4px 6px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;color:var(--text);outline:none;font-size:13px;}
 .dup-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
 .dup-list label{display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface2);font-size:13px;cursor:pointer;}
 .dup-list label.wide{grid-column:1/3;}
@@ -1077,10 +1080,16 @@ body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-o
         <input id="release-buy" type="number" class="form-input mono" placeholder="0">
       </div>
       <div>
-        <div class="form-label">판매가</div>
-        <input id="release-sell" type="number" class="form-input mono" placeholder="0">
+        <div class="form-label">판매금액</div>
+        <input id="release-sell" type="number" class="form-input mono" placeholder="0" oninput="relNetUpd()">
       </div>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+      <div><div class="form-label">수수료</div><input id="release-fee" type="number" class="form-input mono" placeholder="0" oninput="relNetUpd()"></div>
+      <div><div class="form-label">배송비</div><input id="release-ship" type="number" class="form-input mono" placeholder="0" oninput="relNetUpd()"></div>
+      <div><div class="form-label">배송비 할인</div><input id="release-shipdisc" type="number" class="form-input mono" placeholder="0" oninput="relNetUpd()"></div>
+    </div>
+    <div id="release-net" style="display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:8px 12px;margin-bottom:14px;border-radius:var(--rs);background:var(--surface2);border:1px solid var(--border);"></div>
     <div style="margin-bottom:14px;">
       <button onclick="toggleReleaseDateRow()"
         style="font-size:12px;padding:5px 12px;background:var(--rdim);border:1px solid var(--rborder);border-radius:var(--rs);color:var(--red);cursor:pointer;font-family:inherit;font-weight:600;">
@@ -1446,6 +1455,7 @@ body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-o
         <th style="min-width:130px;">피규어명</th>
         <th style="width:95px;cursor:pointer;text-align:right;" onclick="setSellSort('buy')">구매가 <span id="sell-sort-buy"></span></th>
         <th style="width:95px;cursor:pointer;text-align:right;" onclick="setSellSort('sell')">판매가 <span id="sell-sort-sell"></span></th>
+        <th style="width:84px;text-align:right;" title="수수료 + 배송비 − 배송비 할인 (클릭해서 고치기)">수수료·배송</th>
         <th style="width:90px;cursor:pointer;text-align:right;" onclick="setSellSort('profit')">손익 <span id="sell-sort-profit"></span></th>
         <th style="width:80px;text-align:center;">출처</th>
         <th style="min-width:120px;">메모</th>
@@ -2715,6 +2725,36 @@ function confirmDeliveredModal(){
 }
 
 // ── 방출 모달 (오버레이) ──────────────────────────────────────
+// 방출 실수령 = 판매금액 − 수수료 − 배송비 + 배송비 할인
+function sellCostOf(s){return (Number(s.fee)||0)+(Number(s.shipFee)||0)-(Number(s.shipDisc)||0);}
+function sellNet(s){return (Number(s.sell)||0)-sellCostOf(s);}
+function relNetUpd(){
+  const el=document.getElementById('release-net');if(!el)return;
+  const v=k=>Math.abs(Number(document.getElementById(k)?.value)||0);
+  const x={sell:v('release-sell'),fee:v('release-fee'),shipFee:v('release-ship'),shipDisc:v('release-shipdisc')};
+  const net=sellNet(x),buy=Number(document.getElementById('release-buy')?.value)||0,p=net-buy;
+  el.innerHTML=`<span style="color:var(--text2);">실수령 <b class="mono" style="color:var(--text);">￦ ${net.toLocaleString('ko-KR')}</b></span><span style="color:var(--text2);">손익 <b class="mono" style="color:${p>=0?'var(--green)':'var(--red)'};">${p>=0?'+':''}${p.toLocaleString('ko-KR')}</b></span>`;
+}
+// 방출 탭: 수수료·배송비·배송비 할인 고치기 (작은 창)
+function sellFeeEdit(ev,id){
+  ev.stopPropagation();const s=sells.find(i=>i.id===id);if(!s)return;
+  let pop=document.getElementById('sell-fee-pop');
+  if(!pop){pop=document.createElement('div');pop.id='sell-fee-pop';pop.onclick=e=>e.stopPropagation();document.body.appendChild(pop);document.addEventListener('click',()=>{pop.style.display='none';});}
+  const f=(k,l)=>`<label>${l}<input type="number" class="mono" data-k="${k}" value="${Number(s[k])||''}" placeholder="0" onkeydown="if(event.key==='Enter')sellFeeSave(${id})"></label>`;
+  pop.innerHTML=`<div style="font-size:12px;font-weight:700;margin-bottom:6px;">${pcEsc(s.name||'')} — 수수료·배송</div>${f('fee','수수료')}${f('shipFee','배송비')}${f('shipDisc','배송비 할인')}
+    <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;"><button class="btn" style="font-size:12px;padding:4px 10px;" onclick="document.getElementById('sell-fee-pop').style.display='none'">취소</button><button class="btn primary" style="font-size:12px;padding:4px 10px;" onclick="sellFeeSave(${id})">확인</button></div>`;
+  pop.style.display='block';const r=ev.currentTarget.getBoundingClientRect();
+  pop.style.left=Math.max(8,Math.min(innerWidth-pop.offsetWidth-8,r.right-pop.offsetWidth))+'px';
+  pop.style.top=(r.bottom+4+pop.offsetHeight>innerHeight?Math.max(8,r.top-pop.offsetHeight-4):r.bottom+4)+'px';
+  const first=pop.querySelector('input');if(first){first.focus();first.select();}
+}
+function sellFeeSave(id){const s=sells.find(i=>i.id===id);const pop=document.getElementById('sell-fee-pop');if(!s||!pop)return;
+  pop.querySelectorAll('input[data-k]').forEach(i=>{s[i.dataset.k]=Math.abs(Number(i.value)||0);});pop.style.display='none';renderSell();autoSave();}
+function sellFeeCell(s){
+  const fee=Number(s.fee)||0,sh=Number(s.shipFee)||0,sd=Number(s.shipDisc)||0,c=fee+sh-sd;
+  const tip=`수수료 ${fee.toLocaleString('ko-KR')} · 배송비 ${sh.toLocaleString('ko-KR')} · 배송비 할인 ${sd.toLocaleString('ko-KR')}`;
+  return `<td class="mono" style="text-align:right;cursor:pointer;font-size:12px;" title="${tip} — 클릭해서 고치기" onclick="sellFeeEdit(event,${s.id})">${fee||sh||sd?`<span style="color:${c>0?'var(--yellow)':'var(--green)'};">${c>0?'−':'+'}${Math.abs(c).toLocaleString('ko-KR')}</span><div style="font-size:10px;color:var(--text3);line-height:1.2;">${[fee?'수수료':'',sh?'배송':'',sd?'할인':''].filter(Boolean).join('·')}</div>`:'<span style="color:var(--text3);">＋</span>'}</td>`;
+}
 function openReleaseModal2(id){
   closePayDatePop();
   pendingReleaseId=id;
@@ -2723,7 +2763,9 @@ function openReleaseModal2(id){
     `<strong style="color:var(--yellow)">${o.charName}</strong> 을(를) 방출 처리할까요?<br>판매 탭에 자동으로 등록됩니다.`;
   document.getElementById('release-buy').value=totalCost(o)||'';
   document.getElementById('release-sell').value='';
+  ['release-fee','release-ship','release-shipdisc'].forEach(k=>{const e=document.getElementById(k);if(e)e.value='';});
   document.getElementById('release-shop').value='';
+  relNetUpd();
   // 방출일 숨김 초기화
   document.getElementById('rel-date-row').style.display='none';
   document.getElementById('release-date').value='';
@@ -2803,11 +2845,14 @@ function confirmRelease(){
   const shop=document.getElementById('release-shop').value.trim()||'미입력';
   const buy=Number(document.getElementById('release-buy').value)||0;
   const sell=Number(document.getElementById('release-sell').value)||0;
+  const fee=Math.abs(Number(document.getElementById('release-fee')?.value)||0);
+  const shipFee=Math.abs(Number(document.getElementById('release-ship')?.value)||0);
+  const shipDisc=Math.abs(Number(document.getElementById('release-shipdisc')?.value)||0);
   // 방출 처리
   const rdate=document.getElementById('release-date').value.trim();
   o.released=true;o.deliveryState='released';o.releasedDate=autoDate(rdate)||rdate;
   // 판매 탭 자동 등록
-  sells.push({id:nS++,shop,name:o.charName,maker:o.maker||'',buy,sell,memo:'',fromOrder:o.id,date:o.releasedDate||''});
+  sells.push({id:nS++,shop,name:o.charName,maker:o.maker||'',buy,sell,fee,shipFee,shipDisc,memo:'',fromOrder:o.id,date:o.releasedDate||''});
   closeReleaseModal();
   renderOrder();renderSell();autoSave();
   showToast(`📤 ${o.charName} 방출 완료! 판매 탭에 등록됐어요`,'success');
@@ -3834,7 +3879,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.10.16',['항목 복제 — 수정 창 제목 오른쪽 복제 버튼, 복제할 내용 선택 (카드 혜택은 월 한도에 맞춰 다시 계산)','세부 스케일 추가 (1/2.5 ~ 1/8.5) — 스케일 고르는 창 2열 (1/4 옆에 1/4.5)']],
+  ['26.10.16',['방출 시 수수료 · 배송비 · 배송비 할인 입력 — 실수령·손익에 반영, 방출 탭에 수수료·배송 칸','항목 복제 — 수정 창 제목 오른쪽 복제 버튼, 복제할 내용 선택 (카드 혜택은 월 한도에 맞춰 다시 계산)','세부 스케일 추가 (1/2.5 ~ 1/8.5) — 스케일 고르는 창 2열 (1/4 옆에 1/4.5)']],
   ['26.10.15',['수정 창 카드 버튼: 저장 안 한 입력이 있으면 자동 저장 후 바로 카드 설정','+추가 시 새 항목 수정 창 자동으로 열림','카드 혜택이 들어오면 빈 쿠폰1·포인트1 자리를 대신']],
   ['26.10.14',['검색에 운송장 모드 추가 (국내·해외, 일부 번호로도 검색)','금액 검색에 결제 파트별 금액(선행·정식·잔금·배송비 등, 원화·외화) 포함']],
   ['26.10.11',['수정 창 쿠폰·포인트 이름을 끌어 결제 항목에 놓으면 연동 (호버 시 서로 강조)','묶음 코드 자동 지정: 같은 결제일 안에서 A부터','수정 창 카드 칸 호버 강조를 같은 결제에서 나온 칸끼리만','할인 탭: 카드 적립을 포인트 총합·포인트 필터에, 카드 할인을 할인 총합·묶음/단일 필터에 반영','수정 창 결제칸·카드 칸에 카드 버튼 — 묶음 없이 단일 결제에도 카드 혜택 적용','할인 탭 결제 카드 설정 버튼 아래로 이동','카드 정보 보호 — 예전 버전 저장본이 들어와도 카드 목록 유지','카드 탭에서 사라진 카드 복구 (이전 저장 기록 · 드라이브 이전 버전)','스냅샷 복원 시 카드·묶음쿠폰·그룹도 함께 복원','수정 창에서 묶음 코드 입력 후 저장 시 묶음 할인 마법사 진행 여부 확인','묶음 할인 마법사에서 등록된 카드사·카드를 한 화면에서 선택 · 최종 확인 단계에서도 카드 변경','한화 없이 결제일+외화만 입력된 결제칸도 묶음 목록에 표시']],
@@ -6591,7 +6636,8 @@ function renderSell(){
   const data=sells.filter(i=>(!q||(i.name+i.shop).toLowerCase().includes(q)));
   const buyTotal=sells.reduce((a,b)=>{const bl=b.fromOrder?totalCost(orders.find(o=>o.id===b.fromOrder)||{}):Number(b.buy)||0;return a+bl;},0);
   const sellTotal=sells.reduce((a,b)=>a+(Number(b.sell)||0),0);
-  const tp=sellTotal-buyTotal;
+  const costTotal=sells.reduce((a,b)=>a+sellCostOf(b),0);
+  const tp=sellTotal-costTotal-buyTotal;
   const statsSellEl=document.getElementById('stats-sell');
   statsSellEl.style.display='grid';
   statsSellEl.style.gridTemplateColumns='1fr 1fr 1fr 1fr';
@@ -6600,7 +6646,7 @@ function renderSell(){
     <div class="stat-card"><div class="stat-label">판매 항목</div><div class="stat-value">${sells.length}</div></div>
     <div class="stat-card"><div class="stat-label">총 손익</div><div class="stat-value mono ${tp>=0?'sv-g':'sv-r'}" style="font-size:14px;">${tp>=0?'+':'- '}￦${Math.abs(tp).toLocaleString('ko-KR')}</div></div>
     <div class="stat-card"><div class="stat-label">구매가 총액</div><div class="stat-value mono" style="font-size:14px;">￦${buyTotal.toLocaleString('ko-KR')}</div></div>
-    <div class="stat-card"><div class="stat-label">판매가 총액</div><div class="stat-value mono" style="font-size:14px;">￦${sellTotal.toLocaleString('ko-KR')}</div></div>
+    <div class="stat-card"><div class="stat-label">판매가 총액</div><div class="stat-value mono" style="font-size:14px;">￦${sellTotal.toLocaleString('ko-KR')}</div>${costTotal?`<div style="font-size:11px;color:var(--text3);margin-top:2px;" class="mono">수수료·배송 ${costTotal>0?'−':'+'}￦${Math.abs(costTotal).toLocaleString('ko-KR')} · 실수령 ￦${(sellTotal-costTotal).toLocaleString('ko-KR')}</div>`:''}</div>
   `;
   // 정렬 (기본: 최근 판매순)
   sellSortData(data);
@@ -6632,7 +6678,7 @@ function renderSell(){
   document.getElementById('tbody-sell').innerHTML=data.map((s,_i)=>{
     const buyLive=s.fromOrder?totalCost(orders.find(o=>o.id===s.fromOrder)||{}):Number(s.buy)||0;
     const _hd=sellShopHeader(data,s,_i,true);
-    const p=(Number(s.sell)||0)-buyLive;
+    const p=sellNet(s)-buyLive;
     const fromTag=s.fromOrder?`<span class="badge bg-r" style="font-size:10px;">방출</span>`:'';
     return _hd+`<tr class="main-row" style="font-size:13px;">
       <td class="mono" style="text-align:center;font-size:13px;cursor:text;" onclick="const ss=sells.find(i=>i.id===${s.id});const v=prompt('방출일자 (YY-MM-DD)',ss.date||'');if(v!==null){const d=autoDate(v.trim())||v.trim();ss.date=d;if(ss.fromOrder!=null){const oo=orders.find(i=>i.id===ss.fromOrder);if(oo)oo.releasedDate=d;}renderSell();renderOrder();autoSave();}">${s.date||'<span style="color:var(--text3)">-</span>'}</td>
@@ -6641,6 +6687,7 @@ function renderSell(){
       <td style="cursor:pointer;color:var(--accent);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" onclick="goToCard(${s.fromOrder})">${s.name||'-'}</td>
       <td class="mono" style="text-align:right;color:var(--text2);">${buyLive?buyLive.toLocaleString('ko-KR')+'₩':'-'}</td>
       <td class="mono" style="text-align:right;" onclick="editSellNum(this,${s.id},'sell')">${s.sell?(Number(s.sell)||0).toLocaleString('ko-KR')+'₩':'-'}</td>
+      ${sellFeeCell(s)}
       <td class="${p>0?'profit-pos':p<0?'profit-neg':''}">${p>=0?'+':''}${p.toLocaleString('ko-KR')}￦</td>
       <td style="text-align:center;">${fromTag}</td>
       <td><input type="text" value="${s.memo||''}" onchange="sells.find(i=>i.id===${s.id}).memo=this.value;autoSave()" placeholder="메모"></td>
@@ -6677,7 +6724,7 @@ function renderSellCards(data){
     const o=s.fromOrder?orders.find(i=>i.id===s.fromOrder):null;
     const buyLive=o?totalCost(o):Number(s.buy)||0;
     const _hd=sellShopHeader(data,s,_i,false);
-    const p=(Number(s.sell)||0)-buyLive;
+    const p=sellNet(s)-buyLive,sc=sellCostOf(s);
     const pc=p>0?'var(--green)':p<0?'var(--red)':'var(--text2)';
     const buyDate=o?earliestPayDate(o):'';
     const thumb=(o&&o.imageUrl)
@@ -6700,6 +6747,7 @@ function renderSellCards(data){
           <span style="font-size:11px;color:var(--text3);text-align:center;">→</span>
           <span style="font-size:13px;font-weight:700;color:var(--text);text-align:right;">￦${(Number(s.sell)||0).toLocaleString('ko-KR')}</span>
         </div>
+        ${sc?`<div style="${MONO}font-size:11px;color:var(--text3);text-align:right;margin-top:2px;" title="수수료 ${(Number(s.fee)||0).toLocaleString('ko-KR')} · 배송비 ${(Number(s.shipFee)||0).toLocaleString('ko-KR')} · 배송비 할인 ${(Number(s.shipDisc)||0).toLocaleString('ko-KR')}">수수료·배송 ${sc>0?'−':'+'}${Math.abs(sc).toLocaleString('ko-KR')}</div>`:''}
 
         <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px;padding-top:5px;border-top:1px solid var(--border);">
           <span style="font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">${s.shop||'-'}</span>
@@ -6727,12 +6775,12 @@ function sellBuyOf(s){const o=s.fromOrder?orders.find(x=>x.id===s.fromOrder):nul
 function sellBuyDateOf(s){const o=s.fromOrder?orders.find(x=>x.id===s.fromOrder):null;return o?(earliestPayDate(o)||o.date||''):'';}
 function sellSortData(data){
   const [k,ds]=_sellSortKey.split(':');const dir=Number(ds)||1;
-  const val=s=>{const buy=sellBuyOf(s),sell=Number(s.sell)||0;
+  const val=s=>{const buy=sellBuyOf(s),sell=Number(s.sell)||0,net=sellNet(s);
     switch(k){
       case 'saledate':return s.date||'';
       case 'buydate':return sellBuyDateOf(s);
-      case 'profit':return sell-buy;
-      case 'rate':return buy>0?(sell-buy)/buy:null;
+      case 'profit':return net-buy;
+      case 'rate':return buy>0?(net-buy)/buy:null;
       case 'name':return s.name||'';
       case 'buy':return buy;
       case 'sell':return sell;
@@ -6766,10 +6814,10 @@ function sellShopHeader(list,s,i,asRow){
   const shop=s.shop||'';
   if(i>0&&(list[i-1].shop||'')===shop)return '';
   const items=list.filter(x=>(x.shop||'')===shop);
-  const prof=items.reduce((a,x)=>a+(Number(x.sell)||0)-sellBuyOf(x),0);
+  const prof=items.reduce((a,x)=>a+sellNet(x)-sellBuyOf(x),0);
   const inner=`<span style="font-weight:700;color:var(--text);">🏪 ${shop||'(판매처 없음)'}</span><span style="color:var(--text3);margin-left:8px;">${items.length}건</span><span class="mono" style="margin-left:auto;font-weight:700;color:${prof>=0?'var(--green)':'var(--red)'};">${prof>=0?'+':'−'}￦ ${Math.abs(prof).toLocaleString('ko-KR')}</span>`;
   return asRow
-    ?`<tr class="sell-shop-row"><td colspan="10" style="background:var(--surface);padding:8px 12px;font-size:13px;"><div style="display:flex;align-items:center;">${inner}</div></td></tr>`
+    ?`<tr class="sell-shop-row"><td colspan="11" style="background:var(--surface);padding:8px 12px;font-size:13px;"><div style="display:flex;align-items:center;">${inner}</div></td></tr>`
     :`<div style="grid-column:1/-1;display:flex;align-items:center;padding:8px 4px 2px;font-size:13px;border-bottom:1px solid var(--border2);${i>0?'margin-top:8px;':''}">${inner}</div>`;
 }
 function goToCard(orderId){
