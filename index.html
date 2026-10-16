@@ -861,6 +861,12 @@ body.wg-dragging{user-select:none;cursor:grabbing;}
 .pd-wrap .pd-b .d{font-size:14px;font-family:'Space Mono',monospace;color:var(--accent);}
 td:hover>.pd-wrap.has-rel .pd-a{visibility:hidden;}
 td:hover>.pd-wrap.has-rel .pd-b{display:block;}
+#sc-pop{display:none;position:fixed;z-index:9000;grid-template-columns:repeat(2,64px);gap:4px;padding:8px;background:var(--surface2);border:1px solid var(--accent);border-radius:var(--rs);box-shadow:0 10px 28px rgba(0,0,0,.45);}
+#sc-pop button{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;padding:6px 0;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;}
+#sc-pop button.half{color:var(--text2);font-weight:400;}
+#sc-pop button:hover{border-color:var(--accent);color:var(--accent);}
+#sc-pop button.on{background:var(--adim);border-color:var(--accent);color:var(--accent);}
+#sc-pop button.none{grid-column:1/3;font-family:inherit;font-size:12px;color:var(--text2);}
 .am-cpn.pc-hl{border-color:var(--pcc) !important;box-shadow:0 0 0 2px var(--pcc);}
 .am-drag{cursor:grab;user-select:none;}
 .am-drag:active{cursor:grabbing;}
@@ -1342,9 +1348,9 @@ body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-o
       </select>
       <select id="cf-scale-card" onchange="renderCards()" style="font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);padding:4px 8px;outline:none;">
         <option value="">전체 스케일</option>
-        <option>1/2</option><option>1/3</option><option>1/4</option><option>1/5</option>
-        <option>1/6</option><option>1/7</option><option>1/8</option><option>1/10</option>
-        <option>1/12</option><option value="논스케일">NON</option><option>기타</option>
+        <option>1/2</option><option>1/2.5</option><option>1/3</option><option>1/3.5</option><option>1/4</option><option>1/4.5</option>
+        <option>1/5</option><option>1/5.5</option><option>1/6</option><option>1/6.5</option><option>1/7</option><option>1/7.5</option>
+        <option>1/8</option><option>1/8.5</option><option>1/10</option><option>1/12</option><option value="논스케일">NON</option><option>기타</option>
       </select>
       <span id="cards-count" style="font-size:11px;color:var(--text2);margin-left:4px;"></span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0;">
@@ -1634,9 +1640,29 @@ const FIG_SHORT={'레진피규어':'레진','PVC피규어':'PVC','액션피규�
 const EXTRA_FIELDS=['extra','extra2','extra3','extra4','extra5','extra6'];
 const EXTRA_MAX=EXTRA_FIELDS.length;
 function extraLabel(f){const n=f==='extra'?1:Number(f.replace('extra',''));return '기타비용'+n;}
-const SCALE_TYPES=['1/2','1/3','1/4','1/5','1/6','1/7','1/8','1/10','1/12','논스케일','기타'];
+// 기본 스케일 + 세부(.5) 스케일 — 고르는 창에서는 1/4 옆에 1/4.5 처럼 2열로 보인다
+const SCALE_PAIRS=[['1/2','1/2.5'],['1/3','1/3.5'],['1/4','1/4.5'],['1/5','1/5.5'],['1/6','1/6.5'],['1/7','1/7.5'],['1/8','1/8.5'],['1/10',''],['1/12',''],['논스케일','기타']];
+const SCALE_TYPES=SCALE_PAIRS.flat().filter(Boolean);
 // 칸 폭이 좁아 '논스케일'은 NON으로 표기 (저장값은 그대로)
 function scaleLabel(v){return v==='논스케일'?'NON':v;}
+let _scCb=null;
+function scPick(ev,cur,cb){
+  ev&&ev.stopPropagation();
+  let pop=document.getElementById('sc-pop');
+  if(!pop){pop=document.createElement('div');pop.id='sc-pop';pop.onclick=e=>e.stopPropagation();document.body.appendChild(pop);
+    document.addEventListener('click',scClose);window.addEventListener('resize',scClose);document.addEventListener('keydown',e=>{if(e.key==='Escape')scClose();});
+    window.addEventListener('scroll',e=>{if(!pop.contains(e.target))scClose();},true);}
+  if(pop.style.display==='grid'&&_scCb===cb){scClose();return;}
+  _scCb=cb;cur=cur||'(없음)';
+  const cell=v=>v?`<button type="button" class="${v===cur?'on':''}${v.includes('.5')?' half':''}" onclick="scChoose('${v}')">${scaleLabel(v)}</button>`:'<span></span>';
+  pop.innerHTML=`<button type="button" class="none ${cur==='(없음)'?'on':''}" onclick="scChoose('(없음)')">(없음)</button>`+SCALE_PAIRS.map(([a,b])=>cell(a)+cell(b)).join('');
+  pop.style.display='grid';
+  const r=(ev&&ev.currentTarget||ev.target).getBoundingClientRect(),pw=pop.offsetWidth,ph=pop.offsetHeight;
+  let x=Math.min(Math.max(8,r.left+r.width/2-pw/2),innerWidth-pw-8),y=r.bottom+4;if(y+ph>innerHeight-8)y=Math.max(8,r.top-ph-4);
+  pop.style.left=x+'px';pop.style.top=y+'px';
+}
+function scChoose(v){const cb=_scCb;scClose();if(cb)cb(v);}
+function scClose(){const p=document.getElementById('sc-pop');if(p)p.style.display='none';_scCb=null;}
 const P_TYPES=['중고거래','예약구매','전액구매'];
 const CURRENCIES=['₩','$(달러)','¥(위안)','¥(엔)'];
 const GROUP_COLORS=['#ff6eb4','#4ecfcf','#ffd166','#ff8c42','#4ecb71','#7b6cff','#ff5c8a','#42b8d4'];
@@ -3208,7 +3234,7 @@ function openAddModal(editId){
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
       <div><div class="form-label">구매 유형</div><select id="am-pt" class="form-select" onchange="updateCostFields(_addEditId)">${P_TYPES.map(t=>`<option ${t===defPt?'selected':''}>${t}</option>`).join('')}</select></div>
       <div><div class="form-label">피규어 유형</div><select id="am-ft" class="form-select">${FIG_TYPES.map(t=>`<option ${t===defFt?'selected':''}>${t}</option>`).join('')}</select></div>
-      <div><div class="form-label">스케일</div><select id="am-scale" class="form-select">${['(없음)',...SCALE_TYPES].map(s=>`<option value="${s}" ${(ex?.scale||'(없음)')===s?'selected':''}>${scaleLabel(s)}</option>`).join('')}</select></div>
+      <div><div class="form-label">스케일</div><input type="hidden" id="am-scale" value="${ex?.scale||'(없음)'}"><button type="button" id="am-scale-btn" class="form-select" style="text-align:left;cursor:pointer;" onclick="scPick(event,document.getElementById('am-scale').value,v=>{document.getElementById('am-scale').value=v;this.textContent=scaleLabel(v);})">${scaleLabel(ex?.scale||'(없음)')}</button></div>
     </div>
     <div style="display:none"><input id="am-pdate" type="text" value="${defPdate}"></div>
     <!-- 1행: 상호명 / 캐릭터명 / 발매일 -->
@@ -3794,6 +3820,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
+  ['26.10.16',['세부 스케일 추가 (1/2.5 ~ 1/8.5) — 스케일 고르는 창 2열 (1/4 옆에 1/4.5)']],
   ['26.10.15',['수정 창 카드 버튼: 저장 안 한 입력이 있으면 자동 저장 후 바로 카드 설정','+추가 시 새 항목 수정 창 자동으로 열림','카드 혜택이 들어오면 빈 쿠폰1·포인트1 자리를 대신']],
   ['26.10.14',['검색에 운송장 모드 추가 (국내·해외, 일부 번호로도 검색)','금액 검색에 결제 파트별 금액(선행·정식·잔금·배송비 등, 원화·외화) 포함']],
   ['26.10.11',['수정 창 쿠폰·포인트 이름을 끌어 결제 항목에 놓으면 연동 (호버 시 서로 강조)','묶음 코드 자동 지정: 같은 결제일 안에서 A부터','수정 창 카드 칸 호버 강조를 같은 결제에서 나온 칸끼리만','할인 탭: 카드 적립을 포인트 총합·포인트 필터에, 카드 할인을 할인 총합·묶음/단일 필터에 반영','수정 창 결제칸·카드 칸에 카드 버튼 — 묶음 없이 단일 결제에도 카드 혜택 적용','할인 탭 결제 카드 설정 버튼 아래로 이동','카드 정보 보호 — 예전 버전 저장본이 들어와도 카드 목록 유지','카드 탭에서 사라진 카드 복구 (이전 저장 기록 · 드라이브 이전 버전)','스냅샷 복원 시 카드·묶음쿠폰·그룹도 함께 복원','수정 창에서 묶음 코드 입력 후 저장 시 묶음 할인 마법사 진행 여부 확인','묶음 할인 마법사에서 등록된 카드사·카드를 한 화면에서 선택 · 최종 확인 단계에서도 카드 변경','한화 없이 결제일+외화만 입력된 결제칸도 묶음 목록에 표시']],
@@ -5600,10 +5627,8 @@ function renderOrder(){
       </td>
 
       <td style="text-align:center;" onclick="event.stopPropagation()">
-        <select style="font-size:14px;background:transparent;border:none;color:${o.scale?'var(--text)':'var(--text3)'};outline:none;cursor:pointer;text-align:center;max-width:48px;appearance:none;-webkit-appearance:none;"
-          onchange="(()=>{const ord=orders.find(i=>i.id===${o.id});if(ord){ord.scale=this.value==='(없음)'?'':this.value;autoSave();renderOrder();}})()">
-          ${['(없음)',...SCALE_TYPES].map(s=>`<option value="${s}" ${(o.scale||'(없음)')===s?'selected':''}>${scaleLabel(s)}</option>`).join('')}
-        </select>
+        <span style="font-size:14px;color:${o.scale?'var(--text)':'var(--text3)'};cursor:pointer;white-space:nowrap;"
+          onclick="scPick(event,'${o.scale||'(없음)'}',v=>{const ord=orders.find(i=>i.id===${o.id});if(ord){ord.scale=v==='(없음)'?'':v;autoSave();renderOrder();}})">${o.scale?scaleLabel(o.scale):'(없음)'}</span>
       </td>
       <td onclick="event.stopPropagation()" style="text-align:center;position:relative;">
         <!-- 쿠폰 표시 버튼 -->
@@ -7050,7 +7075,7 @@ function closeMcThumbs(){const ov=document.getElementById('mc-thumb-modal');if(o
 function manageChartData(kind){
   const cnt={};const push=k=>{k=(k==null||k==='')?'(없음)':k;cnt[k]=(cnt[k]||0)+1;};
   if(kind==='figType'){FIG_TYPES.forEach(t=>cnt[t]=0);orders.forEach(o=>{if(o.figType)push(o.figType);});return FIG_TYPES.map(t=>({label:t,count:cnt[t]||0}));}
-  if(kind==='scale'){const labels=['(없음)',...SCALE_TYPES];labels.forEach(s=>cnt[s]=0);orders.forEach(o=>push(o.scale||'(없음)'));return labels.map(s=>({label:(typeof scaleLabel==='function'?scaleLabel(s):s),count:cnt[s]||0}));}
+  if(kind==='scale'){const labels=['(없음)',...SCALE_TYPES.filter(s=>!s.includes('.5')||orders.some(o=>o.scale===s))];labels.forEach(s=>cnt[s]=0);orders.forEach(o=>push(o.scale||'(없음)'));return labels.map(s=>({label:(typeof scaleLabel==='function'?scaleLabel(s):s),count:cnt[s]||0}));}
   if(kind==='ptype'){P_TYPES.forEach(t=>cnt[t]=0);orders.forEach(o=>push(o.purchaseType));return P_TYPES.map(t=>({label:t,count:cnt[t]||0}));}
   if(kind==='price'){
     const bk=[['~10만',0,100000],['10~30만',100000,300000],['30~50만',300000,500000],['50~100만',500000,1000000],['100~200만',1000000,2000000],['200~400만',2000000,4000000],['400만~',4000000,Infinity]];
