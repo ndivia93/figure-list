@@ -3398,7 +3398,7 @@ function openAddModal(editId){
     const has=(Number(ex?.costs?.[f])||0)>0||(ex?.costDates||{})[f]||((ex?.localPrices||{})[f]?.amount);
     if(has)_extraShown=Math.max(_extraShown,idx+1);
   });
-  _amFee=Object.assign({},(isEdit&&ex&&ex.feeFields)||{});
+  _amFee=Object.assign({},(isEdit&&ex&&ex.feeFields)||{});_amCardPending={};_amCardPreview={};
   updateCostFields(isEdit?editId:null,ex);
   // 모달-로컬 쿠폰 배열 초기화 (최대 4개) — 기존 항목의 쿠폰을 복제, 없으면 기본 1개
   _amCoupons=(isEdit?couponsOf(ex):[]).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩',...(c.field?{field:c.field,...(c.base?{base:c.base}:{})}:{})}));
@@ -3930,7 +3930,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.10.19',['수정 창 묶음그룹 칸 클릭 → 그 결제일의 묶음 고르기 · 새 묶음 · 직접 입력','묶음 카드 혜택: 결제별 체크리스트로 일부 빼기','기타비용을 수수료로 표시 — 카드 할인·적립 계산에서 제외','결제와 연동된 쿠폰·포인트: 결제 금액이 바뀌면 같은 비율로 조정 (확인/취소)']],
+  ['26.10.19',['결제 금액이 바뀌면 연동된 카드 할인·적립도 다시 계산 (확인/취소, 저장 시 월 한도 반영)','수정 창 묶음그룹 칸 클릭 → 그 결제일의 묶음 고르기 · 새 묶음 · 직접 입력','묶음 카드 혜택: 결제별 체크리스트로 일부 빼기','기타비용을 수수료로 표시 — 카드 할인·적립 계산에서 제외','결제와 연동된 쿠폰·포인트: 결제 금액이 바뀌면 같은 비율로 조정 (확인/취소)']],
   ['26.10.16',['방출 시 수수료 · 배송비 · 배송비 할인 입력 — 실수령·손익에 반영, 방출 탭에 수수료·배송 칸','항목 복제 — 수정 창 제목 오른쪽 복제 버튼, 복제할 내용 선택 (카드 혜택은 월 한도에 맞춰 다시 계산)','세부 스케일 추가 (1/2.5 ~ 1/8.5) — 스케일 고르는 창 2열 (1/4 옆에 1/4.5)']],
   ['26.10.15',['수정 창 카드 버튼: 저장 안 한 입력이 있으면 자동 저장 후 바로 카드 설정','+추가 시 새 항목 수정 창 자동으로 열림','카드 혜택이 들어오면 빈 쿠폰1·포인트1 자리를 대신']],
   ['26.10.14',['검색에 운송장 모드 추가 (국내·해외, 일부 번호로도 검색)','금액 검색에 결제 파트별 금액(선행·정식·잔금·배송비 등, 원화·외화) 포함']],
@@ -4144,6 +4144,36 @@ function amLinkBaseNow(c){
   return krw?(Number((o.costs||{})[c.field])||0):(Number(((o.localPrices||{})[c.field]||{}).amount)||0);
 }
 // 연동된 결제 금액이 바뀌면 → 같은 비율로 쿠폰·포인트 금액 조정 (알림창에서 확인/취소)
+// 수정 창에서 바뀐 결제 금액을 반영해 카드 혜택 미리 계산 (저장할 때 실제 반영)
+let _amCardPending={},_amCardPreview={};
+function amFieldKrw(o,ff){if(o.id===_addEditId){const el=document.getElementById('cf-'+(PC_FIELD_ID[ff]||ff));if(el)return Number(el.value)||0;}return Number((o.costs||{})[ff])||0;}
+function amFieldFee(o,ff){return o.id===_addEditId?!!_amFee[ff]:pcIsFee(o,ff);}
+// 이 묶음(또는 단일 결제)의 카드 혜택 기준 금액 — live: 수정 창 입력값 사용
+function pcCodeBase(code,live){
+  const bc=bundleCoupons[code];if(!bc||!bc.card)return 0;
+  const amt=(o,ff)=>live?amFieldKrw(o,ff):(Number((o.costs||{})[ff])||0);
+  const fee=(o,ff)=>live?amFieldFee(o,ff):pcIsFee(o,ff);
+  if(bc.solo){const o=orders.find(x=>x.id===bc.solo.id);return o&&!fee(o,bc.solo.f)?amt(o,bc.solo.f):0;}
+  const skip=new Set(bc.card.skip||[]);let t=0;
+  orders.forEach(o=>Object.entries(o.costGroups||{}).forEach(([ff,c])=>{if(String(c)!==code||skip.has(o.id+':'+ff)||fee(o,ff))return;t+=amt(o,ff);}));
+  return t;
+}
+function amCardSyncPlan(o,f){
+  const out=[];const codes=new Set();
+  const sc='@'+o.id+':'+f;if(bundleCoupons[sc]&&bundleCoupons[sc].card)codes.add(sc);
+  const bcode=String((o.costGroups||{})[f]||'');if(bcode&&bundleCoupons[bcode]&&bundleCoupons[bcode].card)codes.add(bcode);
+  codes.forEach(code=>{
+    const bc=bundleCoupons[code];const iss=pcIssuer(bc.card.iss),card=pcCard(iss,bc.card.card);if(!card)return;
+    const nb=pcCodeBase(code,true),ob=Number(bc.card.base)||0;if(nb===ob)return;
+    const r=pcCalc(card,nb,bc.card.month,bc.card.off,code);
+    // 이 상품 몫 (묶음이면 이 상품의 포함된 결제 비율)
+    let mine=nb;if(!bc.solo){const skip=new Set(bc.card.skip||[]);mine=0;Object.entries(o.costGroups||{}).forEach(([ff,c])=>{if(String(c)===code&&!skip.has(o.id+':'+ff)&&!amFieldFee(o,ff))mine+=amFieldKrw(o,ff);});}
+    const ratio=nb>0?mine/nb:0;const cur=(o.cardBen||{})[code]||{};
+    out.push({code,card,solo:!!bc.solo,ob,nb,fromD:Number(bc.card.disc)||0,fromP:Number(bc.card.point)||0,toD:r.disc,toP:r.point,
+      myD:Math.round(r.disc*ratio),myP:Math.round(r.point*ratio),curD:Number(cur.disc)||0,curP:Number(cur.point)||0});
+  });
+  return out;
+}
 function amLinkSync(f){
   const list=[];
   [['cpn',_amCoupons,'쿠폰'],['pt',_amPoints,'포인트']].forEach(([kind,arr,lab])=>arr.forEach((c,i)=>{
@@ -4152,12 +4182,24 @@ function amLinkSync(f){
     if(!(now>0)||now===Number(c.base))return;
     const k=isKRW(c.currency||'₩');let nv=Number(c.amount)*now/Number(c.base);nv=k?Math.round(nv):Math.round(nv*100)/100;
     list.push({c,kind,lab:lab+(i+1),from:Number(c.amount),to:nv,b0:Number(c.base),b1:now,k});}));
-  if(!list.length)return;
+  const o=_addEditId!=null?orders.find(x=>x.id===_addEditId):null;
+  const cards=o?amCardSyncPlan(o,f):[];
+  if(!list.length&&!cards.length)return;
   const fm=(n,k)=>(k?'￦ ':'')+Math.abs(n).toLocaleString('ko-KR',{maximumFractionDigits:2});
   const sg=n=>n<0?'−':'';
-  const rows=list.map(x=>`<div style="display:flex;justify-content:space-between;gap:10px;margin-top:4px;"><b>${x.lab}</b><span class="mono">${sg(x.from)}${fm(x.from,x.k)} → <b style="color:var(--accent);">${sg(x.to)}${fm(x.to,x.k)}</b></span></div>`).join('');
-  const done=apply=>{list.forEach(x=>{if(apply)x.c.amount=x.to;x.c.base=x.b1;});renderAmCoupons();renderAmPoints();if(apply)showToast('연동된 금액에 맞춰 바꿨어요 — 수정을 눌러 저장','success');};
-  openNoticeModal('연동 금액이 바뀌었어요',`<b>${BM_FIELDS[f]||f}</b> 금액이 ${fm(list[0].b0,list[0].k)} → ${fm(list[0].b1,list[0].k)} 로 바뀌었어요.<br>연동된 쿠폰·포인트를 같은 비율로 바꿀까요?<div style="text-align:left;margin-top:10px;font-size:13px;">${rows}</div>`,
+  const row=(l,a,b)=>`<div style="display:flex;justify-content:space-between;gap:10px;margin-top:4px;"><b>${l}</b><span class="mono">${a} → <b style="color:var(--accent);">${b}</b></span></div>`;
+  let rows=list.map(x=>row(x.lab,sg(x.from)+fm(x.from,x.k),sg(x.to)+fm(x.to,x.k))).join('');
+  cards.forEach(x=>{const nm=pcEsc(x.card.name)+(x.solo?'':' <span style="font-weight:400;color:var(--text3);">(묶음 '+pcEsc(bundleAlias(x.code)||x.code)+')</span>');
+    if(x.fromD||x.toD)rows+=row(nm+' 할인','−'+fm(x.fromD,true),'−'+fm(x.toD,true));
+    if(x.fromP||x.toP)rows+=row(nm+' 적립',x.fromP.toLocaleString('ko-KR')+' P',x.toP.toLocaleString('ko-KR')+' P');
+    if(!x.solo)rows+=`<div style="font-size:11px;color:var(--text3);text-align:right;">이 상품 몫 −${fm(x.myD,true)} · ${x.myP.toLocaleString('ko-KR')} P</div>`;});
+  const head=list.length?`${fm(list[0].b0,list[0].k)} → ${fm(list[0].b1,list[0].k)}`:`${fm(Number((o.costs||{})[f])||0,true)} → ${fm(amFieldKrw(o,f),true)}`;
+  const done=apply=>{
+    list.forEach(x=>{if(apply)x.c.amount=x.to;x.c.base=x.b1;});
+    cards.forEach(x=>{if(apply){_amCardPending[x.code]=true;_amCardPreview[x.code]={disc:x.solo?x.toD:x.myD,point:x.solo?x.toP:x.myP};}else{delete _amCardPending[x.code];delete _amCardPreview[x.code];}});
+    renderAmCoupons();renderAmPoints();
+    if(apply)showToast(cards.length?'바꿨어요 — 수정을 누르면 카드 혜택도 새 금액(남은 한도 포함)으로 다시 계산돼요':'연동된 금액에 맞춰 바꿨어요 — 수정을 눌러 저장','success');};
+  openNoticeModal('연동 금액이 바뀌었어요',`<b>${BM_FIELDS[f]||(f.startsWith('extra')?extraLabel(f):f)}</b> 금액이 ${head} 로 바뀌었어요.<br>연동된 ${[list.length?'쿠폰·포인트':'',cards.length?'카드 할인·적립':''].filter(Boolean).join('과 ')}을 새 금액에 맞춰 바꿀까요?<div style="text-align:left;margin-top:10px;font-size:13px;">${rows}</div>`,
     [{label:'취소',onClick:()=>done(false)},{label:'확인',primary:true,onClick:()=>done(true)}]);
 }
 // 결제칸 호버 → 그 결제에 연동된 쿠폰·포인트·카드 칸 강조
@@ -4192,8 +4234,9 @@ function couponAddCardHtml(){
 }
 // 수정 창: 이 항목에 들어온 카드 할인·적립 (묶음 결제 카드)
 function amCardBens(key){
-  const o=_addEditId!=null?orders.find(x=>x.id===_addEditId):null;if(!o||!o.cardBen)return [];
-  return Object.entries(o.cardBen).filter(([c,v])=>(Number(v&&v[key])||0)>0).map(([code,v])=>{
+  const o=_addEditId!=null?orders.find(x=>x.id===_addEditId):null;if(!o)return [];
+  const src=Object.assign({},o.cardBen||{});Object.entries(_amCardPreview).forEach(([c,v])=>{src[c]=Object.assign({},src[c]||{},v);});
+  return Object.entries(src).filter(([c,v])=>(Number(v&&v[key])||0)>0).map(([code,v])=>{
     const bc=bundleCoupons[code]||{};const is=bc.card?pcIssuer(bc.card.iss):null;const cd=bc.card?pcCard(is,bc.card.card):null;
     return {code,amount:Number(v[key])||0,name:cd?cd.name:'카드',alias:bc.solo?'단일 · '+(BM_FIELDS[bc.solo.f]||bc.solo.f):(bc.name||code),cid:cd?cd.id:'',color:(cd&&cd.color)||(is&&is.color)||'#8a8aa0'};});
 }
@@ -4715,6 +4758,9 @@ function submitAdd(editId){
         Object.assign(o,{purchaseType:pt,figType,scale,scale,charName:finalName,subName,maker,date,paymentDate,releaseDate,groupId:o.groupId||'',storeName,costs,coupons,coupon:null,points,imageUrl:_img,localPrice,memo,costDates:newCostDates,costGroups:newCostGroups,localPrices:newLocalPrices});
         o.paymentDate=autoPayDate(newCostDates,costs)||o.paymentDate;
         {const ff={};EXTRA_FIELDS.forEach(f=>{if(_amFee[f])ff[f]=true;});if(Object.keys(ff).length)o.feeFields=ff;else delete o.feeFields;}
+        // 바뀐 결제 금액으로 카드 혜택 다시 계산 (같은 카드·달 전체를 날짜순으로 — 월 한도 반영)
+        {const done=new Set();Object.keys(_amCardPending).forEach(code=>{const bc=bundleCoupons[code];if(!bc||!bc.card)return;bc.card.base=pcCodeBase(code,false);const k=bc.card.card+'|'+bc.card.month;if(!done.has(k)){done.add(k);}});
+          done.forEach(k=>{const [cid,m]=k.split('|');pcRecalcMonth(cid,m);});_amCardPending={};_amCardPreview={};}
         if((o.trackNo||'')!==trackNo||(o.trackNoIntl||'')!==trackNoIntl)delete o.shipUndone;
         o.trackCourier=trackCourier;o.trackNo=trackNo;o.trackCourierIntl=trackCourierIntl;o.trackNoIntl=trackNoIntl;
         if(autoShipState(o))setTimeout(()=>showToast(`운송장이 등록되어 배송중으로 전환했어요`,'success'),400);
