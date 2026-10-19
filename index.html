@@ -3950,7 +3950,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.10.19',['카드 혜택 한도를 결제 순서대로 — 추가·수정·삭제 시 같은 달 혜택 자동 재계산','결제 금액이 바뀌면 연동된 카드 할인·적립도 다시 계산 (확인/취소, 저장 시 월 한도 반영)','수정 창 묶음그룹 칸 클릭 → 그 결제일의 묶음 고르기 · 새 묶음 · 직접 입력','묶음 카드 혜택: 결제별 체크리스트로 일부 빼기','기타비용을 수수료로 표시 — 카드 할인·적립 계산에서 제외','결제와 연동된 쿠폰·포인트: 결제 금액이 바뀌면 같은 비율로 조정 (확인/취소)']],
+  ['26.10.19',['구매목록에서 결제 금액을 고쳐도 연동된 카드 혜택·쿠폰·포인트 조정 확인창','수정 창 저장 시 놓친 금액 변경도 확인','카드 혜택 한도를 결제 순서대로 — 추가·수정·삭제 시 같은 달 혜택 자동 재계산','결제 금액이 바뀌면 연동된 카드 할인·적립도 다시 계산 (확인/취소, 저장 시 월 한도 반영)','수정 창 묶음그룹 칸 클릭 → 그 결제일의 묶음 고르기 · 새 묶음 · 직접 입력','묶음 카드 혜택: 결제별 체크리스트로 일부 빼기','기타비용을 수수료로 표시 — 카드 할인·적립 계산에서 제외','결제와 연동된 쿠폰·포인트: 결제 금액이 바뀌면 같은 비율로 조정 (확인/취소)']],
   ['26.10.16',['방출 시 수수료 · 배송비 · 배송비 할인 입력 — 실수령·손익에 반영, 방출 탭에 수수료·배송 칸','항목 복제 — 수정 창 제목 오른쪽 복제 버튼, 복제할 내용 선택 (카드 혜택은 월 한도에 맞춰 다시 계산)','세부 스케일 추가 (1/2.5 ~ 1/8.5) — 스케일 고르는 창 2열 (1/4 옆에 1/4.5)']],
   ['26.10.15',['수정 창 카드 버튼: 저장 안 한 입력이 있으면 자동 저장 후 바로 카드 설정','+추가 시 새 항목 수정 창 자동으로 열림','카드 혜택이 들어오면 빈 쿠폰1·포인트1 자리를 대신']],
   ['26.10.14',['검색에 운송장 모드 추가 (국내·해외, 일부 번호로도 검색)','금액 검색에 결제 파트별 금액(선행·정식·잔금·배송비 등, 원화·외화) 포함']],
@@ -4216,7 +4216,7 @@ function amLinkSync(f){
   const head=list.length?`${fm(list[0].b0,list[0].k)} → ${fm(list[0].b1,list[0].k)}`:`${fm(Number((o.costs||{})[f])||0,true)} → ${fm(amFieldKrw(o,f),true)}`;
   const done=apply=>{
     list.forEach(x=>{if(apply)x.c.amount=x.to;x.c.base=x.b1;});
-    cards.forEach(x=>{if(apply){_amCardPending[x.code]=true;_amCardPreview[x.code]={disc:x.solo?x.toD:x.myD,point:x.solo?x.toP:x.myP};}else{delete _amCardPending[x.code];delete _amCardPreview[x.code];}});
+    cards.forEach(x=>{if(apply){_amCardPending[x.code]=true;_amCardPreview[x.code]={disc:x.solo?x.toD:x.myD,point:x.solo?x.toP:x.myP};}else{delete _amCardPending[x.code];delete _amCardPreview[x.code];const bc=bundleCoupons[x.code];if(bc&&bc.card)bc.card.ignoreBase=x.nb;}});
     renderAmCoupons();renderAmPoints();
     if(apply)showToast(cards.length?'바꿨어요 — 수정을 누르면 카드 혜택도 새 금액(남은 한도 포함)으로 다시 계산돼요':'연동된 금액에 맞춰 바꿨어요 — 수정을 눌러 저장','success');};
   openNoticeModal('연동 금액이 바뀌었어요',`<b>${BM_FIELDS[f]||(f.startsWith('extra')?extraLabel(f):f)}</b> 금액이 ${head} 로 바뀌었어요.<br>연동된 ${[list.length?'쿠폰·포인트':'',cards.length?'카드 할인·적립':''].filter(Boolean).join('과 ')}을 새 금액에 맞춰 바꿀까요?<div style="text-align:left;margin-top:10px;font-size:13px;">${rows}</div>`,
@@ -4808,7 +4808,7 @@ function submitAdd(editId){
     const _aft=_amAfterSave;_amAfterSave=null;
     if(_aft&&_savedO&&Date.now()-_aft.t<60000){_aft.fn(_savedO.id);return;}   // 카드 버튼에서 온 저장 → 창 다시 열고 마법사로
     if(_savedO&&!cpnMixed(_savedO))delete _savedO.cpnMixOk;
-    if(_savedO)cpnAskUnify(_savedO,()=>bmwAskAfterSave(_newCodes));
+    if(_savedO)cpnAskUnify(_savedO,()=>pcCostChanged(_savedO,()=>bmwAskAfterSave(_newCodes)));
     else bmwAskAfterSave(_newCodes);
   };
   if(editId==null){const s=findSimilar(charName);if(s.length)showSimModal(charName,s,doSave);else doSave(charName);}
@@ -8379,6 +8379,7 @@ let _renderOrderTimer=null;
 function updateCostField(id,field,val){
   const o=orders.find(i=>i.id===id);if(!o)return;
   o.costs[field]=Number(val)||0;
+  setTimeout(()=>pcCostChanged(o),200);   // 연동된 카드 혜택·쿠폰·포인트 확인
   // price-modal만 즉시 갱신 (팝업 DOM은 별도라 안전)
   const pm=document.getElementById('price-modal');
   if(pm&&pm.classList.contains('show'))renderPriceModal(o);
@@ -8387,11 +8388,43 @@ function updateCostField(id,field,val){
   _renderOrderTimer=setTimeout(()=>{renderOrder();},150);
   autoSave();
 }
+// 저장된 결제 금액이 바뀐 뒤: 이 상품에 연동된 카드 혜택·쿠폰·포인트를 새 금액에 맞출지 묻기 (수정 창 밖에서 고친 경우 포함)
+function pcCostChanged(o,after){
+  const fin=()=>{if(after)after();};
+  if(!o){fin();return;}
+  const cards=[],cps=[];
+  Object.entries(bundleCoupons||{}).forEach(([code,bc])=>{
+    if(!pcBcLive(bc)||!bc.card)return;
+    const mine=bc.solo?bc.solo.id===o.id:Object.values(o.costGroups||{}).map(String).includes(code);if(!mine)return;
+    const iss=pcIssuer(bc.card.iss),card=pcCard(iss,bc.card.card);if(!card)return;
+    const nb=pcCodeBase(code,false),ob=Number(bc.card.base)||0;if(nb===ob||nb===bc.card.ignoreBase)return;
+    const r=pcCalc(card,nb,bc.card.month,bc.card.off,code,String(bc.card.date||''));
+    cards.push({code,bc,card,nb,ob,fromD:Number(bc.card.disc)||0,fromP:Number(bc.card.point)||0,toD:r.disc,toP:r.point});
+  });
+  [['쿠폰',couponsOf(o)],['포인트',pointsOf(o)]].forEach(([lab,arr])=>(arr||[]).forEach((c,i)=>{
+    if(!c||!c.field||!(Number(c.base)>0))return;const k=isKRW(c.currency||'₩');
+    const now=k?(Number((o.costs||{})[c.field])||0):(Number(((o.localPrices||{})[c.field]||{}).amount)||0);
+    if(!(now>0)||now===Number(c.base))return;let nv=Number(c.amount)*now/Number(c.base);nv=k?Math.round(nv):Math.round(nv*100)/100;
+    cps.push({c,lab:lab+(i+1),from:Number(c.amount),to:nv,now,k});}));
+  if(!cards.length&&!cps.length){fin();return;}
+  const fm=(n,k)=>(k?'￦ ':'')+Math.abs(n).toLocaleString('ko-KR',{maximumFractionDigits:2});
+  const row=(l,a,b)=>`<div style="display:flex;justify-content:space-between;gap:10px;margin-top:4px;"><b>${l}</b><span class="mono">${a} → <b style="color:var(--accent);">${b}</b></span></div>`;
+  let rows=cps.map(x=>row(x.lab,(x.from<0?'−':'')+fm(x.from,x.k),(x.to<0?'−':'')+fm(x.to,x.k))).join('');
+  cards.forEach(x=>{const nm=pcEsc(x.card.name)+(x.bc.solo?'':' <span style="font-weight:400;color:var(--text3);">(묶음 '+pcEsc(bundleAlias(x.code)||x.code)+')</span>');
+    rows+=`<div style="font-size:11px;color:var(--text3);margin-top:6px;">${nm} — 결제금액 ${fm(x.ob,true)} → ${fm(x.nb,true)}</div>`;
+    if(x.fromD||x.toD)rows+=row('할인','−'+fm(x.fromD,true),'−'+fm(x.toD,true));
+    if(x.fromP||x.toP)rows+=row('적립',x.fromP.toLocaleString('ko-KR')+' P',x.toP.toLocaleString('ko-KR')+' P');});
+  openNoticeModal('결제 금액이 바뀌었어요',`<b>${pcEsc(o.charName||'')}</b>의 결제 금액이 바뀌었어요.<br>연동된 ${[cps.length?'쿠폰·포인트':'',cards.length?'카드 할인·적립':''].filter(Boolean).join('과 ')}을 새 금액에 맞춰 바꿀까요?<div style="text-align:left;margin-top:10px;font-size:13px;">${rows}</div>`,
+    [{label:'취소',onClick:()=>{cps.forEach(x=>{x.c.base=x.now;});cards.forEach(x=>{x.bc.card.ignoreBase=x.nb;});autoSave();fin();}},
+     {label:'확인',primary:true,onClick:()=>{cps.forEach(x=>{x.c.amount=x.to;x.c.base=x.now;});cards.forEach(x=>{x.bc.card.base=x.nb;delete x.bc.card.ignoreBase;pcTouch(x.bc);});
+       pcSettle();renderOrder();if(typeof renderBundle==='function')renderBundle();if(typeof renderPayCards==='function'&&document.getElementById('panel-paycard')?.classList.contains('active'))renderPayCards();autoSave();
+       showToast('새 금액에 맞춰 바꿨어요','success');fin();}}]);
+}
 function updateFieldLocalPrice(id,field,key,val){
   const o=orders.find(i=>i.id===id);if(!o)return;
   if(!o.localPrices)o.localPrices={};
   if(!o.localPrices[field])o.localPrices[field]={currency:'¥(위안)',amount:0};
-  if(key==='amount')o.localPrices[field].amount=Number(val)||0;
+  if(key==='amount'){o.localPrices[field].amount=Number(val)||0;setTimeout(()=>pcCostChanged(o),200);}
   else o.localPrices[field].currency=val;
   const pm=document.getElementById('price-modal');
   if(pm&&pm.classList.contains('show'))renderPriceModal(o);
