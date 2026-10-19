@@ -3950,7 +3950,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.10.19',['구매목록에서 결제 금액을 고쳐도 연동된 카드 혜택·쿠폰·포인트 조정 확인창','수정 창 저장 시 놓친 금액 변경도 확인','카드 혜택 한도를 결제 순서대로 — 추가·수정·삭제 시 같은 달 혜택 자동 재계산','결제 금액이 바뀌면 연동된 카드 할인·적립도 다시 계산 (확인/취소, 저장 시 월 한도 반영)','수정 창 묶음그룹 칸 클릭 → 그 결제일의 묶음 고르기 · 새 묶음 · 직접 입력','묶음 카드 혜택: 결제별 체크리스트로 일부 빼기','기타비용을 수수료로 표시 — 카드 할인·적립 계산에서 제외','결제와 연동된 쿠폰·포인트: 결제 금액이 바뀌면 같은 비율로 조정 (확인/취소)']],
+  ['26.10.19',['수정 창에서 금액 입력 후 바로 수정을 눌러도 카드 혜택 확인창이 뜨게 수정','구매목록에서 결제 금액을 고쳐도 연동된 카드 혜택·쿠폰·포인트 조정 확인창','수정 창 저장 시 놓친 금액 변경도 확인','카드 혜택 한도를 결제 순서대로 — 추가·수정·삭제 시 같은 달 혜택 자동 재계산','결제 금액이 바뀌면 연동된 카드 할인·적립도 다시 계산 (확인/취소, 저장 시 월 한도 반영)','수정 창 묶음그룹 칸 클릭 → 그 결제일의 묶음 고르기 · 새 묶음 · 직접 입력','묶음 카드 혜택: 결제별 체크리스트로 일부 빼기','기타비용을 수수료로 표시 — 카드 할인·적립 계산에서 제외','결제와 연동된 쿠폰·포인트: 결제 금액이 바뀌면 같은 비율로 조정 (확인/취소)']],
   ['26.10.16',['방출 시 수수료 · 배송비 · 배송비 할인 입력 — 실수령·손익에 반영, 방출 탭에 수수료·배송 칸','항목 복제 — 수정 창 제목 오른쪽 복제 버튼, 복제할 내용 선택 (카드 혜택은 월 한도에 맞춰 다시 계산)','세부 스케일 추가 (1/2.5 ~ 1/8.5) — 스케일 고르는 창 2열 (1/4 옆에 1/4.5)']],
   ['26.10.15',['수정 창 카드 버튼: 저장 안 한 입력이 있으면 자동 저장 후 바로 카드 설정','+추가 시 새 항목 수정 창 자동으로 열림','카드 혜택이 들어오면 빈 쿠폰1·포인트1 자리를 대신']],
   ['26.10.14',['검색에 운송장 모드 추가 (국내·해외, 일부 번호로도 검색)','금액 검색에 결제 파트별 금액(선행·정식·잔금·배송비 등, 원화·외화) 포함']],
@@ -4219,8 +4219,10 @@ function amLinkSync(f){
     cards.forEach(x=>{if(apply){_amCardPending[x.code]=true;_amCardPreview[x.code]={disc:x.solo?x.toD:x.myD,point:x.solo?x.toP:x.myP};}else{delete _amCardPending[x.code];delete _amCardPreview[x.code];const bc=bundleCoupons[x.code];if(bc&&bc.card)bc.card.ignoreBase=x.nb;}});
     renderAmCoupons();renderAmPoints();
     if(apply)showToast(cards.length?'바꿨어요 — 수정을 누르면 카드 혜택도 새 금액(남은 한도 포함)으로 다시 계산돼요':'연동된 금액에 맞춰 바꿨어요 — 수정을 눌러 저장','success');};
+  // 수정 버튼을 바로 눌러 칸을 벗어난 경우: 여기서 창을 띄우면 그 클릭이 창에 막혀 저장이 안 됨 → 잠깐 기다렸다가, 저장돼 닫혔으면 저장 후 확인창(pcCostChanged)에 맡김
+  setTimeout(()=>{if(!document.getElementById('add-modal').classList.contains('show'))return;
   openNoticeModal('연동 금액이 바뀌었어요',`<b>${BM_FIELDS[f]||(f.startsWith('extra')?extraLabel(f):f)}</b> 금액이 ${head} 로 바뀌었어요.<br>연동된 ${[list.length?'쿠폰·포인트':'',cards.length?'카드 할인·적립':''].filter(Boolean).join('과 ')}을 새 금액에 맞춰 바꿀까요?<div style="text-align:left;margin-top:10px;font-size:13px;">${rows}</div>`,
-    [{label:'취소',onClick:()=>done(false)},{label:'확인',primary:true,onClick:()=>done(true)}]);
+    [{label:'취소',onClick:()=>done(false)},{label:'확인',primary:true,onClick:()=>done(true)}]);},300);
 }
 // 결제칸 호버 → 그 결제에 연동된 쿠폰·포인트·카드 칸 강조
 function amFieldHl(f,on){
