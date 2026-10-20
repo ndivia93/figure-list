@@ -587,7 +587,7 @@ option[value="전액구매"]{color:#7b6cff;}
   #add-modal-content.am-mobile #am-crop-stage{max-width:260px;margin:0 auto 12px !important;}
   #add-modal-content.am-mobile #am-memo{min-height:120px !important;}
   /* 모달이 열려 있으면 떠 있는 버튼들 숨김(모달 버튼을 가리지 않게) */
-  body:has(.modal-overlay.show) #fab-add,body:has(.modal-overlay.show) #fab-warn,body:has(.modal-overlay.show) #fab-bundle,
+  body:has(.modal-overlay.show) #fab-add,body:has(.modal-overlay.show) #fab-warn,body:has(.modal-overlay.show) #fab-hold,body:has(.modal-overlay.show) #fab-bundle,
   body:has(.modal-overlay.show) #scroll-btns,body:has(.modal-overlay.show) #gd-float,body:has(.modal-overlay.show) #warn-pop{display:none !important;}
   #modal-close-fab{top:10px !important;bottom:auto !important;left:auto !important;right:10px !important;transform:none !important;}
   /* 떠 있는 버튼 배치: 화면 맨 아래 한 줄 */
@@ -3950,6 +3950,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
+  ['26.10.20',['결제금액 보류 알림 — 결제일·외화만 있고 한화가 빈 결제를 ! 알림 옆에 따로 표시','할인 탭 묶음에 묶음 정보 수정(마법사) 버튼']],
   ['26.10.19',['수정 창에서 금액 입력 후 바로 수정을 눌러도 카드 혜택 확인창이 뜨게 수정','구매목록에서 결제 금액을 고쳐도 연동된 카드 혜택·쿠폰·포인트 조정 확인창','수정 창 저장 시 놓친 금액 변경도 확인','카드 혜택 한도를 결제 순서대로 — 추가·수정·삭제 시 같은 달 혜택 자동 재계산','결제 금액이 바뀌면 연동된 카드 할인·적립도 다시 계산 (확인/취소, 저장 시 월 한도 반영)','수정 창 묶음그룹 칸 클릭 → 그 결제일의 묶음 고르기 · 새 묶음 · 직접 입력','묶음 카드 혜택: 결제별 체크리스트로 일부 빼기','기타비용을 수수료로 표시 — 카드 할인·적립 계산에서 제외','결제와 연동된 쿠폰·포인트: 결제 금액이 바뀌면 같은 비율로 조정 (확인/취소)']],
   ['26.10.16',['방출 시 수수료 · 배송비 · 배송비 할인 입력 — 실수령·손익에 반영, 방출 탭에 수수료·배송 칸','항목 복제 — 수정 창 제목 오른쪽 복제 버튼, 복제할 내용 선택 (카드 혜택은 월 한도에 맞춰 다시 계산)','세부 스케일 추가 (1/2.5 ~ 1/8.5) — 스케일 고르는 창 2열 (1/4 옆에 1/4.5)']],
   ['26.10.15',['수정 창 카드 버튼: 저장 안 한 입력이 있으면 자동 저장 후 바로 카드 설정','+추가 시 새 항목 수정 창 자동으로 열림','카드 혜택이 들어오면 빈 쿠폰1·포인트1 자리를 대신']],
@@ -5483,7 +5484,7 @@ function bmwStart(code,keys,removed,dd){
   const couponForeign=(typeof bundleCoupons!=='undefined'&&bundleCoupons[code])?Math.abs(Number(bundleCoupons[code].couponForeign)||0):0;
   const couponRate=(typeof bundleCoupons!=='undefined'&&bundleCoupons[code])?(Number(bundleCoupons[code].couponRate)||0):0;
   const _pc=(typeof bundleCoupons!=='undefined'&&bundleCoupons[code]&&bundleCoupons[code].card)||null;
-  _bmw={code,dd,keys,removed:removed||[],cur,foreign,couponForeign,couponRate,totalKrw:0,alias,step:1,
+  _bmw={code,dd,keys,removed:removed||[],cur,foreign,couponForeign,couponRate,totalKrw:(typeof bundleCoupons!=='undefined'&&bundleCoupons[code]&&Number(bundleCoupons[code].totalKrw))||0,alias,step:1,
     pcIss:_pc?_pc.iss:null,pcCard:_pc?_pc.card:null,pcOff:_pc?(_pc.off||[]):[],pcSkip:_pc?(_pc.skip||[]).filter(k=>keys.includes(k)):[]};
   document.getElementById('bmw-modal').classList.add('show');
   bmwRender();
@@ -8783,6 +8784,7 @@ function renderBundle(){
       <div class="bundle-group-header">
         <span class="bundle-group-tag" title="${letter}" style="color:${grpColor||'var(--pink)'};background:${grpColor?grpColor+'28':'var(--pdim)'};border-color:${grpColor?grpColor+'66':'var(--pborder)'};max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle;">그룹 ${bundleEditLabel(letter)}</span>
         <span style="font-size:13px;color:var(--text2);">${items.length}개 항목</span>
+        <button type="button" class="pc-mini-btn" onclick="bmwStartCode('${letter}')" title="묶음 할인 마법사로 외화·한화 총액·쿠폰·카드·별칭을 다시 설정">묶음 정보 수정</button>
         <span style="font-family:'Space Mono',monospace;font-size:13px;font-weight:700;margin-left:auto;">
           ${hasCoupon
             ?`<span style="color:var(--text2);">￦ ${originalKrwTotal.toLocaleString('ko-KR')}</span>
@@ -10753,6 +10755,12 @@ function closeTopModal(){
   style="display:none;position:fixed;bottom:80px;right:104px;z-index:8000;height:46px;min-width:44px;padding:0 12px;border-radius:11px;background:var(--yellow);border:none;color:#1a1a22;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);white-space:nowrap;display:none;align-items:center;gap:5px;">
   <span style="font-size:16px;">⚠</span><span id="fab-warn-count">0</span>
 </button>
+<!-- 결제금액 보류 알림 (외화·결제일만 있고 한화 미입력) — ! 알림 자리 옆에 -->
+<button id="fab-hold" onclick="toggleHoldPop(event)" title="결제금액 보류 — 외화만 입력되고 한화(카드 청구액)는 아직 미입력"
+  style="display:none;position:fixed;bottom:80px;right:104px;z-index:8000;height:46px;min-width:44px;padding:0 12px;border-radius:11px;background:var(--cyan);border:none;color:#10202a;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);white-space:nowrap;align-items:center;gap:5px;">
+  <span>보류</span><span id="fab-hold-count">0</span>
+</button>
+<div id="hold-pop" style="display:none;position:fixed;bottom:186px;right:16px;z-index:8100;width:340px;max-width:90vw;max-height:64vh;overflow-y:auto;background:var(--surface2);border:1px solid var(--cborder);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.5);padding:12px 14px;"></div>
 <div id="warn-pop" style="display:none;position:fixed;bottom:186px;right:16px;z-index:8100;width:320px;max-width:90vw;max-height:64vh;overflow-y:auto;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.5);padding:12px 14px;"></div>
 
 <!-- 스크롤 이동 — 화면 세로 중앙 -->
@@ -10810,6 +10818,45 @@ function renderWarnBadge(){
     fab.style.display='none';
     const wp=document.getElementById('warn-pop');if(wp)wp.style.display='none';
   }
+  renderHoldBadge(onOrder);
+}
+// ── 결제금액 보류: 결제일·외화는 있는데 한화가 비어 있는 결제칸 (해외결제는 카드사 청구일에야 확정) ──
+function computeHolds(){
+  const out=[];
+  (orders||[]).forEach(o=>{if(o.released)return;const lp=o.localPrices||{},c=o.costs||{},cd=o.costDates||{};
+    Object.keys(BM_FIELDS).forEach(f=>{const l=lp[f];if(!l||!(Number(l.amount)>0)||isKRW(l.currency))return;if((Number(c[f])||0)>0)return;
+      const d=cd[f]||o.paymentDate||'';if(!d)return;out.push({o,f,d,amt:Number(l.amount),cur:l.currency});});});
+  return out.sort((a,b)=>String(a.d).localeCompare(String(b.d)));
+}
+function renderHoldBadge(onOrder){
+  const fab=document.getElementById('fab-hold');if(!fab)return;
+  const h=computeHolds();
+  if(onOrder&&h.length){
+    fab.style.display='inline-flex';document.getElementById('fab-hold-count').textContent=h.length;
+    // ! 알림이 있으면 그 왼쪽, 없으면 그 자리에
+    const wf=document.getElementById('fab-warn');const cs=getComputedStyle(wf);const base=parseFloat(cs.right)||104;
+    fab.style.bottom=cs.bottom;
+    fab.style.right=(wf.style.display!=='none'?base+wf.offsetWidth+8:base)+'px';
+  }else{fab.style.display='none';const hp=document.getElementById('hold-pop');if(hp)hp.style.display='none';}
+}
+function toggleHoldPop(e){
+  if(e)e.stopPropagation();
+  const hp=document.getElementById('hold-pop');if(!hp)return;
+  if(hp.style.display==='block'){hp.style.display='none';return;}
+  closeWarnPop();
+  const h=computeHolds();
+  const fx=(a,c)=>curSym(c)+' '+fmtForeign(a);
+  hp.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <span style="font-size:13px;font-weight:700;color:var(--cyan);">결제금액 보류 <span style="color:var(--text2);font-weight:400;">${h.length}건</span></span>
+      <button onclick="document.getElementById('hold-pop').style.display='none'" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:14px;">✕</button></div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;">결제일과 외화는 있지만 한화가 비어 있어요. 카드사 청구액이 확정되면 한화를 입력해주세요.</div>
+    ${h.map(x=>`<div onclick="document.getElementById('hold-pop').style.display='none';openAddModal(${x.o.id})" style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:var(--rs);cursor:pointer;font-size:12px;" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background=''">
+      <span class="mono" style="color:var(--text3);font-size:11px;min-width:56px;flex-shrink:0;">${x.d}</span>
+      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pcEsc(x.o.charName||'(이름없음)')} <span style="color:var(--text3);">${x.f.startsWith('extra')?extraLabel(x.f):BM_FIELDS[x.f]}</span></span>
+      <span class="mono" style="color:var(--yellow);flex-shrink:0;">${fx(x.amt,x.cur)}</span></div>`).join('')}
+    <div style="font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:6px;margin-top:6px;">항목 클릭 시 수정 창이 열립니다</div>`;
+  hp.style.display='block';
+  setTimeout(()=>{function _c(ev){const f=document.getElementById('fab-hold');if(hp.contains(ev.target)||(f&&f.contains(ev.target)))return;hp.style.display='none';document.removeEventListener('click',_c);}document.addEventListener('click',_c);},50);
 }
 function _warnSection(title,color,list){
   if(!list.length)return '';
@@ -10825,6 +10872,7 @@ function _warnSection(title,color,list){
 function toggleWarnPop(e){
   if(e)e.stopPropagation();
   const wp=document.getElementById('warn-pop');if(!wp)return;
+  {const hp=document.getElementById('hold-pop');if(hp)hp.style.display='none';}
   if(wp.style.display==='block'){wp.style.display='none';return;}
   const w=computeWarnings();
   wp.innerHTML=`
