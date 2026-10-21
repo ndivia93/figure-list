@@ -909,6 +909,8 @@ td:hover>.pd-wrap.has-rel .pd-b{display:block;}
 .fx-calc .tot{border-top:1px solid var(--border2);margin-top:3px;padding-top:5px;font-weight:700;color:var(--accent);}
 .fx-calc .tot b{color:var(--accent);font-size:13px;}
 .pc-feem button{min-width:0;padding:4px 9px;}
+.pc-feem button.fx{background:#5b6475;color:#fff;}
+.pc-feem button.fi{background:var(--accent,#7c5cff);color:#fff;}
 .pc-feem.need{outline:2px solid var(--yellow);outline-offset:1px;border-radius:20px;}
 .pc-feewarn{font-size:12px;color:var(--yellow);background:var(--ydim);border:1px solid var(--yborder);border-radius:var(--rs);padding:7px 10px;margin:4px 0 8px;}
 .pc-feecfg{border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;margin:10px 0;background:var(--surface2);}
@@ -4069,7 +4071,7 @@ function renderPayCards(){
       <td class="ti"><input value="${pcEsc(b.title)}" placeholder="예: 해외 결제, 온라인 쇼핑" onchange="pcSetB('${b.id}','title',this.value)"></td>
       <td class="ra"><div style="display:flex;gap:4px;align-items:center;">${b.tiers&&b.tiers.length?`<button type="button" class="pc-tierbtn on" onclick="pcTierToggle('${b.id}')" title="금액 구간별 비율 고치기">${pcRateLabel(b)}</button>`:`<input class="num" inputmode="decimal" value="${b.rate||''}" placeholder="5" onchange="pcSetB('${b.id}','rate',Number(this.value)||0)"><button type="button" class="pc-tierbtn" onclick="pcTierToggle('${b.id}')" title="결제금액 구간마다 비율을 다르게">구간</button>`}</div></td>
       <td class="ca"><input class="num" inputmode="numeric" value="${b.cap?Number(b.cap).toLocaleString('ko-KR'):''}" placeholder="비우면 상시" onchange="pcSetB('${b.id}','cap',Number(this.value.replace(/\\D/g,''))||0)"></td>
-      <td><div class="pc-type pc-feem ${b.feeMode?'':'need'}" title="이 혜택이 수수료(브랜드·해외결제 수수료)까지 포함한 금액에 붙는지"><button type="button" class="${b.feeMode==='excl'?'on':''}" onclick="pcSetB('${b.id}','feeMode','excl')">제외</button><button type="button" class="${b.feeMode==='incl'?'on':''}" onclick="pcSetB('${b.id}','feeMode','incl')">포함</button></div></td>
+      <td><div class="pc-type pc-feem ${b.feeMode?'':'need'}" title="이 혜택이 수수료(브랜드·해외결제 수수료)까지 포함한 금액에 붙는지"><button type="button" class="${b.feeMode==='excl'?'on fx':''}" onclick="pcSetB('${b.id}','feeMode','excl')">제외</button><button type="button" class="${b.feeMode==='incl'?'on fi':''}" onclick="pcSetB('${b.id}','feeMode','incl')">포함</button></div></td>
       <td class="co"><input value="${pcEsc(b.cond)}" placeholder="예: 건당 1만원 이상" onchange="pcSetB('${b.id}','cond',this.value)"></td>
       <td><button type="button" class="del-btn" onclick="pcDelB('${b.id}')">✕</button></td></tr>${_pcTierOpen===b.id?`<tr class="pc-tier-row"><td colspan="7">${pcTierEditorHtml(b)}</td></tr>`:''}`).join('')}
     </tbody></table>
