@@ -3150,7 +3150,7 @@ function amSetManualFx(type,val){const v=Number(val)||0;const st=amFxState();if(
 // 한화 입력: 구매금액(A)을 그 결제칸 한화로
 function amFxApply(){
   const key=amFxKey();if(!key||key==='local')return;const st=amFxState();const r=fxCalc(st);
-  const fid=PC_FIELD_ID[key]||key;const el=document.getElementById('cf-'+fid);if(!el)return;
+  const el=amAmtEl(key);if(!el)return;
   el.value=r.A;el.dispatchEvent(new Event('change',{bubbles:true}));
   showToast(`${BM_FIELDS[key]||key}에 ￦ ${r.A.toLocaleString('ko-KR')} 입력했어요`,'success');
 }
@@ -3532,8 +3532,8 @@ function openAddModal(editId){
   _amPoints=(isEdit?pointsOf(ex):[]).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩',...(c.field?{field:c.field,...(c.base?{base:c.base}:{})}:{})}));
   renderAmPoints();
   // 수수료: 저장된 수수료 + 예전에 기타비용 칸에 '수수료'로 표시해 둔 금액을 수수료 칸으로 옮김
-  _amFees=(isEdit?feesOf(ex):[]).map(f=>({id:f.id||feeNewId(),amount:Number(f.amount)||0,...(f.field?{field:f.field}:{}),...(f.date?{date:f.date}:{})}));
-  if(isEdit&&ex&&ex.feeFields){Object.keys(ex.feeFields).forEach(f=>{const a=Number((ex.costs||{})[f])||0;if(a>0&&_amFees.length<MAX_FEES)_amFees.push({id:feeNewId(),amount:a,...((ex.costDates||{})[f]?{date:ex.costDates[f]}:{})});
+  _amFees=(isEdit?feesOf(ex):[]).map(f=>({id:f.id||feeNewId(),amount:Number(f.amount)||0,...(f.auto?{auto:true}:{}),...(f.field?{field:f.field}:{}),...(f.date?{date:f.date}:{})}));
+  if(isEdit&&ex&&ex.feeFields){Object.keys(ex.feeFields).forEach(f=>{const a=Number((ex.costs||{})[f])||0;if(a>0&&_amFees.length<MAX_FEES)_amFees.push({id:feeNewId(),auto:true,amount:a,...((ex.costDates||{})[f]?{date:ex.costDates[f]}:{})});
       const ci=document.getElementById('cf-'+f);if(ci)ci.value='';const gi=document.getElementById('cf-'+f+'-grp');if(gi)gi.value='';});
     _amFee={};if(Object.keys(ex.feeFields).length)setTimeout(()=>showToast('기타비용의 수수료를 수수료 칸으로 옮겼어요 — 수정을 눌러 저장','warn'),400);}
   renderAmFees();
@@ -4149,7 +4149,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.10.22',['ESC 로 가장 최근에 연 창·팝업부터 하나씩 닫기','수정 창 카드 버튼: 저장 없이 바로 진행 (한화 없는 묶음은 묶음 마법사 3단계에서 예상 원화 계산)','카드 혜택 금액 구간별 비율 (직접 입력 · 막대 끌기)','결제일 없이 현지가만 적힌 결제칸은 보류에서 제외 (기록용)','환산에서 자동 입력된 수수료는 고칠 수 없게 (다시 환산하거나 지우기)','수수료 칸 호버 강조 — 연결된 결제칸·이 수수료를 포함한 카드 칸','원화 환산 창 위쪽부터 정렬','구매목록 쿠폰 창에 묶음 정보 수정(마법사) 버튼']],
+  ['26.10.22',['중고거래 배송비 칸에서 원화 환산·한화 입력·카드 버튼이 안 되던 문제 수정','기타비용에서 옮긴 수수료도 잠금','ESC 로 가장 최근에 연 창·팝업부터 하나씩 닫기','수정 창 카드 버튼: 저장 없이 바로 진행 (한화 없는 묶음은 묶음 마법사 3단계에서 예상 원화 계산)','카드 혜택 금액 구간별 비율 (직접 입력 · 막대 끌기)','결제일 없이 현지가만 적힌 결제칸은 보류에서 제외 (기록용)','환산에서 자동 입력된 수수료는 고칠 수 없게 (다시 환산하거나 지우기)','수수료 칸 호버 강조 — 연결된 결제칸·이 수수료를 포함한 카드 칸','원화 환산 창 위쪽부터 정렬','구매목록 쿠폰 창에 묶음 정보 수정(마법사) 버튼']],
   ['26.10.21',['수정 창 카드 버튼: 한화가 없어도 진행 — 마법사 1페이지에서 예상 원화 계산 후 2페이지 카드 선택','카드 혜택에 수수료 포함 여부 체크리스트','수수료 칸을 쿠폰·포인트 아래로 분리 (총비용 포함 · 카드 할인·적립 제외)','환산 창: 한화 입력(구매금액) / 수수료 입력 버튼, 결제칸별 계산기 설정 저장, 설명 글씨 정리','한화 입력칸 클릭 → 원화 환산 창 (표기외화·적용외화 선택, 결제칸에 바로 입력)','환산 공식 변경: 구매금액(절삭) + 브랜드 수수료 + 해외결제 수수료 (+ 체크카드 결제수수료)','적용 환율 선택 제거 · 체크카드 결제수수료 직접 입력','현지전액가 환산: 매매기준율·전신환매도율을 직접 입력하면 하나은행 고시 대신 사용 (항목별 저장)']],
   ['26.10.20',['결제금액 보류 알림 — 결제일·외화만 있고 한화가 빈 결제를 ! 알림 옆에 따로 표시','할인 탭 묶음에 묶음 정보 수정(마법사) 버튼']],
   ['26.10.19',['수정 창에서 금액 입력 후 바로 수정을 눌러도 카드 혜택 확인창이 뜨게 수정','구매목록에서 결제 금액을 고쳐도 연동된 카드 혜택·쿠폰·포인트 조정 확인창','수정 창 저장 시 놓친 금액 변경도 확인','카드 혜택 한도를 결제 순서대로 — 추가·수정·삭제 시 같은 달 혜택 자동 재계산','결제 금액이 바뀌면 연동된 카드 할인·적립도 다시 계산 (확인/취소, 저장 시 월 한도 반영)','수정 창 묶음그룹 칸 클릭 → 그 결제일의 묶음 고르기 · 새 묶음 · 직접 입력','묶음 카드 혜택: 결제별 체크리스트로 일부 빼기','기타비용을 수수료로 표시 — 카드 할인·적립 계산에서 제외','결제와 연동된 쿠폰·포인트: 결제 금액이 바뀌면 같은 비율로 조정 (확인/취소)']],
@@ -4363,7 +4363,7 @@ function amGrpDirect(){const pop=document.getElementById('grp-pop');const inp=po
 // 연동 기준 금액 — 원화 쿠폰은 그 결제의 원화, 외화 쿠폰은 그 결제의 현지가
 function amLinkBaseNow(c){
   if(!c||!c.field)return 0;const fid=PC_FIELD_ID[c.field]||c.field;
-  const krw=isKRW(c.currency||'₩');const el=document.getElementById('cf-'+fid+(krw?'':'-lp'));
+  const krw=isKRW(c.currency||'₩');const el=krw?amAmtEl(c.field):document.getElementById('cf-'+fid+'-lp');
   if(el)return Number(el.value)||0;
   const o=_addEditId!=null?orders.find(x=>x.id===_addEditId):null;if(!o)return 0;
   return krw?(Number((o.costs||{})[c.field])||0):(Number(((o.localPrices||{})[c.field]||{}).amount)||0);
@@ -4371,7 +4371,7 @@ function amLinkBaseNow(c){
 // 연동된 결제 금액이 바뀌면 → 같은 비율로 쿠폰·포인트 금액 조정 (알림창에서 확인/취소)
 // 수정 창에서 바뀐 결제 금액을 반영해 카드 혜택 미리 계산 (저장할 때 실제 반영)
 let _amCardPending={},_amCardPreview={};
-function amFieldKrw(o,ff){if(o.id===_addEditId){const el=document.getElementById('cf-'+(PC_FIELD_ID[ff]||ff));if(el)return Number(el.value)||0;}return Number((o.costs||{})[ff])||0;}
+function amFieldKrw(o,ff){if(o.id===_addEditId){const el=amAmtEl(ff);if(el)return Number(el.value)||0;}return Number((o.costs||{})[ff])||0;}
 function amFieldFee(o,ff){return o.id===_addEditId?!!_amFee[ff]:pcIsFee(o,ff);}
 // 이 묶음(또는 단일 결제)의 카드 혜택 기준 금액 — live: 수정 창 입력값 사용
 function pcCodeBase(code,live){
@@ -4482,6 +4482,9 @@ function amCardBenHtml(x,i,type){
 }
 // 카드 칸 호버: 같은 결제(묶음·단일)에서 나온 할인·적립 칸 + 그 혜택이 나온 비용 칸만 강조
 const PC_FIELD_ID={shipping:'ship',fullPayment:'full'};
+function amAmtEl(f){const fid=PC_FIELD_ID[f]||f;const g=document.getElementById('cf-'+fid+'-grp');const box=g&&g.closest('.cost-field');
+  if(box){const el=[...box.querySelectorAll('input')].find(i=>i.id&&i.id.startsWith('cf-'+fid)&&!/-(date|lp|grp)$/.test(i.id));if(el)return el;}
+  return document.getElementById('cf-'+fid);}
 function pcHl(el,on){
   document.querySelectorAll('.am-cardben.pc-hl').forEach(e=>e.classList.remove('pc-hl'));
   document.querySelectorAll('.am-fee.pc-hl').forEach(e=>{e.classList.remove('pc-hl');e.style.setProperty('--pcc','var(--red)');});
@@ -4513,8 +4516,8 @@ function amInjectCardBtns(){
       fb.addEventListener('drop',e=>{if(!_amDrag)return;e.preventDefault();amLinkDrop(f);});
       fb.addEventListener('mouseenter',()=>{if(!_amDrag)amFieldHl(f,true);});
       fb.addEventListener('mouseleave',()=>amFieldHl(f,false));
-      [document.getElementById('cf-'+fid),document.getElementById('cf-'+fid+'-lp')].forEach(el=>{if(el&&fb.contains(el))el.addEventListener('change',()=>amLinkSync(f));});
-      {const ki=document.getElementById('cf-'+fid);if(ki&&fb.contains(ki))ki.addEventListener('click',()=>amFxOpenField(f));
+      [amAmtEl(f),document.getElementById('cf-'+fid+'-lp')].forEach(el=>{if(el&&fb.contains(el))el.addEventListener('change',()=>amLinkSync(f));});
+      {const ki=amAmtEl(f);if(ki&&fb.contains(ki))ki.addEventListener('click',()=>amFxOpenField(f));
        const li=document.getElementById('cf-'+fid+'-lp');if(li&&fb.contains(li))li.addEventListener('change',()=>{if(_amFxPanelOpen&&amFxKey()===f){const st=_amFx[f];if(st)st.payAmt=null;updateLocalPreview();}});}}
     if(!inp.dataset.gp){inp.dataset.gp='1';
       inp.addEventListener('click',e=>{if(inp.dataset.direct)return;e.preventDefault();amGrpPick(inp,f);});
@@ -4535,7 +4538,7 @@ function amCardRefresh(){if(!document.getElementById('am-costs'))return;try{rend
 let _amAfterSave=null;
 function amNeedsSave(o,f){
   if(!o)return true;const fid=PC_FIELD_ID[f]||f;
-  const ai=document.getElementById('cf-'+fid),di=document.getElementById('cf-'+fid+'-date'),gi=document.getElementById('cf-'+fid+'-grp');
+  const ai=amAmtEl(f),di=document.getElementById('cf-'+fid+'-date'),gi=document.getElementById('cf-'+fid+'-grp');
   // 금액·날짜는 수정 창에 입력된 값을 그대로 써서 계산하므로 저장 없이 진행 (새 묶음 코드만 저장 필요)
   const saved=String((o.costGroups||{})[f]||'').replace(/^\d+/,'');
   if(gi&&gi.value.trim().toUpperCase()!==saved.toUpperCase())return true;
@@ -4554,7 +4557,7 @@ function amCardFor(f,noSave){
   const fid=PC_FIELD_ID[f]||f;
   const code=String((o.costGroups||{})[f]||'');
   if(code){pcBundleCard(code);return;}
-  const ai=document.getElementById('cf-'+fid);const amt=Number(ai&&ai.value)||Number((o.costs||{})[f])||0;
+  const ai=amAmtEl(f);const amt=Number(ai&&ai.value)||Number((o.costs||{})[f])||0;
   const di=document.getElementById('cf-'+fid+'-date');const dt=(di&&di.value.trim())||(o.costDates||{})[f]||o.paymentDate||'';
   const sc='@'+o.id+':'+f;
   bmwStart(sc,[o.id+':'+f],[],dt.replace(/-/g,''));
@@ -4626,12 +4629,12 @@ function pointAddCardHtml(){
 let _amFees=[];const MAX_FEES=4;
 const feeNewId=()=>'fe'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 function feeCardHtml(c,i){
-  const auto=!!c.field;
+  const auto=!!(c.field||c.auto);
   return `<div class="cost-card am-cpn am-fee" data-link="${c.field&&c.field!=='local'?c.field:''}" data-fid="${c.id||''}" style="--pcc:var(--red);padding:8px 9px;min-width:0;overflow:hidden;" onmouseenter="amLinkHl(this,true)" onmouseleave="amLinkHl(this,false)">
     <div style="display:flex;align-items:center;gap:5px;">
       <span class="cost-label" style="margin:0;flex-shrink:0;color:var(--red);font-size:12px;">수수료${i+1}</span>${c.field&&c.field!=='local'?`<span class="am-link" style="color:var(--red);cursor:default;text-decoration:none;" title="${BM_FIELDS[c.field]||c.field} 환산에서 입력">${AM_FIELD_SHORT[c.field]||c.field}</span>`:''}
       <span style="flex-shrink:0;font-size:12px;color:var(--text2);">￦</span>
-      <input type="number" class="mono" value="${c.amount||''}" placeholder="0" ${auto?'readonly title="원화 환산에서 자동 입력된 수수료 — 바꾸려면 그 결제칸의 환산을 다시 하거나 ✕로 지우세요"':''} style="flex:1;min-width:0;background:${auto?'transparent':'var(--surface)'};border:1px ${auto?'dashed':'solid'} var(--border);border-radius:var(--rs);color:var(--text);font-size:13px;font-weight:600;padding:6px 6px;text-align:right;outline:none;${auto?'cursor:default;':''}" onchange="_amFees[${i}].amount=Math.max(0,Number(this.value)||0)">
+      <input type="number" class="mono" value="${c.amount||''}" placeholder="0" ${auto?'readonly title="자동 입력된 수수료 — 바꾸려면 원화 환산을 다시 하거나 ✕로 지우세요"':''} style="flex:1;min-width:0;background:${auto?'transparent':'var(--surface)'};border:1px ${auto?'dashed':'solid'} var(--border);border-radius:var(--rs);color:var(--text);font-size:13px;font-weight:600;padding:6px 6px;text-align:right;outline:none;${auto?'cursor:default;':''}" onchange="_amFees[${i}].amount=Math.max(0,Number(this.value)||0)">
       <button type="button" onclick="_amFees.splice(${i},1);renderAmFees()" title="삭제" style="flex-shrink:0;width:22px;height:28px;padding:0;line-height:1;background:transparent;border:none;color:var(--text3);cursor:pointer;font-family:inherit;">✕</button>
     </div></div>`;
 }
@@ -4930,7 +4933,7 @@ function submitAdd(editId){
   // 쿠폰 (최대 4개): 모달-로컬 배열에서 금액 있는 것만
   const coupons=(_amCoupons||[]).filter(c=>Number(c.amount)).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩',...(c.field?{field:c.field,...(c.base?{base:c.base}:{})}:{})}));
   // 포인트 (최대 4개, 기록용)
-  const fees=(_amFees||[]).filter(f=>Number(f.amount)>0).map(f=>({id:f.id||feeNewId(),amount:Math.round(Number(f.amount)),...(f.field?{field:f.field}:{}),...(f.date?{date:f.date}:{})}));
+  const fees=(_amFees||[]).filter(f=>Number(f.amount)>0).map(f=>({id:f.id||feeNewId(),amount:Math.round(Number(f.amount)),...(f.auto?{auto:true}:{}),...(f.field?{field:f.field}:{}),...(f.date?{date:f.date}:{})}));
   const points=(_amPoints||[]).filter(c=>Number(c.amount)).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩',...(c.field?{field:c.field,...(c.base?{base:c.base}:{})}:{})}));
   // 사진 URL (썸네일 초점은 이미지 편집 창에서 관리하므로 여기서 건드리지 않음)
   const imgUrl=(document.getElementById('am-imgurl')?.value||'').trim();
@@ -5759,7 +5762,7 @@ function pcBundleCard(code){
   orders.forEach(o=>Object.entries(o.costGroups||{}).forEach(([f,c])=>{if(c!==code)return;keys.push(o.id+':'+f);const dt=(o.costDates||{})[f]||o.paymentDate||'';if(dt>dd)dd=dt;}));
   if(!keys.length){showToast('묶음 항목이 없어요','warn');return;}
   const krw=keys.reduce((a,k)=>{const [id,f]=k.split(':');const o=orders.find(x=>x.id===Number(id));let v=Number((o&&o.costs||{})[f])||0;
-    if(o&&o.id===_addEditId){const el=document.getElementById('cf-'+(PC_FIELD_ID[f]||f));if(el)v=Number(el.value)||0;}return a+v;},0);
+    if(o&&o.id===_addEditId){const el=amAmtEl(f);if(el)v=Number(el.value)||0;}return a+v;},0);
   if(!krw&&!(bundleCoupons[code]&&Number(bundleCoupons[code].totalKrw)>0)){showToast('한화가 없어 묶음 마법사를 처음부터 열어요 — 3단계에서 예상 원화를 계산할 수 있어요','warn');bmwStartCode(code);return;}
   bmwStart(code,keys,[],dd);_bmw.cardOnly=true;_bmw.step=4;bmwRender();
 }
@@ -5781,7 +5784,7 @@ function bmwFxFill(){_amFxCtx={mode:'bundle'};const r=fxCalc(amFxState());_bmw.t
 function bmwSoloCalcNext(){
   const f=_bmw.solo.f;_amFxCtx={mode:'field',f};const r=fxCalc(amFxState());
   if(!(r.A>0)){showToast('표기외화 금액을 입력하면 예상 원화를 계산해요','warn');return;}
-  const fid=PC_FIELD_ID[f]||f;const el=document.getElementById('cf-'+fid);if(el)el.value=r.A;
+  const fid=PC_FIELD_ID[f]||f;const el=amAmtEl(f);if(el)el.value=r.A;
   if(r.fee>0){let it=_amFees.find(x=>x.field===f);if(!it&&_amFees.length<MAX_FEES){it={id:feeNewId(),field:f};_amFees.push(it);}if(it){it.amount=r.fee;const di=document.getElementById('cf-'+fid+'-date');if(di&&di.value.trim())it.date=autoDate(di.value.trim())||di.value.trim();}renderAmFees();}
   _bmw.totalKrw=r.A;_bmw.soloPage=2;bmwRender();
   showToast(`구매금액 ￦ ${r.A.toLocaleString('ko-KR')}${r.fee?` · 수수료 ￦ ${r.fee.toLocaleString('ko-KR')}`:''} 를 수정 창에 넣었어요 (수정을 눌러 저장)`,'success');
