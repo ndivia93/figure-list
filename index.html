@@ -3046,6 +3046,8 @@ function openMakerDropdown(inp){
 }
 
 let _amCardBrand='비자 1.1%';
+let _amManualFx=null; // 수정 창: 직접 입력한 환율 {type:'base'|'tt', rate}
+function amSetManualFx(type,val){const v=Number(val)||0;if(v>0)_amManualFx={type,rate:v};else if(_amManualFx&&_amManualFx.type===type)_amManualFx=null;updateLocalPreview();}
 let _amFxPanelOpen=false; // 환산 별도 창 표시 여부 (토글 ON 시 모달 오른쪽에 생성)
 function toggleFxPanel(){_amFxPanelOpen=!_amFxPanelOpen;syncFxToggleBtn();updateLocalPreview();}
 function syncFxToggleBtn(){
@@ -3065,20 +3067,29 @@ function updateLocalPreview(){
   // 토글이 꺼져 있으면 별도 창 숨김
   if(!_amFxPanelOpen){side.style.display='none';side.innerHTML='';return;}
   side.style.display='block';
-  const titleHtml=`<div class="fx-side-title">→ 원화 환산 <span style="font-size:11px;font-weight:400;color:var(--text2);">(하나은행 기준)</span></div>`;
+  const man=_amManualFx&&Number(_amManualFx.rate)>0?_amManualFx:null;
+  const titleHtml=`<div class="fx-side-title">→ 원화 환산 <span style="font-size:11px;font-weight:400;color:${man?'var(--accent)':'var(--text2)'};">(${man?'직접 입력 환율':'하나은행 기준'})</span></div>`;
   if(!amt){side.innerHTML=titleHtml+`<div style="font-size:12px;color:var(--text3);padding:14px 6px;border:1px dashed var(--border2);border-radius:var(--rs);text-align:center;">왼쪽에 현지전액가격을 입력하면<br>원화 환산이 여기에 표시됩니다</div>`;return;}
   const baseRate=cur==='$(달러)'?fxSettings.usd:cur==='¥(엔)'?fxSettings.jpy:fxSettings.cny;
-  const _ed=calcEstKrw(amt,cur);
+  const _ed=calcEstKrw(amt,cur,man);
   const toggleBtn=(on)=>`padding:1px 10px;border-radius:20px;border:1px solid;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:${on?'var(--gdim)':'var(--surface2)'};border-color:${on?'var(--gborder)':'var(--border2)'};color:${on?'var(--green)':'var(--text2)'};`;
   side.innerHTML=titleHtml+`<div style="background:rgba(255,209,102,.06);border:1px solid var(--border);border-radius:var(--rs);padding:8px 9px;font-size:11px;color:var(--text2);">
-    <div style="display:flex;gap:4px;align-items:center;margin-bottom:8px;">
+    <div style="font-weight:700;margin-bottom:3px;">하나은행 고시 <span style="font-weight:400;color:var(--text3);">${man?'— 직접 입력 환율 사용 중':'(매매기준율)'}</span></div>
+    <div style="display:flex;gap:4px;align-items:center;margin-bottom:6px;${man?'opacity:.45;':''}">
       <span style="white-space:nowrap;">${cur==='$(달러)'?'USD':cur==='¥(엔)'?'JPY':'CNY'}/KRW</span>
       <input class="fx-rate-input" type="number" id="am-rate-inp" value="${baseRate}" style="flex:1;min-width:0;font-size:11px;padding:2px 4px;"
         onchange="updateFxRate('${cur}',this.value);updateLocalPreview()">
       <button onclick="fetchLocalModalRate()" style="font-size:11px;padding:2px 6px;background:var(--adim);border:1px solid var(--aborder);border-radius:var(--rs);color:var(--accent);cursor:pointer;font-family:inherit;white-space:nowrap;">🔄</button>
     </div>
-    <div style="font-weight:700;margin-bottom:3px;">적용 환율</div>
-    <div class="fx-btn-group" style="margin-bottom:6px;">
+    <div style="font-weight:700;margin-bottom:3px;">직접 입력 <span style="font-weight:400;color:var(--text3);">— 하나만 입력하면 고시 대신 사용 (이 항목에 저장)</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;align-items:end;">
+      <label style="display:flex;flex-direction:column;gap:2px;font-size:10px;color:${man&&man.type==='base'?'var(--accent)':'var(--text3)'};">매매기준율
+        <input class="fx-rate-input" type="number" step="0.01" value="${man&&man.type==='base'?man.rate:''}" placeholder="비우면 고시" ${man&&man.type!=='base'?'disabled':''} style="font-size:11px;padding:2px 4px;${man&&man.type==='base'?'border-color:var(--accent);':''}" onchange="amSetManualFx('base',this.value)"></label>
+      <label style="display:flex;flex-direction:column;gap:2px;font-size:10px;color:${man&&man.type==='tt'?'var(--accent)':'var(--text3)'};" title="전신환매도율(송금시)">전신환매도율
+        <input class="fx-rate-input" type="number" step="0.01" value="${man&&man.type==='tt'?man.rate:''}" placeholder="비우면 고시" ${man&&man.type!=='tt'?'disabled':''} style="font-size:11px;padding:2px 4px;${man&&man.type==='tt'?'border-color:var(--accent);':''}" onchange="amSetManualFx('tt',this.value)"></label>
+    </div>
+    <div style="font-weight:700;margin-bottom:3px;${man?'opacity:.45;':''}">적용 환율 <span style="font-weight:400;color:var(--text3);">(고시 사용 시)</span></div>
+    <div class="fx-btn-group" style="margin-bottom:6px;${man?'opacity:.45;pointer-events:none;':''}">
       <button class="fx-btn ${fxSettings.rateMode==='base'?'active':''}" onclick="fxSettings.rateMode='base';saveFxSettings();updateLocalPreview()">매매기준율</button>
       <button class="fx-btn ${fxSettings.rateMode!=='base'?'active':''}" onclick="fxSettings.rateMode='tt';saveFxSettings();updateLocalPreview()">전신환매도율(송금시)</button>
     </div>
@@ -3111,7 +3122,7 @@ function updateLocalPreview(){
       <span style="font-size:11px;color:var(--accent);font-weight:700;">합계</span>
       <span style="font-size:12px;font-weight:700;color:var(--accent);font-family:'Space Mono',monospace;">${(_ed.krwBase+_ed.taxKrw).toLocaleString('ko-KR')}￦</span>
     </div>`:''}
-    <div style="font-size:10px;color:var(--text3);margin-top:4px;">= ${amt}×${baseRate}×${fxSettings.rateMode==='base'?'1.00':'1.01'}×(1+${((CARD_BRAND_FEES[fxSettings.cardBrand]||0)*100).toFixed(1)}%+${(fxSettings.cardFee*100).toFixed(2)}%)${fxSettings.debitFee?' +$0.5':''}</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:4px;">= ${amt}×${man?man.rate+(man.type==='tt'?'(직접·전신환)':'(직접·매매기준)'):baseRate}×${man?'1.00':(fxSettings.rateMode==='base'?'1.00':'1.01')}×(1+${((CARD_BRAND_FEES[fxSettings.cardBrand]||0)*100).toFixed(1)}%+${(fxSettings.cardFee*100).toFixed(2)}%)${fxSettings.debitFee?' +$0.5':''}</div>
   </div>`;
 }
 function setAmCardBrand(b){_amCardBrand=b;updateLocalPreview();}
@@ -3401,6 +3412,7 @@ function openAddModal(editId){
   _amFee=Object.assign({},(isEdit&&ex&&ex.feeFields)||{});_amCardPending={};_amCardPreview={};
   updateCostFields(isEdit?editId:null,ex);
   // 모달-로컬 쿠폰 배열 초기화 (최대 4개) — 기존 항목의 쿠폰을 복제, 없으면 기본 1개
+  _amManualFx=(isEdit&&ex&&ex.localPrice&&ex.localPrice.manualRate&&Number(ex.localPrice.manualRate.rate)>0)?{...ex.localPrice.manualRate}:null;
   _amCoupons=(isEdit?couponsOf(ex):[]).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩',...(c.field?{field:c.field,...(c.base?{base:c.base}:{})}:{})}));
   renderAmCoupons();
   // 포인트 배열 초기화 (기록용, 최대 4개)
@@ -3950,6 +3962,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
+  ['26.10.21',['현지전액가 환산: 매매기준율·전신환매도율을 직접 입력하면 하나은행 고시 대신 사용 (항목별 저장)']],
   ['26.10.20',['결제금액 보류 알림 — 결제일·외화만 있고 한화가 빈 결제를 ! 알림 옆에 따로 표시','할인 탭 묶음에 묶음 정보 수정(마법사) 버튼']],
   ['26.10.19',['수정 창에서 금액 입력 후 바로 수정을 눌러도 카드 혜택 확인창이 뜨게 수정','구매목록에서 결제 금액을 고쳐도 연동된 카드 혜택·쿠폰·포인트 조정 확인창','수정 창 저장 시 놓친 금액 변경도 확인','카드 혜택 한도를 결제 순서대로 — 추가·수정·삭제 시 같은 달 혜택 자동 재계산','결제 금액이 바뀌면 연동된 카드 할인·적립도 다시 계산 (확인/취소, 저장 시 월 한도 반영)','수정 창 묶음그룹 칸 클릭 → 그 결제일의 묶음 고르기 · 새 묶음 · 직접 입력','묶음 카드 혜택: 결제별 체크리스트로 일부 빼기','기타비용을 수수료로 표시 — 카드 할인·적립 계산에서 제외','결제와 연동된 쿠폰·포인트: 결제 금액이 바뀌면 같은 비율로 조정 (확인/취소)']],
   ['26.10.16',['방출 시 수수료 · 배송비 · 배송비 할인 입력 — 실수령·손익에 반영, 방출 탭에 수수료·배송 칸','항목 복제 — 수정 창 제목 오른쪽 복제 버튼, 복제할 내용 선택 (카드 혜택은 월 한도에 맞춰 다시 계산)','세부 스케일 추가 (1/2.5 ~ 1/8.5) — 스케일 고르는 창 2열 (1/4 옆에 1/4.5)']],
@@ -4694,7 +4707,7 @@ function submitAdd(editId){
   const scale=scaleVal&&scaleVal!=='(없음)'?scaleVal:'';
   const localCur=document.getElementById('am-local-cur')?.value||'¥(위안)';
   const localAmt=Number(document.getElementById('am-local-amt')?.value)||0;
-  const localPrice=localAmt?{currency:localCur,amount:localAmt}:null;
+  const localPrice=localAmt?{currency:localCur,amount:localAmt,...(_amManualFx&&Number(_amManualFx.rate)>0?{manualRate:{..._amManualFx}}:{})}:null;
   // 쿠폰 (최대 4개): 모달-로컬 배열에서 금액 있는 것만
   const coupons=(_amCoupons||[]).filter(c=>Number(c.amount)).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩',...(c.field?{field:c.field,...(c.base?{base:c.base}:{})}:{})}));
   // 포인트 (최대 4개, 기록용)
@@ -7942,7 +7955,7 @@ function showPricePop(e, id){
   if(o.localPrice?.amount){
     const lpCur=o.localPrice.currency||'¥(위안)';
     const lpAmt=Number(o.localPrice.amount);
-    const estData2=calcEstKrw(lpAmt,lpCur);
+    const estData2=calcEstKrw(lpAmt,lpCur,o.localPrice.manualRate);
     const sym=curSym(lpCur);
     estRows+=`<div class="price-pop-row" style="color:var(--yellow);"><span>현지전액가격 (참고)</span><span class="mono">${sym} ${fmtForeign(lpAmt)}</span></div>`;
     estRows+=`<div class="price-pop-row" style="color:var(--cyan);"><span>💱 예상원화(직구가)</span><span class="mono">￦ ${estData2.krwBase.toLocaleString('ko-KR')}</span></div>`;
@@ -8183,7 +8196,7 @@ function renderPriceModal(o){
   const baseRate=lpCur==='$(달러)'?fxSettings.usd:lpCur==='¥(엔)'?fxSettings.jpy:fxSettings.cny;
   const brandFee=CARD_BRAND_FEES[fxSettings.cardBrand]||0.011;
   const cardFee=fxSettings.cardFee||0.0018;
-  const estData=lpAmt?calcEstKrw(lpAmt,lpCur):{krwBase:0,taxKrw:0,total:0};
+  const estData=lpAmt?calcEstKrw(lpAmt,lpCur,o.localPrice&&o.localPrice.manualRate):{krwBase:0,taxKrw:0,total:0};
   const estKrw=estData.krwBase;
 
   const localRow=`
@@ -8233,7 +8246,7 @@ function renderPriceModal(o){
           <span style="font-size:12px;font-weight:700;color:var(--accent);font-family:'Space Mono',monospace;">${(estData.krwBase+estData.taxKrw).toLocaleString('ko-KR')}￦</span>
         </div>`:''}
         <div style="font-size:9px;color:var(--text2);margin-top:3px;">
-          = ${lpAmt}×${baseRate}×1.01×(1+${((CARD_BRAND_FEES[fxSettings.cardBrand]||0.011)*100).toFixed(1)}%+${(fxSettings.cardFee*100).toFixed(2)}%)
+          = ${lpAmt}×${(o.localPrice&&o.localPrice.manualRate&&Number(o.localPrice.manualRate.rate)>0)?o.localPrice.manualRate.rate+'(직접)×1.00':baseRate+'×'+(fxSettings.rateMode==='base'?'1.00':'1.01')}×(1+${((CARD_BRAND_FEES[fxSettings.cardBrand]||0.011)*100).toFixed(1)}%+${(fxSettings.cardFee*100).toFixed(2)}%)
         </div>
       </div>
       <!-- 우: 카드 브랜드 + 수수료 -->
@@ -8307,14 +8320,16 @@ async function fetchLiveRate(lpCur, orderId){
 }
 
 
-function calcEstKrw(lpAmt, lpCur){
-  const baseRate=lpCur==='$(달러)'?fxSettings.usd:lpCur==='¥(엔)'?fxSettings.jpy:fxSettings.cny;
+function calcEstKrw(lpAmt, lpCur, manual){
+  // 직접 입력한 환율(매매기준율 또는 전신환매도율)이 있으면 하나은행 고시 대신 사용
+  const man=manual&&Number(manual.rate)>0?manual:null;
+  const baseRate=man?Number(man.rate):(lpCur==='$(달러)'?fxSettings.usd:lpCur==='¥(엔)'?fxSettings.jpy:fxSettings.cny);
   const brandFee=(CARD_BRAND_FEES[fxSettings.cardBrand]!=null?CARD_BRAND_FEES[fxSettings.cardBrand]:0.011);
   const cardFee=(fxSettings.cardFee!=null?fxSettings.cardFee:0.0018);
   // 체크카드 해외결제 정액 수수료 $0.5
   const debitKrw=fxSettings.debitFee?0.5*(fxSettings.usd||1380):0;
   // 적용 환율: 매매기준율(×1.0) / 전신환매도율 송금시(×1.01, 기본)
-  const ttMul=fxSettings.rateMode==='base'?1:1.01;
+  const ttMul=man?1:(fxSettings.rateMode==='base'?1:1.01);   // 직접 입력한 전신환매도율은 이미 송금 환율이므로 ×1
   const krwBase=lpAmt*baseRate*ttMul*(1+brandFee+cardFee)+debitKrw;
   // 관부가세: 별도 참고용, 합산 안 함
   let taxKrw=0;
