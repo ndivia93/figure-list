@@ -908,11 +908,13 @@ td:hover>.pd-wrap.has-rel .pd-b{display:block;}
 .fx-calc b{font-family:'Space Mono',monospace;color:var(--text);white-space:nowrap;}
 .fx-calc .tot{border-top:1px solid var(--border2);margin-top:3px;padding-top:5px;font-weight:700;color:var(--accent);}
 .fx-calc .tot b{color:var(--accent);font-size:13px;}
-.pc-feem button{min-width:0;padding:4px 9px;}
+.pc-feem{white-space:nowrap;flex-wrap:nowrap;}
+.pc-feem button{min-width:0;padding:4px 8px;white-space:nowrap;}
 .cf-direct{display:inline-flex;align-items:center;gap:3px;}
 .cf-direct input{width:86px;padding:4px 6px;text-align:right;background:var(--surface);border:1px solid var(--accent);border-radius:6px;color:var(--text);font-size:12px;font-family:'Space Mono',monospace;}
 .cf-direct em{font-style:normal;font-size:12px;color:var(--text2);}
 .pc-feem button.fx{background:#5b6475;color:#fff;}
+.pc-feem button.fb{background:#b7791f;color:#fff;}
 .pc-feem button.fi{background:var(--accent,#7c5cff);color:#fff;}
 .pc-feem.need{outline:2px solid var(--yellow);outline-offset:1px;border-radius:20px;}
 .pc-feewarn{font-size:12px;color:var(--yellow);background:var(--ydim);border:1px solid var(--yborder);border-radius:var(--rs);padding:7px 10px;margin:4px 0 8px;}
@@ -934,6 +936,11 @@ td:hover>.pd-wrap.has-rel .pd-b{display:block;}
 .bmw-feeplan .row .k{font-size:12px;color:var(--text3);}
 .bmw-feeplan input{width:110px;text-align:right;padding:5px 8px;background:var(--surface);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:'Space Mono',monospace;font-size:14px;}
 .bmw-feeplan .sum{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px;padding-top:5px;border-top:1px dashed var(--rborder);}
+.bmw-fxcard{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0;padding:8px 12px;border:1px solid var(--aborder);background:var(--adim);border-radius:10px;font-size:14px;}
+.bmw-fxcard>span{font-weight:700;color:var(--text);}
+.bmw-fxcard select{font-family:inherit;font-size:14px;font-weight:700;padding:4px 8px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);max-width:100%;}
+.bmw-fxcard small{flex-basis:100%;font-size:12px;color:var(--text2);}
+.bmw-fxcard small em{font-style:normal;color:var(--yellow);}
 .bmw-soloin{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);}
 .bmw-soloin label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:15px;color:var(--text2);}
 .bmw-soloin label em{font-style:normal;font-size:12px;color:var(--text3);}
@@ -3258,7 +3265,7 @@ function amFxFeeApply(){
   const fid=PC_FIELD_ID[key]||key;const di=document.getElementById('cf-'+fid+'-date');
   let it=_amFees.find(f=>f.field===key);
   if(!it){if(_amFees.length>=MAX_FEES){showToast('수수료는 최대 4개까지예요','warn');return;}it={id:feeNewId(),field:key};_amFees.push(it);}
-  it.amount=r.fee;if(di&&di.value.trim())it.date=autoDate(di.value.trim())||di.value.trim();
+  it.amount=r.fee;it.brand=r.B;if(di&&di.value.trim())it.date=autoDate(di.value.trim())||di.value.trim();
   renderAmFees();showToast(`수수료 ￦ ${r.fee.toLocaleString('ko-KR')} 입력했어요 — 카드 할인·적립 계산에서 빠져요`,'success');
 }
 function fxPanelInner(){
@@ -3631,7 +3638,7 @@ function openAddModal(editId){
   _amPoints=(isEdit?pointsOf(ex):[]).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩',...(c.field?{field:c.field,...(c.base?{base:c.base}:{})}:{})}));
   renderAmPoints();
   // 수수료: 저장된 수수료 + 예전에 기타비용 칸에 '수수료'로 표시해 둔 금액을 수수료 칸으로 옮김
-  _amFees=(isEdit?feesOf(ex):[]).map(f=>({id:f.id||feeNewId(),amount:Number(f.amount)||0,...(f.auto?{auto:true}:{}),...(f.field?{field:f.field}:{}),...(f.date?{date:f.date}:{})}));
+  _amFees=(isEdit?feesOf(ex):[]).map(f=>({id:f.id||feeNewId(),amount:Number(f.amount)||0,...(f.auto?{auto:true}:{}),...(f.field?{field:f.field}:{}),...(f.date?{date:f.date}:{}),...(f.brand!=null?{brand:Number(f.brand)}:{})}));
   if(isEdit&&ex&&ex.feeFields){Object.keys(ex.feeFields).forEach(f=>{const a=Number((ex.costs||{})[f])||0;if(a>0&&_amFees.length<MAX_FEES)_amFees.push({id:feeNewId(),auto:true,amount:a,...((ex.costDates||{})[f]?{date:ex.costDates[f]}:{})});
       const ci=document.getElementById('cf-'+f);if(ci)ci.value='';const gi=document.getElementById('cf-'+f+'-grp');if(gi)gi.value='';});
     _amFee={};if(Object.keys(ex.feeFields).length)setTimeout(()=>showToast('기타비용의 수수료를 수수료 칸으로 옮겼어요 — 수정을 눌러 저장','warn'),400);}
@@ -3772,6 +3779,10 @@ function bmwFeeSum(){bmwFeeInit();const inc=new Set(_bmw.feeInc||[]);
   if(_bmw.feePlan&&!_bmw.solo)return bmwPlanSum()+bmwFeeList().filter(x=>!bmwFeeOnKey(x)&&inc.has(x.f.id)).reduce((a,x)=>a+(Number(x.f.amount)||0),0);
   return bmwFeeList().filter(x=>inc.has(x.f.id)).reduce((a,x)=>a+(Number(x.f.amount)||0),0);}
 // ── 묶음 수수료 자동 분배: 카드 공식으로 수수료를 계산해 각 결제에 나눠 넣고(직접 고칠 수 있음), 적용할 때 각 결제의 수수료 칸에 기록 ──
+function bmwFeeBrandSum(card){bmwFeeInit();const inc=new Set(_bmw.feeInc||[]);
+  if(_bmw.feePlan&&!_bmw.solo){const pb=_bmw.feePlanBrand||{};let t=bmwPayKeys().reduce((a,k)=>{const v=Number(_bmw.feePlan[k])||0;return a+(pb[k]!=null?Math.min(v,pb[k]):pcBrandShare(card,v));},0);
+    bmwFeeList().filter(x=>!bmwFeeOnKey(x)&&inc.has(x.f.id)).forEach(x=>t+=feeBrandOf(card,x.f));return t;}
+  return bmwFeeList().filter(x=>inc.has(x.f.id)).reduce((a,x)=>a+feeBrandOf(card,x.f),0);}
 function bmwFeeOnKey(x){return !!(x.f.field&&!x.f.auto&&_bmw.keys.includes(x.o.id+':'+x.f.field));}
 function bmwPayKeys(){return _bmw.keys.filter(k=>{const {o,f}=bmwItem(k);return !pcIsFee(o,f);});}
 function bmwPayTotal(){return bmwPayKeys().reduce((a,k)=>a+bmwKeyKrw(k),0);}
@@ -3793,16 +3804,17 @@ function bmwSplit(total,keys){const w=keys.map(k=>bmwKeyKrw(k)),ws=w.reduce((a,b
   let diff=total-keys.reduce((a,k)=>a+out[k],0);if(diff&&keys.length){let mi=0;w.forEach((v,i)=>{if(v>w[mi])mi=i;});out[keys[mi]]+=diff;}return out;}
 function bmwPlanSum(){return bmwPayKeys().reduce((a,k)=>a+(Number((_bmw.feePlan||{})[k])||0),0);}
 function bmwPlanAuto(card){const keys=bmwPayKeys();const fe=bmwIsForeign()?bmwFormulaFee(card,bmwPayTotal(),false):{has:false,fee:0};
-  return fe.has&&fe.fee>0?bmwSplit(fe.fee,keys):Object.fromEntries(keys.map(k=>[k,0]));}
+  if(!(fe.has&&fe.fee>0)){_bmw.feePlanBrand={};return Object.fromEntries(keys.map(k=>[k,0]));}
+  const plan=bmwSplit(fe.fee,keys);const pb=bmwSplit(fe.B||0,keys);keys.forEach(k=>{pb[k]=Math.min(pb[k],plan[k]);});_bmw.feePlanBrand=pb;return plan;}
 function bmwPlanInit(card){
   if(_bmw.solo)return;const sig=card.id+'|'+bmwPayTotal()+'|'+bmwPayKeys().join(',');
   if(_bmw.feePlan&&(!_bmw.feePlanAuto||_bmw.feePlanSig===sig))return;
   const keys=bmwPayKeys();
   if(!_bmw.feePlan){const ex=Object.fromEntries(keys.map(k=>[k,bmwExistingFee(k)]));
-    if(keys.some(k=>ex[k]>0)){_bmw.feePlan=ex;_bmw.feePlanAuto=false;_bmw.feePlanSig=sig;return;}}
+    if(keys.some(k=>ex[k]>0)){_bmw.feePlan=ex;_bmw.feePlanBrand=Object.fromEntries(keys.map(k=>{const {o,f}=bmwItem(k);const it=pcOrderFees(o,true).find(x=>x.field===f&&!x.auto);return [k,it&&it.brand!=null?Number(it.brand):null];}));_bmw.feePlanAuto=false;_bmw.feePlanSig=sig;return;}}
   _bmw.feePlan=bmwPlanAuto(card);_bmw.feePlanAuto=true;_bmw.feePlanSig=sig;
 }
-function bmwPlanSet(k,v){_bmw.feePlan[k]=Math.max(0,Math.round(Number(v)||0));_bmw.feePlanAuto=false;bmwRender();}
+function bmwPlanSet(k,v){_bmw.feePlan[k]=Math.max(0,Math.round(Number(v)||0));if(_bmw.feePlanBrand)_bmw.feePlanBrand[k]=null;_bmw.feePlanAuto=false;bmwRender();}
 function bmwPlanReset(){const r=bmwCardCalc();if(!r)return;_bmw.feePlan=bmwPlanAuto(r.card);_bmw.feePlanAuto=true;_bmw.feePlanSig=null;bmwPlanInit(r.card);bmwRender();}
 // 적용: 분배한 수수료를 각 결제의 수수료 칸(field 연결)에 기록하고, 그 수수료를 카드 혜택 계산에 포함
 function bmwWriteFees(){
@@ -3811,8 +3823,9 @@ function bmwWriteFees(){
     const live=o.id===_addEditId&&document.getElementById('am-fee-box');
     if(!live&&!Array.isArray(o.fees))o.fees=[];const arr=live?_amFees:o.fees;
     const idx=arr.findIndex(x=>x&&x.field===f&&!x.auto);
-    if(idx>=0){if(amt>0){arr[idx].amount=amt;if(!arr[idx].id)arr[idx].id=feeNewId();ids.push(arr[idx].id);}else arr.splice(idx,1);}
-    else if(amt>0){if(arr.filter(x=>x&&Number(x.amount)>0).length>=MAX_FEES){full++;return;}const it={id:feeNewId(),amount:amt,field:f,date:(o.costDates||{})[f]||''};arr.push(it);ids.push(it.id);}
+    const br=(_bmw.feePlanBrand||{})[k];const setB=it=>{if(br!=null)it.brand=Math.min(br,amt);else delete it.brand;};
+    if(idx>=0){if(amt>0){arr[idx].amount=amt;setB(arr[idx]);if(!arr[idx].id)arr[idx].id=feeNewId();ids.push(arr[idx].id);}else arr.splice(idx,1);}
+    else if(amt>0){if(arr.filter(x=>x&&Number(x.amount)>0).length>=MAX_FEES){full++;return;}const it={id:feeNewId(),amount:amt,field:f,date:(o.costDates||{})[f]||''};setB(it);arr.push(it);ids.push(it.id);}
     if(live)renderAmFees();});
   const others=new Set(bmwFeeList().filter(x=>!bmwFeeOnKey(x)).map(x=>x.f.id));
   _bmw.feeInc=(_bmw.feeInc||[]).filter(id=>others.has(id)).concat(ids);
@@ -3825,15 +3838,15 @@ function bmwModeOverrides(card){const m={};(card.benefits||[]).forEach(b=>{const
 function bmwSetMode(bid,v){if(!_bmw.feeModes)_bmw.feeModes={};_bmw.feeModes[bid]=v;bmwRender();}
 function bmwModesHtml(card){
   const bs=card.benefits||[];if(!bs.length)return '';
-  return `<div class="bmw-modes"><div class="t">혜택별 수수료 포함/제외 확인 <span>— 카드 탭 설정으로 자동 선택돼요. 여기서 바꾸면 이 결제에만 적용돼요</span></div>
+  return `<div class="bmw-modes"><div class="t">혜택별 수수료 포함/제외 확인 <span>— 카드 탭 설정으로 자동 선택돼요. 여기서 바꾸면 이 결제에만 적용돼요 · 브랜드만 = 원금 + 브랜드 수수료 (해외서비스수수료 제외)</span></div>
     ${bs.map(b=>{const m=bmwModeOf(b),pt=b.type==='point',ov=(_bmw.feeModes||{})[b.id]&&(_bmw.feeModes||{})[b.id]!==(b.feeMode||'excl');
       return `<div class="row"><span><b style="color:${pt?'var(--cyan)':'var(--yellow)'};">${pt?'적립':'할인'}</b> · ${pcEsc(b.title||'(이름 없음)')} <span style="color:var(--text3);">${pcRateLabel(b)}</span>${!b.feeMode?'<small>카드 탭 미정</small>':ov?'<small>이 결제만 변경</small>':''}</span>
-        <div class="pc-type pc-feem"><button type="button" class="${m==='excl'?'on fx':''}" onclick="bmwSetMode('${b.id}','excl')">제외</button><button type="button" class="${m==='incl'?'on fi':''}" onclick="bmwSetMode('${b.id}','incl')">포함</button></div></div>`;}).join('')}</div>`;
+        <div class="pc-type pc-feem"><button type="button" class="${m==='excl'?'on fx':''}" onclick="bmwSetMode('${b.id}','excl')" title="원금만">제외</button><button type="button" class="${m==='brand'?'on fb':''}" onclick="bmwSetMode('${b.id}','brand')" title="원금 + 브랜드 수수료만">브랜드만</button><button type="button" class="${m==='incl'?'on fi':''}" onclick="bmwSetMode('${b.id}','incl')" title="원금 + 전체 수수료">포함</button></div></div>`;}).join('')}</div>`;
 }
 function bmwToggleFee(id,on){_bmw.feeInc=(_bmw.feeInc||[]).filter(x=>x!==id);if(on)_bmw.feeInc.push(id);bmwRender();}
 function bmwFeeHtml(){
   let list=bmwFeeList();if(_bmw.feePlan&&!_bmw.solo)list=list.filter(x=>!bmwFeeOnKey(x));if(!list.length)return '';bmwFeeInit();const inc=new Set(_bmw.feeInc||[]);
-  return `<div style="font-size:14px;color:var(--text3);margin:4px 0 6px;">${_bmw.feePlan&&!_bmw.solo?'그 밖의 수수료':'이 결제의 수수료'} <span style="font-size:12px;">— 체크한 수수료는 '수수료 포함' 혜택에만 더해져요</span></div>
+  return `<div style="font-size:14px;color:var(--text3);margin:4px 0 6px;">${_bmw.feePlan&&!_bmw.solo?'그 밖의 수수료':'이 결제의 수수료'} <span style="font-size:12px;">— 체크한 수수료는 '포함' 혜택에 전부, '브랜드만' 혜택엔 브랜드 수수료만 더해져요</span></div>
     <div class="bmw-skip">${list.map(x=>`<label class="${inc.has(x.f.id)?'':'off'}"><input type="checkbox" ${inc.has(x.f.id)?'checked':''} onchange="bmwToggleFee('${x.f.id}',this.checked)"><span class="n">${pcEsc(x.o.charName||'')} <em>수수료${x.i+1}${x.f.field&&x.f.field!=='local'?' · '+(BM_FIELDS[x.f.field]||x.f.field):''}</em></span><b class="mono">￦ ${(Number(x.f.amount)||0).toLocaleString('ko-KR')}</b></label>`).join('')}</div>`;
 }
 function bmwToggleSkip(k,on){_bmw.pcSkip=(_bmw.pcSkip||[]).filter(x=>x!==k);if(!on)_bmw.pcSkip.push(k);bmwRender();}
@@ -3855,13 +3868,17 @@ function pcRateFor(b,base){
   return Number(b.rate)||0;
 }
 function pcRateLabel(b){return (Array.isArray(b.tiers)&&b.tiers.length)?'구간 '+b.tiers.map(t=>(Number(t.rate)||0)+'%').join('·'):((Number(b.rate)||0)+'%');}
-function pcCalc(card,base,month,off,exceptCode,beforeDate,feeAmt,modes){
+// 수수료 중 브랜드 수수료 몫 (따로 기록 없으면 카드 공식 비율로 나눔)
+function pcBrandShare(card,amt){amt=Number(amt)||0;if(!amt||!card)return 0;const c=pcFeeCfgOf(card);const b=CARD_BRAND_FEES[c.brand]||0;if(!(b>0))return 0;const cf=(Number(c.cardFee)||0)/feeDivOf(c.mul);return Math.floor(amt*b/(b+cf)+1e-9);}
+function feeBrandOf(card,f){const a=Number(f.amount)||0;return f.brand!=null?Math.min(a,Number(f.brand)||0):pcBrandShare(card,a);}
+function pcCalc(card,base,month,off,exceptCode,beforeDate,feeAmt,modes,feeBrand){
   const active=pcMonthOn(card,month);
+  const fa=Number(feeAmt)||0,fb=feeBrand!=null?Math.min(fa,Number(feeBrand)||0):pcBrandShare(card,fa);
   let disc=0,point=0;
   const rows=(card.benefits||[]).map(b=>{
     const on=!(off||[]).includes(b.id);
     const mode=(modes&&modes[b.id])||b.feeMode||'excl';
-    const bb=base+(mode==='incl'?(Number(feeAmt)||0):0);   // '수수료 포함' 혜택만 수수료를 더해 계산 (이 결제에서 바꾼 값 우선)
+    const bb=base+(mode==='incl'?fa:mode==='brand'?fb:0);   // 포함 = 전체 수수료 · 브랜드만 = 브랜드 수수료만 (KB NEED Global) · 제외 = 원금만
     const rate=pcRateFor(b,bb);const calc=Math.floor(bb*rate/100);
     const cap=Number(b.cap)||0;
     const used=pcUsed(card.id,b.id,month,exceptCode,beforeDate);
@@ -3870,7 +3887,7 @@ function pcCalc(card,base,month,off,exceptCode,beforeDate,feeAmt,modes){
     if(b.type==='point')point+=applied;else disc+=applied;
     return {b,on,rate,bb,calc,cap,used,left,applied,mode};
   });
-  return {rows,disc,point,active,feeAmt:Number(feeAmt)||0};
+  return {rows,disc,point,active,feeAmt:fa,feeBrand:fb};
 }
 function bmwCardCalc(){
   if(!_bmw||!_bmw.pcCard)return null;
@@ -3878,7 +3895,7 @@ function bmwCardCalc(){
   if(!_bmw.solo)bmwPlanInit(card);
   const base=bmwBase(),month=bmwMonth();
   const dd=String(_bmw.dd||'').replace(/\D/g,'');
-  const r=pcCalc(card,base,month,_bmw.pcOff,_bmw.code,dd,bmwFeeSum(),bmwModes(card));
+  const r=pcCalc(card,base,month,_bmw.pcOff,_bmw.code,dd,bmwFeeSum(),bmwModes(card),bmwFeeBrandSum(card));
   const later=Object.entries(bundleCoupons||{}).filter(([c,bc])=>c!==_bmw.code&&pcBcLive(bc)&&bc.card&&bc.card.card===card.id&&bc.card.month===month&&(String(bc.card.date||'')>dd||(String(bc.card.date||'')===dd&&c.localeCompare(_bmw.code)>0))).length;
   return {iss,card,base,month,later,...r};
 }
@@ -3899,7 +3916,7 @@ function pcApplyToBundle(code,info){
   pcTouch(bc);
   orders.forEach(o=>{if(o.cardBen&&o.cardBen[code]){delete o.cardBen[code];if(!Object.keys(o.cardBen).length)delete o.cardBen;}});
   if(!info){delete bc.card;return;}
-  bc.card={iss:info.iss,card:info.card,month:info.month,base:info.base,off:(info.off||[]).slice(),skip:(info.skip||[]).slice(),feeInc:(info.feeInc||[]).slice(),feeAmt:Number(info.feeAmt)||0,...(info.feeModes&&Object.keys(info.feeModes).length?{feeModes:{...info.feeModes}}:{}),date:info.date||'',
+  bc.card={iss:info.iss,card:info.card,month:info.month,base:info.base,off:(info.off||[]).slice(),skip:(info.skip||[]).slice(),feeInc:(info.feeInc||[]).slice(),feeAmt:Number(info.feeAmt)||0,...(info.feeBrand!=null?{feeBrand:Number(info.feeBrand)||0}:{}),...(info.feeModes&&Object.keys(info.feeModes).length?{feeModes:{...info.feeModes}}:{}),date:info.date||'',
     applied:info.rows.filter(r=>r.on&&r.applied>0).map(r=>({bid:r.b.id,type:r.b.type==='point'?'point':'discount',title:r.b.title||'',amount:r.applied})),disc:info.disc,point:info.point};
   pcTouch(bc);
   if(!(info.disc||info.point))return;
@@ -3921,8 +3938,8 @@ function _pcRecalcMonth(cardId,month){
   const list=Object.entries(bundleCoupons||{}).filter(([c,bc])=>pcBcLive(bc)&&bc.card&&bc.card.card===cardId&&bc.card.month===month)
     .sort((a,b)=>String(a[1].card.date||'').localeCompare(String(b[1].card.date||''))||a[0].localeCompare(b[0]));
   list.forEach(([c,bc])=>{bc.card.applied=[];});
-  list.forEach(([code,bc])=>{const r=pcCalc(card,Number(bc.card.base)||0,month,bc.card.off,code,undefined,Number(bc.card.feeAmt)||0,bc.card.feeModes);
-    pcApplyToBundle(code,{iss:iss.id,card:cardId,month,base:bc.card.base,off:bc.card.off,skip:bc.card.skip,feeInc:bc.card.feeInc,feeAmt:bc.card.feeAmt,feeModes:bc.card.feeModes,date:bc.card.date,...r});});
+  list.forEach(([code,bc])=>{const r=pcCalc(card,Number(bc.card.base)||0,month,bc.card.off,code,undefined,Number(bc.card.feeAmt)||0,bc.card.feeModes,bc.card.feeBrand);
+    pcApplyToBundle(code,{iss:iss.id,card:cardId,month,base:bc.card.base,off:bc.card.off,skip:bc.card.skip,feeInc:bc.card.feeInc,feeAmt:bc.card.feeAmt,feeModes:bc.card.feeModes,date:bc.card.date,...r,feeBrand:bc.card.feeBrand!=null?bc.card.feeBrand:r.feeBrand});});
   return list.length;
 }
 function pcBundlesIn(cardId,month){return Object.values(bundleCoupons||{}).filter(bc=>pcBcLive(bc)&&bc.card&&bc.card.card===cardId&&bc.card.month===month);}
@@ -4012,7 +4029,7 @@ function bmwCardStepHtml(){
   h+=r.rows.map(x=>{const pt=x.b.type==='point';const col=pt?'var(--cyan)':'var(--yellow)';
     return `<label style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:9px 12px;margin-bottom:6px;border-radius:10px;border:1px solid ${x.on?(pt?'var(--cborder)':'var(--yborder)'):'var(--border)'};background:${x.on?(pt?'var(--cdim)':'var(--ydim)'):'transparent'};cursor:pointer;">
       <input type="checkbox" ${x.on?'checked':''} onchange="bmwToggleBen('${x.b.id}',this.checked)" style="width:18px;height:18px;accent-color:${pt?'#4ecfcf':'#ffd166'};grid-row:1/3;">
-      <span style="font-size:16px;font-weight:700;color:${x.on?col:'var(--text3)'};">${pt?'적립':'할인'} · ${pcEsc(x.b.title||'(이름 없음)')} <span style="font-weight:400;color:var(--text2);">${x.rate!=null?x.rate:(Number(x.b.rate)||0)}% <span style="font-size:12px;color:${x.mode==='incl'?'var(--red)':'var(--text3)'};">${x.mode==='incl'?'수수료 포함':'수수료 제외'}</span>${Array.isArray(x.b.tiers)&&x.b.tiers.length?' <span style="font-size:12px;">(구간)</span>':''}</span></span>
+      <span style="font-size:16px;font-weight:700;color:${x.on?col:'var(--text3)'};">${pt?'적립':'할인'} · ${pcEsc(x.b.title||'(이름 없음)')} <span style="font-weight:400;color:var(--text2);">${x.rate!=null?x.rate:(Number(x.b.rate)||0)}% <span style="font-size:12px;color:${x.mode==='incl'?'var(--red)':x.mode==='brand'?'#d69e2e':'var(--text3)'};">${x.mode==='incl'?'수수료 포함':x.mode==='brand'?'브랜드 수수료만 포함':'수수료 제외'}</span>${Array.isArray(x.b.tiers)&&x.b.tiers.length?' <span style="font-size:12px;">(구간)</span>':''}</span></span>
       <b class="mono" style="font-size:17px;color:${x.on?col:'var(--text3)'};">${pt?'':'▼ ￦ '}${x.applied.toLocaleString('ko-KR')}${pt?' P':''}</b>
       <span style="font-size:12px;color:var(--text3);grid-column:2/4;">계산 ${x.calc.toLocaleString('ko-KR')} · ${x.cap?'월 한도 ￦ '+x.cap.toLocaleString('ko-KR'):'상시 (한도 없음)'}${x.cap?` · 이번 달 사용 ${x.used.toLocaleString('ko-KR')} · 남음 ${x.left.toLocaleString('ko-KR')}`:''}${x.b.cond?' · '+pcEsc(x.b.cond):''}${x.on&&x.cap&&x.calc>x.left?' · <span style="color:var(--red);">한도 초과분 제외</span>':''}</span>
     </label>`;}).join('');
@@ -4216,7 +4233,7 @@ function renderPayCards(){
       <td class="ti"><input value="${pcEsc(b.title)}" placeholder="예: 해외 결제, 온라인 쇼핑" onchange="pcSetB('${b.id}','title',this.value)"></td>
       <td class="ra"><div style="display:flex;gap:4px;align-items:center;">${b.tiers&&b.tiers.length?`<button type="button" class="pc-tierbtn on" onclick="pcTierToggle('${b.id}')" title="금액 구간별 비율 고치기">${pcRateLabel(b)}</button>`:`<input class="num" inputmode="decimal" value="${b.rate||''}" placeholder="5" onchange="pcSetB('${b.id}','rate',Number(this.value)||0)"><button type="button" class="pc-tierbtn" onclick="pcTierToggle('${b.id}')" title="결제금액 구간마다 비율을 다르게">구간</button>`}</div></td>
       <td class="ca"><input class="num" inputmode="numeric" value="${b.cap?Number(b.cap).toLocaleString('ko-KR'):''}" placeholder="비우면 상시" onchange="pcSetB('${b.id}','cap',Number(this.value.replace(/\\D/g,''))||0)"></td>
-      <td><div class="pc-type pc-feem ${b.feeMode?'':'need'}" title="이 혜택이 수수료(브랜드·해외결제 수수료)까지 포함한 금액에 붙는지"><button type="button" class="${b.feeMode==='excl'?'on fx':''}" onclick="pcSetB('${b.id}','feeMode','excl')">제외</button><button type="button" class="${b.feeMode==='incl'?'on fi':''}" onclick="pcSetB('${b.id}','feeMode','incl')">포함</button></div></td>
+      <td><div class="pc-type pc-feem ${b.feeMode?'':'need'}" title="이 혜택이 수수료(브랜드·해외결제 수수료)까지 포함한 금액에 붙는지"><button type="button" class="${b.feeMode==='excl'?'on fx':''}" onclick="pcSetB('${b.id}','feeMode','excl')" title="원금만">제외</button><button type="button" class="${b.feeMode==='brand'?'on fb':''}" onclick="pcSetB('${b.id}','feeMode','brand')" title="원금 + 브랜드 수수료 (카드사 해외서비스수수료는 빼고) — 예: KB NEED Global">브랜드만</button><button type="button" class="${b.feeMode==='incl'?'on fi':''}" onclick="pcSetB('${b.id}','feeMode','incl')" title="원금 + 전체 수수료">포함</button></div></td>
       <td class="co"><input value="${pcEsc(b.cond)}" placeholder="예: 건당 1만원 이상" onchange="pcSetB('${b.id}','cond',this.value)"></td>
       <td><button type="button" class="del-btn" onclick="pcDelB('${b.id}')">✕</button></td></tr>${_pcTierOpen===b.id?`<tr class="pc-tier-row"><td colspan="7">${pcTierEditorHtml(b)}</td></tr>`:''}`).join('')}
     </tbody></table>
@@ -4321,7 +4338,7 @@ function bmwCardFeeBox(card){
     const lpEl=document.getElementById('cf-'+(PC_FIELD_ID[_bmw.solo.f]||_bmw.solo.f)+'-lp');const foreign=!!(lpEl&&Number(lpEl.value)>0);
     return `<div class="bmw-feebox"><div class="t"><b>수수료 확인</b> <span>${pcEsc(pcFeeCfgText(card))}</span></div>
       <div class="r"><span>구매금액 ￦ ${A.toLocaleString('ko-KR')} 기준${bmwFeeBasisTxt(ff)}</span><b class="mono">브랜드 ￦ ${B.toLocaleString('ko-KR')} + 해외결제 ￦ ${C.toLocaleString('ko-KR')}${D?` + 체크카드 ￦ ${D.toLocaleString('ko-KR')}`:''} = ￦ ${fee.toLocaleString('ko-KR')}</b></div>
-      ${foreign&&fee!==cur?`<div class="r"><span>수수료 칸 ${cur?'￦ '+cur.toLocaleString('ko-KR'):'없음'} → 이 카드 공식 ￦ ${fee.toLocaleString('ko-KR')}</span><button type="button" class="pc-mini-btn" onclick="bmwFeeSync(${fee})">수수료 칸 맞추기</button></div>`:''}
+      ${foreign&&fee!==cur?`<div class="r"><span>수수료 칸 ${cur?'￦ '+cur.toLocaleString('ko-KR'):'없음'} → 이 카드 공식 ￦ ${fee.toLocaleString('ko-KR')}</span><button type="button" class="pc-mini-btn" onclick="bmwFeeSync(${fee},${B})">수수료 칸 맞추기</button></div>`:''}
       ${!foreign?`<div class="r"><span>해외결제가 아니면(현지가 없음) 수수료는 없어요</span></div>`:''}
     </div>`;
   }
@@ -4334,11 +4351,11 @@ function bmwCardFeeBox(card){
   h+=`<div class="bmw-feeplan">${keys.map(k=>{const {o,f}=bmwItem(k);const ex=bmwExistingFee(k),v=Number(_bmw.feePlan[k])||0;
     return `<div class="row"><span class="n">${pcEsc(o?o.charName||'(이름없음)':'?')} <em>${f.startsWith('extra')?extraLabel(f):BM_FIELDS[f]||f} · ￦ ${bmwKeyKrw(k).toLocaleString('ko-KR')}</em></span>${ex&&ex!==v?`<span class="k">지금 ￦ ${ex.toLocaleString('ko-KR')} →</span>`:''}<span class="k">수수료 ￦</span><input type="number" inputmode="numeric" value="${v||''}" placeholder="0" onchange="bmwPlanSet('${k}',this.value)"></div>`;}).join('')}
     <div class="sum"><span>합계 <b class="mono">￦ ${sum.toLocaleString('ko-KR')}</b> <span style="color:var(--text3);">${_bmw.feePlanAuto?'· 카드 공식대로 결제금액 비율로 나눴어요':'· 직접 입력'}</span></span>${sum!==want?`<button type="button" class="pc-mini-btn" onclick="bmwPlanReset()">${want?`카드 공식대로 다시 나누기 (￦ ${want.toLocaleString('ko-KR')})`:'수수료 0으로 되돌리기'}</button>`:''}</div>
-    <div style="font-size:12px;color:var(--text3);margin-top:4px;">적용하면 각 결제의 수수료 칸에 들어가고, '수수료 포함' 혜택에만 더해져요.</div></div></div>`;
+    <div style="font-size:12px;color:var(--text3);margin-top:4px;">적용하면 각 결제의 수수료 칸에 들어가요. '포함' 혜택엔 전부, '브랜드만' 혜택엔 브랜드 수수료(￦ ${(()=>{const pb=_bmw.feePlanBrand||{};return keys.reduce((a,k)=>a+(pb[k]!=null?pb[k]:pcBrandShare(card,Number(_bmw.feePlan[k])||0)),0).toLocaleString('ko-KR');})()})만 더해져요.</div></div></div>`;
   return h;
 }
-function bmwFeeSync(fee){const f=_bmw.solo.f;let it=_amFees.find(x=>x.field===f);if(!it){if(_amFees.length>=MAX_FEES){showToast('수수료는 최대 4개까지예요','warn');return;}it={id:feeNewId(),field:f};_amFees.push(it);}
-  it.amount=fee;renderAmFees();if(_bmw.feeInc&&!_bmw.feeInc.includes(it.id))_bmw.feeInc.push(it.id);bmwRender();showToast(`수수료 칸을 ￦ ${fee.toLocaleString('ko-KR')}로 맞췄어요 (수정을 눌러 저장)`,'success');}
+function bmwFeeSync(fee,brand){const f=_bmw.solo.f;let it=_amFees.find(x=>x.field===f);if(!it){if(_amFees.length>=MAX_FEES){showToast('수수료는 최대 4개까지예요','warn');return;}it={id:feeNewId(),field:f};_amFees.push(it);}
+  it.amount=fee;if(brand!=null)it.brand=brand;else delete it.brand;renderAmFees();if(_bmw.feeInc&&!_bmw.feeInc.includes(it.id))_bmw.feeInc.push(it.id);bmwRender();showToast(`수수료 칸을 ￦ ${fee.toLocaleString('ko-KR')}로 맞췄어요 (수정을 눌러 저장)`,'success');}
 function pcShiftMonth(dl){const m=_pcMonth||pcNowMonth();let [y,mm]=m.split('-').map(Number);mm+=dl;if(mm<1){mm=12;y--;}if(mm>12){mm=1;y++;}_pcMonth=y+'-'+String(mm).padStart(2,'0');renderPayCards();}
 function pcCur(){const iss=pcIssuer(_pcSel.iss);return {iss,card:pcCard(iss,_pcSel.card)};}
 function pcSet(f,v){const {card}=pcCur();if(!card)return;card[f]=v;autoSave();renderPayCards();}
@@ -4419,6 +4436,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
+  ['26.10.27',['카드·묶음 마법사: 한화 계산 단계에서 결제 카드를 먼저 고르면 브랜드·해외결제 수수료·끝처리를 그 카드 설정으로 자동 선택 (카드 단계로 그대로 이어짐)','혜택 수수료 기준에 \'브랜드만\' 추가 — 원금 + 브랜드 수수료 (카드사 해외서비스수수료 제외, 예: KB NEED Global 청구할인)','수수료 칸에 브랜드 수수료 몫을 함께 기록 (원화 환산·마법사에서 넣은 수수료)','탭 이동 단축키: 1 구매목록 · 2 카드보기 · 3 위시 · 4 방출 · 5 할인 · 6 구매처 · 7 통계 · 8 랭킹 · 9 잔금 · 0 카드 · ` 설정 (입력 중·창이 열려 있을 땐 안 됨)']],
   ['26.10.26',['NH농협카드 프리셋: 0.25% · 기준 금액 결제 외화 ÷ 1.006 (유니온 브랜드 0.6% 포함분 제외) · 끊지 않음 (청구서로 확인)','삼성카드 기준 금액을 ÷ 1.008 로 (브랜드 수수료 포함 구조)','카드사 수정: 수수료 기준 금액을 결제 외화 ÷ (1 + 브랜드율) 로 입력']],
   ['26.10.22',['카드 탭: 카드별 해외결제 수수료 공식 · 혜택마다 수수료 포함/제외 기록','카드·묶음 마법사: 할인·적립 전에 카드 수수료 확인 (수수료 칸 맞추기)','묶음 마법사: 카드를 고르면 카드 공식으로 수수료를 계산해 결제금액 비율로 자동 분배 (직접 수정 가능, 적용 시 각 결제의 수수료 칸에 기록)','마법사에서 혜택별 수수료 포함/제외 최종 확인 — 카드 탭 값이 기본, 바꾸면 그 결제에만 적용','수수료 제외/포함 버튼 선택 표시 수정','카드 버튼 마법사: 1페이지에 한화 직접 입력 칸 · 정한 한화/외화/수수료를 상품에 바로 저장 (수정을 안 눌러도 남음)','묶음 결제 카드 버튼: 한화가 빈 결제가 있으면 묶음 마법사를 처음부터 열기','해외결제 카드사 수수료 직접 입력 (예: 0.1985%) — 카드 탭 · 원화 환산 · 예상가','수정 창에서 연 묶음 마법사: 나눠 넣은 한화가 수정 창 칸에 안 들어가 수정을 누르면 0으로 덮이던 문제 수정','해외결제 수수료를 실제 청구 방식으로: 결제 외화(달러)에 수수료율을 곱해 외화로 먼저 끊고(KB 센트 반올림 · 신한 0.0001 버림) × 환율 → 원 미만 절사','카드 탭: 카드사 추가는 미리 등록된 카드사·은행에서 고르기 — 해외결제 수수료율·끝처리를 카드사 단위로 하위 카드 전체에 적용 (KB국민 0.25% 센트 반올림 · 신한 0.18% 0.0001 버림 확인됨)','카드별 해외결제 수수료는 0%(트래블·우대) 또는 카드사 수수료율 중 선택 · 원화 환산·예상가도 0% + 등록한 카드사 수수료율','유니온 0% 브랜드 추가','삼성카드 프리셋: 0.2% · 기준 금액 결제 외화 ÷ 1.008 (유니온 브랜드 0.8% 포함분 제외) · 끊지 않음 (청구서로 확인)','따로 정하지 않은 카드사의 끝처리 기본값 = 신한 방식(0.0001 버림)','구매목록 묶음 코드 창에 묶음 정보 수정(마법사) 버튼','중고거래 배송비 칸에서 원화 환산·한화 입력·카드 버튼이 안 되던 문제 수정','기타비용에서 옮긴 수수료도 잠금','ESC 로 가장 최근에 연 창·팝업부터 하나씩 닫기','수정 창 카드 버튼: 저장 없이 바로 진행 (한화 없는 묶음은 묶음 마법사 3단계에서 예상 원화 계산)','카드 혜택 금액 구간별 비율 (직접 입력 · 막대 끌기)','결제일 없이 현지가만 적힌 결제칸은 보류에서 제외 (기록용)','환산에서 자동 입력된 수수료는 고칠 수 없게 (다시 환산하거나 지우기)','수수료 칸 호버 강조 — 연결된 결제칸·이 수수료를 포함한 카드 칸','원화 환산 창 위쪽부터 정렬','구매목록 쿠폰 창에 묶음 정보 수정(마법사) 버튼']],
   ['26.10.21',['수정 창 카드 버튼: 한화가 없어도 진행 — 마법사 1페이지에서 예상 원화 계산 후 2페이지 카드 선택','카드 혜택에 수수료 포함 여부 체크리스트','수수료 칸을 쿠폰·포인트 아래로 분리 (총비용 포함 · 카드 할인·적립 제외)','환산 창: 한화 입력(구매금액) / 수수료 입력 버튼, 결제칸별 계산기 설정 저장, 설명 글씨 정리','한화 입력칸 클릭 → 원화 환산 창 (표기외화·적용외화 선택, 결제칸에 바로 입력)','환산 공식 변경: 구매금액(절삭) + 브랜드 수수료 + 해외결제 수수료 (+ 체크카드 결제수수료)','적용 환율 선택 제거 · 체크카드 결제수수료 직접 입력','현지전액가 환산: 매매기준율·전신환매도율을 직접 입력하면 하나은행 고시 대신 사용 (항목별 저장)']],
@@ -4655,6 +4673,11 @@ function pcCodeBase(code,live){
   return t;
 }
 // 이 묶음(또는 단일 결제)에서 '수수료 포함' 혜택에 더할 수수료 합
+function pcCodeFeeBrand(code,live,card){
+  const bc=bundleCoupons[code];if(!bc||!bc.card)return 0;const fi=new Set(bc.card.feeInc||[]);if(!fi.size)return 0;
+  const mem=new Set();if(bc.solo){const o=orders.find(x=>x.id===bc.solo.id);if(o)mem.add(o);}else orders.forEach(o=>{if(Object.values(o.costGroups||{}).map(String).includes(code))mem.add(o);});
+  let t=0;mem.forEach(o=>pcOrderFees(o,live).forEach(f=>{if(fi.has(f.id))t+=feeBrandOf(card,f);}));return t;
+}
 function pcCodeFee(code,live){
   const bc=bundleCoupons[code];if(!bc||!bc.card)return 0;const fi=new Set(bc.card.feeInc||[]);if(!fi.size)return 0;
   const mem=new Set();if(bc.solo){const o=orders.find(x=>x.id===bc.solo.id);if(o)mem.add(o);}else orders.forEach(o=>{if(Object.values(o.costGroups||{}).map(String).includes(code))mem.add(o);});
@@ -4667,7 +4690,7 @@ function amCardSyncPlan(o,f){
   codes.forEach(code=>{
     const bc=bundleCoupons[code];const iss=pcIssuer(bc.card.iss),card=pcCard(iss,bc.card.card);if(!card)return;
     const nb=pcCodeBase(code,true),ob=Number(bc.card.base)||0,nf=pcCodeFee(code,true);if(nb===ob&&nf===(Number(bc.card.feeAmt)||0))return;
-    const r=pcCalc(card,nb,bc.card.month,bc.card.off,code,undefined,nf,bc.card.feeModes);
+    const r=pcCalc(card,nb,bc.card.month,bc.card.off,code,undefined,nf,bc.card.feeModes,pcCodeFeeBrand(code,true,card));
     // 이 상품 몫 (묶음이면 이 상품의 포함된 결제 비율)
     let mine=nb;if(!bc.solo){const skip=new Set(bc.card.skip||[]);mine=0;Object.entries(o.costGroups||{}).forEach(([ff,c])=>{if(String(c)===code&&!skip.has(o.id+':'+ff)&&!amFieldFee(o,ff))mine+=amFieldKrw(o,ff);});}
     const ratio=nb>0?mine/nb:0;const cur=(o.cardBen||{})[code]||{};
@@ -5208,7 +5231,7 @@ function submitAdd(editId){
   // 쿠폰 (최대 4개): 모달-로컬 배열에서 금액 있는 것만
   const coupons=(_amCoupons||[]).filter(c=>Number(c.amount)).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩',...(c.field?{field:c.field,...(c.base?{base:c.base}:{})}:{})}));
   // 포인트 (최대 4개, 기록용)
-  const fees=(_amFees||[]).filter(f=>Number(f.amount)>0).map(f=>({id:f.id||feeNewId(),amount:Math.round(Number(f.amount)),...(f.auto?{auto:true}:{}),...(f.field?{field:f.field}:{}),...(f.date?{date:f.date}:{})}));
+  const fees=(_amFees||[]).filter(f=>Number(f.amount)>0).map(f=>({id:f.id||feeNewId(),amount:Math.round(Number(f.amount)),...(f.auto?{auto:true}:{}),...(f.field?{field:f.field}:{}),...(f.date?{date:f.date}:{}),...(f.brand!=null?{brand:Math.min(Number(f.brand),Math.round(Number(f.amount)))}:{})}));
   const points=(_amPoints||[]).filter(c=>Number(c.amount)).map(c=>({amount:Number(c.amount)||0,currency:c.currency||'₩',...(c.field?{field:c.field,...(c.base?{base:c.base}:{})}:{})}));
   // 사진 URL (썸네일 초점은 이미지 편집 창에서 관리하므로 여기서 건드리지 않음)
   const imgUrl=(document.getElementById('am-imgurl')?.value||'').trim();
@@ -5300,7 +5323,7 @@ function submitAdd(editId){
           const nd=String((o.costDates||{})[bc.solo.f]||o.paymentDate||'').replace(/\D/g,'');if(nd.length!==6||nd===String(bc.card.date||''))return;
           pcTouch(bc);bc.card.date=nd;bc.card.month='20'+nd.slice(0,2)+'-'+nd.slice(2,4);pcTouch(bc);});
         pcSettle();
-        {const done=new Set();Object.keys(_amCardPending).forEach(code=>{const bc=bundleCoupons[code];if(!bc||!bc.card)return;bc.card.base=pcCodeBase(code,false);bc.card.feeAmt=pcCodeFee(code,false);const k=bc.card.card+'|'+bc.card.month;if(!done.has(k)){done.add(k);}});
+        {const done=new Set();Object.keys(_amCardPending).forEach(code=>{const bc=bundleCoupons[code];if(!bc||!bc.card)return;bc.card.base=pcCodeBase(code,false);bc.card.feeAmt=pcCodeFee(code,false);{const _is=pcIssuer(bc.card.iss),_cd=pcCard(_is,bc.card.card);bc.card.feeBrand=pcCodeFeeBrand(code,false,_cd);}const k=bc.card.card+'|'+bc.card.month;if(!done.has(k)){done.add(k);}});
           done.forEach(k=>{const [cid,m]=k.split('|');_pcTouched.add(cid+'|'+m);});pcSettle();_amCardPending={};_amCardPreview={};}
         if((o.trackNo||'')!==trackNo||(o.trackNoIntl||'')!==trackNoIntl)delete o.shipUndone;
         o.trackCourier=trackCourier;o.trackNo=trackNo;o.trackCourierIntl=trackCourierIntl;o.trackNoIntl=trackNoIntl;
@@ -6056,17 +6079,34 @@ function bmwApplyCardOnly(){
   if(_bmw.solo){
     if(!cr){if(bundleCoupons[code]){pcApplyToBundle(code,null);delete bundleCoupons[code];}}
     else{bmwSoloPersist();if(!bundleCoupons[code])bundleCoupons[code]={solo:{..._bmw.solo}};bundleCoupons[code].solo={..._bmw.solo};
-      pcApplyToBundle(code,{iss:cr.iss.id,card:cr.card.id,month:cr.month,base:cr.base,off:_bmw.pcOff,skip:(_bmw.pcSkip||[]).slice(),feeInc:(_bmw.feeInc||[]).slice(),feeAmt:cr.feeAmt||0,feeModes:bmwModeOverrides(cr.card),date:String(_bmw.dd||''),rows:cr.rows,disc:cr.disc,point:cr.point});}
+      pcApplyToBundle(code,{iss:cr.iss.id,card:cr.card.id,month:cr.month,base:cr.base,off:_bmw.pcOff,skip:(_bmw.pcSkip||[]).slice(),feeInc:(_bmw.feeInc||[]).slice(),feeAmt:cr.feeAmt||0,feeBrand:cr.feeBrand||0,feeModes:bmwModeOverrides(cr.card),date:String(_bmw.dd||''),rows:cr.rows,disc:cr.disc,point:cr.point});}
     pcSettle();bmwClose();renderOrder();if(typeof renderBundle==='function')renderBundle();autoSave();amCardRefresh();
     showToast(cr?`${cr.card.name} 카드 혜택을 적용했어요`:'카드 혜택을 해제했어요','success');return;
   }
   if(!bundleCoupons[code])bundleCoupons[code]={totalForeign:0,couponForeign:0,currency:'₩',couponCurrency:'₩'};
   if(cr){bmwWriteFees();Object.assign(cr,bmwCardCalc());}
-  pcApplyToBundle(code,cr?{iss:cr.iss.id,card:cr.card.id,month:cr.month,base:cr.base,off:_bmw.pcOff,skip:(_bmw.pcSkip||[]).slice(),feeInc:(_bmw.feeInc||[]).slice(),feeAmt:cr.feeAmt||0,feeModes:bmwModeOverrides(cr.card),date:String(_bmw.dd||''),rows:cr.rows,disc:cr.disc,point:cr.point}:null);
+  pcApplyToBundle(code,cr?{iss:cr.iss.id,card:cr.card.id,month:cr.month,base:cr.base,off:_bmw.pcOff,skip:(_bmw.pcSkip||[]).slice(),feeInc:(_bmw.feeInc||[]).slice(),feeAmt:cr.feeAmt||0,feeBrand:cr.feeBrand||0,feeModes:bmwModeOverrides(cr.card),date:String(_bmw.dd||''),rows:cr.rows,disc:cr.disc,point:cr.point}:null);
   pcSettle();bmwClose();renderOrder();renderBundle();autoSave();amCardRefresh();showToast(cr?`${cr.card.name} 카드를 설정했어요`:'카드 설정을 해제했어요','success');
 }
 // 1페이지 → 2페이지: 계산한 구매금액은 결제칸 한화로, 수수료는 수수료 칸으로
 function bmwFxFill(){_amFxCtx={mode:'bundle'};const r=fxCalc(amFxState());_bmw.totalKrw=r.A;_bmw.fxOpen=false;_amFxCtx=null;bmwRender();showToast(`한화 총액을 ￦ ${r.A.toLocaleString('ko-KR')}로 채웠어요`,'success');}
+// 한화 계산 단계에서 결제 카드를 먼저 고르면 → 계산기의 브랜드·해외결제 수수료·끝처리를 그 카드 설정으로 자동 선택 (카드 단계에도 그대로 이어짐)
+function bmwFxCardHtml(){
+  if(!payCards.some(i=>(i.cards||[]).length))return '';
+  const opts=payCards.flatMap(i=>(i.cards||[]).map(c=>`<option value="${i.id}|${c.id}" ${_bmw.pcCard===c.id?'selected':''}>${pcEsc(i.name)} · ${pcEsc(c.name)}${c.last4?' ('+pcEsc(c.last4)+')':''}</option>`)).join('');
+  const card=_bmw.pcCard?pcCard(pcIssuer(_bmw.pcIss),_bmw.pcCard):null;const c=card?pcFeeCfgOf(card):null;
+  return `<div class="bmw-fxcard"><span>결제 카드</span><select onchange="const v=this.value.split('|');bmwFxPickCard(v[0]||null,v[1]||null)"><option value="" ${!_bmw.pcCard?'selected':''}>고르지 않음 (직접 선택)</option>${opts}</select>
+    ${c?`<small>${c.brand?pcEsc((PC_BRANDS.find(x=>x[0]===c.brand)||[,''])[1]):'<em>브랜드 미설정</em>'} · 해외결제 ${c.cardFee!=null?cfPctTxt(c.cardFee)+'%':'<em>미입력</em>'} · ${feeRoundLabel(c.round)}${feeDivOf(c.mul)!==1?' · 기준 ÷'+feeDivOf(c.mul):''} 자동 선택</small>`:'<small>카드를 고르면 수수료 설정이 자동으로 맞춰져요</small>'}</div>`;
+}
+function bmwFxApplyCard(){
+  const card=_bmw&&_bmw.pcCard?pcCard(pcIssuer(_bmw.pcIss),_bmw.pcCard):null;if(!card)return;
+  const ctx=_amFxCtx;_amFxCtx=_bmw.solo?{mode:'field',f:_bmw.solo.f}:{mode:'bundle'};
+  try{const st=amFxState();if(!st)return;const c=pcFeeCfgOf(card);
+    if(c.brand)st.brand=c.brand;if(c.cardFee!=null)st.cardFee=c.cardFee;st.rnd=c.round;st.feeMul=c.mul;st.feeIss=c.free?'':(c.iss?c.iss.id:st.feeIss);}
+  finally{_amFxCtx=ctx;}
+  _bmw.fxCardFor=_bmw.pcCard;
+}
+function bmwFxPickCard(iss,card){if(card!==_bmw.pcCard){_bmw.feeModes={};_bmw.pcOff=[];}_bmw.pcIss=iss||null;_bmw.pcCard=card||null;bmwFxApplyCard();bmwRender();}
 function bmwSoloLp(){const f=_bmw.solo.f;return document.getElementById('cf-'+(PC_FIELD_ID[f]||f)+'-lp');}
 function bmwSoloInHtml(){
   const lp=bmwSoloLp(),lpc=lp?lp.parentElement.querySelector('select'):null;const sym=lpc&&lpc.value?curSym(lpc.value):'';
@@ -6082,7 +6122,7 @@ function bmwSoloCalcNext(){
   _amFxCtx={mode:'field',f};const r=fxCalc(amFxState());
   if(!(r.A>0)){showToast('외화 금액이나 한화를 입력해주세요','warn');return;}
   const fid=PC_FIELD_ID[f]||f;const el=amAmtEl(f);if(el){el.value=r.A;el.dispatchEvent(new Event('input',{bubbles:true}));}
-  if(r.fee>0){let it=_amFees.find(x=>x.field===f);if(!it&&_amFees.length<MAX_FEES){it={id:feeNewId(),field:f};_amFees.push(it);}if(it){it.amount=r.fee;const di=document.getElementById('cf-'+fid+'-date');if(di&&di.value.trim())it.date=autoDate(di.value.trim())||di.value.trim();}renderAmFees();}
+  if(r.fee>0){let it=_amFees.find(x=>x.field===f);if(!it&&_amFees.length<MAX_FEES){it={id:feeNewId(),field:f};_amFees.push(it);}if(it){it.amount=r.fee;it.brand=r.B;const di=document.getElementById('cf-'+fid+'-date');if(di&&di.value.trim())it.date=autoDate(di.value.trim())||di.value.trim();}renderAmFees();}
   _bmw.totalKrw=r.A;_bmw.soloPage=2;bmwRender();
   showToast(`구매금액 ￦ ${r.A.toLocaleString('ko-KR')}${r.fee?` · 수수료 ￦ ${r.fee.toLocaleString('ko-KR')}`:''} 를 넣었어요`,'success');
 }
@@ -6091,8 +6131,9 @@ function bmwRender(){
   if(_bmw.solo&&_bmw.soloPage===1){
     document.getElementById('bmw-title').innerHTML=`카드 혜택 <span style="font-size:17px;color:var(--text2);">${pcEsc(pcSoloLabel(_bmw.solo))}</span>`;
     document.getElementById('bmw-step').textContent='1 / 2 예상 원화';
+    if(_bmw.pcCard&&_bmw.fxCardFor!==_bmw.pcCard)bmwFxApplyCard();
     _amFxCtx={mode:'field',f:_bmw.solo.f};
-    document.getElementById('bmw-body').innerHTML=`<div style="font-size:16px;color:var(--text2);margin-bottom:12px;"><b style="color:var(--text);">한화 금액</b>을 정해요. 실제 결제한 한화를 알면 바로 입력하고, 모르면 아래 계산기에 표기외화를 넣어 예상 원화를 계산해요.</div>${bmwSoloInHtml()}<div class="bmw-fx">${fxPanelInner()}</div>`;
+    document.getElementById('bmw-body').innerHTML=`<div style="font-size:16px;color:var(--text2);margin-bottom:12px;"><b style="color:var(--text);">한화 금액</b>을 정해요. 실제 결제한 한화를 알면 바로 입력하고, 모르면 아래 계산기에 표기외화를 넣어 예상 원화를 계산해요.</div>${bmwFxCardHtml()}${bmwSoloInHtml()}<div class="bmw-fx">${fxPanelInner()}</div>`;
     document.getElementById('bmw-prev').style.display='none';
     document.getElementById('bmw-next').textContent='다음';return;
   }
@@ -6150,9 +6191,10 @@ function bmwRender(){
         <span style="font-size:19px;font-weight:700;flex-shrink:0;">한화 총액 ￦</span>
         <input type="number" inputmode="numeric" id="bmw-krw-inp" value="${_bmw.totalKrw||''}" oninput="_bmw.totalKrw=Number(this.value)||0" placeholder="0" class="mono" style="flex:1;text-align:right;padding:13px 16px;background:var(--surface);border:1px solid var(--accent);border-radius:10px;color:var(--text);font-size:24px;font-family:'Space Mono',monospace;">
       </div>
+      ${bmwFxCardHtml()}
       <details class="bmw-fxd" ${_bmw.fxOpen?'open':''} ontoggle="if(this.open===!!_bmw.fxOpen)return;_bmw.fxOpen=this.open;_amFxCtx=this.open?{mode:'bundle'}:null;bmwRender();">
         <summary>예상 원화 계산</summary>
-        ${_bmw.fxOpen?(()=>{_amFxCtx={mode:'bundle'};const r=fxCalc(amFxState());return `<div class="bmw-fx">${fxPanelInner()}</div><button type="button" class="btn primary" style="width:100%;margin-top:8px;" onclick="bmwFxFill()" ${r.A>0?'':'disabled'}>한화 총액을 구매금액 ￦ ${r.A.toLocaleString('ko-KR')}로 채우기</button>`;})():''}
+        ${_bmw.fxOpen?(()=>{if(_bmw.pcCard&&_bmw.fxCardFor!==_bmw.pcCard)bmwFxApplyCard();_amFxCtx={mode:'bundle'};const r=fxCalc(amFxState());return `<div class="bmw-fx">${fxPanelInner()}</div><button type="button" class="btn primary" style="width:100%;margin-top:8px;" onclick="bmwFxFill()" ${r.A>0?'':'disabled'}>한화 총액을 구매금액 ￦ ${r.A.toLocaleString('ko-KR')}로 채우기</button>`;})():''}
       </details>`;
   } else if(_bmw.step===4){
     h=bmwCardStepHtml();
@@ -6220,7 +6262,7 @@ function bmwApply(){
     // 결제 카드 혜택 (저장 + 상품별 배분) — 분배한 수수료를 먼저 각 결제의 수수료 칸에 기록
     if(bmwCardCalc())bmwWriteFees();
     const cr=bmwCardCalc();
-    pcApplyToBundle(code,cr?{iss:cr.iss.id,card:cr.card.id,month:cr.month,base:cr.base,off:_bmw.pcOff,skip:(_bmw.pcSkip||[]).slice(),feeInc:(_bmw.feeInc||[]).slice(),feeAmt:cr.feeAmt||0,feeModes:bmwModeOverrides(cr.card),date:String(_bmw.dd||''),rows:cr.rows,disc:cr.disc,point:cr.point}:null);
+    pcApplyToBundle(code,cr?{iss:cr.iss.id,card:cr.card.id,month:cr.month,base:cr.base,off:_bmw.pcOff,skip:(_bmw.pcSkip||[]).slice(),feeInc:(_bmw.feeInc||[]).slice(),feeAmt:cr.feeAmt||0,feeBrand:cr.feeBrand||0,feeModes:bmwModeOverrides(cr.card),date:String(_bmw.dd||''),rows:cr.rows,disc:cr.disc,point:cr.point}:null);
   }
   _bmChecked=new Set();_bmDate='';_bmCode='';
   bmwSyncModal(keys);
@@ -8961,8 +9003,8 @@ function pcCostChanged(o,after){
     const iss=pcIssuer(bc.card.iss),card=pcCard(iss,bc.card.card);if(!card)return;
     const nb=pcCodeBase(code,false),ob=Number(bc.card.base)||0,nf=pcCodeFee(code,false),sig=nb+'/'+nf;
     if((nb===ob&&nf===(Number(bc.card.feeAmt)||0))||sig===bc.card.ignoreBase)return;
-    const r=pcCalc(card,nb,bc.card.month,bc.card.off,code,String(bc.card.date||''),nf,bc.card.feeModes);
-    cards.push({code,bc,card,nb,ob,nf,fromD:Number(bc.card.disc)||0,fromP:Number(bc.card.point)||0,toD:r.disc,toP:r.point});
+    const nfb=pcCodeFeeBrand(code,false,card);const r=pcCalc(card,nb,bc.card.month,bc.card.off,code,String(bc.card.date||''),nf,bc.card.feeModes,nfb);
+    cards.push({code,bc,card,nb,ob,nf,nfb,fromD:Number(bc.card.disc)||0,fromP:Number(bc.card.point)||0,toD:r.disc,toP:r.point});
   });
   [['쿠폰',couponsOf(o)],['포인트',pointsOf(o)]].forEach(([lab,arr])=>(arr||[]).forEach((c,i)=>{
     if(!c||!c.field||!(Number(c.base)>0))return;const k=isKRW(c.currency||'₩');
@@ -8979,7 +9021,7 @@ function pcCostChanged(o,after){
     if(x.fromP||x.toP)rows+=row('적립',x.fromP.toLocaleString('ko-KR')+' P',x.toP.toLocaleString('ko-KR')+' P');});
   openNoticeModal('결제 금액이 바뀌었어요',`<b>${pcEsc(o.charName||'')}</b>의 결제 금액이 바뀌었어요.<br>연동된 ${[cps.length?'쿠폰·포인트':'',cards.length?'카드 할인·적립':''].filter(Boolean).join('과 ')}을 새 금액에 맞춰 바꿀까요?<div style="text-align:left;margin-top:10px;font-size:13px;">${rows}</div>`,
     [{label:'취소',onClick:()=>{cps.forEach(x=>{x.c.base=x.now;});cards.forEach(x=>{x.bc.card.ignoreBase=x.nb+'/'+x.nf;});autoSave();fin();}},
-     {label:'확인',primary:true,onClick:()=>{cps.forEach(x=>{x.c.amount=x.to;x.c.base=x.now;});cards.forEach(x=>{x.bc.card.base=x.nb;x.bc.card.feeAmt=x.nf;delete x.bc.card.ignoreBase;pcTouch(x.bc);});
+     {label:'확인',primary:true,onClick:()=>{cps.forEach(x=>{x.c.amount=x.to;x.c.base=x.now;});cards.forEach(x=>{x.bc.card.base=x.nb;x.bc.card.feeAmt=x.nf;x.bc.card.feeBrand=x.nfb;delete x.bc.card.ignoreBase;pcTouch(x.bc);});
        pcSettle();renderOrder();if(typeof renderBundle==='function')renderBundle();if(typeof renderPayCards==='function'&&document.getElementById('panel-paycard')?.classList.contains('active'))renderPayCards();autoSave();
        showToast('새 금액에 맞춰 바꿨어요','success');fin();}}]);
 }
@@ -11016,6 +11058,23 @@ window.addEventListener('load',()=>{
 document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveData();}
   // ESC 는 아래 '가장 최근에 연 것부터 닫기'(escCloseTop)에서 처리
+});
+
+// ── 탭 이동 단축키: 1~9 = 1~9번째 탭, 0 = 10번째(카드), ` = 설정(⚙) ──
+//   글자 입력 중이거나 창·팝업이 열려 있을 때, Ctrl/Alt/Cmd 와 같이 누를 때는 동작 안 함
+function tabKeyButtons(){return [...document.querySelectorAll('.tabs .tab:not(.tab-gear)')];}
+function tabKeyInit(){tabKeyButtons().forEach((b,i)=>{if(i<10&&!/단축키/.test(b.title||''))b.title=(b.title?b.title+' · ':'')+'단축키 '+(i===9?0:i+1);});
+  const g=document.querySelector('.tabs .tab-gear');if(g&&!/단축키/.test(g.title||''))g.title=(g.title||'관리')+' · 단축키 `';}
+document.addEventListener('DOMContentLoaded',tabKeyInit);setTimeout(tabKeyInit,0);
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey||e.isComposing||e.repeat)return;
+  const t=e.target;if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))return;
+  if(document.querySelector('.modal-overlay.show'))return;
+  let btn=null;
+  if(e.code==='Backquote')btn=document.querySelector('.tabs .tab-gear');
+  else{const m=/^(?:Digit|Numpad)(\d)$/.exec(e.code||'');if(!m)return;const n=Number(m[1]);btn=tabKeyButtons()[n===0?9:n-1];}
+  if(!btn||btn.offsetParent===null&&getComputedStyle(btn).display==='none')return;
+  e.preventDefault();btn.click();
 });
 
 // ── ESC: 가장 최근에 연 창·팝업 하나만 닫기 ──
