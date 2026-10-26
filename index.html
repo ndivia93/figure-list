@@ -1839,12 +1839,12 @@ const FEE_ROUNDS=[['cent','센트 반올림','KB국민 방식 — 외화 수수�
 const PC_ISSUER_PRESETS=[
   {key:'kb',name:'KB국민카드',color:'#f2b705',rate:0.0025,round:'cent',ok:true,re:/국민|^kb(?!ank)|kb카드/i},
   {key:'shinhan',name:'신한카드',color:'#0046ff',rate:0.0018,round:'trunc4',ok:true,re:/신한|shinhan/i},
-  {key:'samsung',name:'삼성카드',color:'#1428a0',rate:0.002,round:'none',mul:0.992,ok:true,re:/삼성|samsung/i},
+  {key:'samsung',name:'삼성카드',color:'#1428a0',rate:0.002,round:'none',mul:1.008,ok:true,re:/삼성|samsung/i},
   {key:'hyundai',name:'현대카드',color:'#222222',re:/현대|hyundai/i},
   {key:'lotte',name:'롯데카드',color:'#e60012',re:/롯데|lotte/i},
   {key:'hana',name:'하나카드',color:'#00927f',re:/하나|hana|트래블로그/i},
   {key:'woori',name:'우리카드',color:'#0067ac',re:/우리|woori/i},
-  {key:'nh',name:'NH농협카드',color:'#00a651',re:/농협|^nh/i},
+  {key:'nh',name:'NH농협카드',color:'#00a651',rate:0.0025,round:'none',mul:1.006,ok:true,re:/농협|^nh/i},
   {key:'bc',name:'BC카드',color:'#f04e45',re:/^bc|비씨|bc카드/i},
   {key:'ibk',name:'IBK기업은행',color:'#0072bc',re:/기업|ibk/i},
   {key:'citi',name:'씨티카드',color:'#003b70',re:/씨티|citi/i},
@@ -1869,16 +1869,18 @@ function pcIssFee(iss){const p=pcIssPreset(iss);
   let rate=iss&&iss.feeRate!=null?Number(iss.feeRate):(p&&p.rate!=null?p.rate:null);
   if(rate==null&&iss){const old=(iss.cards||[]).map(c=>c.feeCfg&&Number(c.feeCfg.cardFee)).find(v=>v>0);if(old)rate=old;}
   const round=(iss&&iss.round)||(p&&p.round)||((iss&&iss.cards||[]).map(c=>c.feeCfg&&c.feeCfg.round).find(Boolean))||'trunc4';
-  const mul=iss&&Number(iss.feeMul)>0?Number(iss.feeMul):(p&&p.mul?p.mul:1);
+  const mul=iss&&Number(iss.feeMul)>0?feeDivOf(iss.feeMul):(p&&p.mul?p.mul:1);
   return {rate,round,mul,ok:!!(p&&p.ok&&iss.feeRate==null&&!iss.round),userSet:!!(iss&&(iss.feeRate!=null||iss.round)),preset:p};}
 function pcIssOf(card){return (payCards||[]).find(i=>(i.cards||[]).some(x=>x===card||(card&&x.id===card.id)))||null;}
 function feeRoundLabel(m){return (FEE_ROUNDS.find(x=>x[0]===m)||FEE_ROUNDS[1])[1];}
-// mul: 수수료 기준 금액 배율 (삼성카드 = 결제 외화 × 0.992)
+// mul: 수수료 기준 금액 나눗수 — 브랜드 수수료가 표시 USD에 이미 포함된 카드 (삼성 유니온 ÷1.008 · 농협 유니온 ÷1.006)
+//   (예전 저장값 0.992 같은 1 미만 배율은 1/값 으로 바꿔 읽음)
+function feeDivOf(m){let d=Number(m)>0?Number(m):1;if(d<1)d=1/d;return d;}
 function feeByRule(pay,rate,A,pct,mode,mul){
-  pct=Number(pct)||0;if(!pct)return 0;mul=Number(mul)>0?Number(mul):1;
-  if(mode!=='krw'&&pay>0&&rate>0){const raw=pay*mul*pct;if(mode==='none')return Math.floor(raw*rate+1e-7);
+  pct=Number(pct)||0;if(!pct)return 0;const d=feeDivOf(mul);
+  if(mode!=='krw'&&pay>0&&rate>0){const raw=pay/d*pct;if(mode==='none')return Math.floor(raw*rate+1e-7);
     const r=mode==='cent'?Math.round(raw*100+1e-9)/100:Math.floor(raw*10000+1e-6)/10000;return Math.floor(r*rate+1e-7);}
-  return Math.floor(A*mul*pct);
+  return Math.floor(A/d*pct);
 }
 const CARD_FEES=[0,0.0018,0.0020,0.0025,0.0030];
 const CARD_FEE_LABELS=['0%','0.18%','0.20%','0.25%','0.30%'];
@@ -3285,7 +3287,7 @@ function fxPanelInner(){
     </div>
     ${lbl('카드 브랜드 수수료')}
     <div class="fx-btn-group">${FX_BRAND_BTNS.map(([k,l])=>`<button class="fx-btn ${r.bk===k?'active':''}" onclick="amFxSet('brand','${k}')">${l}</button>`).join('')}</div>
-    ${lbl('해외결제 수수료 <span style="font-weight:400;color:var(--text3);">· 끝처리 '+feeRoundLabel(r.rnd)+(r.mul&&r.mul!==1?' · 기준 ×'+r.mul:'')+'</span>')}
+    ${lbl('해외결제 수수료 <span style="font-weight:400;color:var(--text3);">· 끝처리 '+feeRoundLabel(r.rnd)+(r.mul&&feeDivOf(r.mul)!==1?' · 기준 ÷'+feeDivOf(r.mul):'')+'</span>')}
     <div class="fx-btn-group">${issFeeBtns(st.feeIss!=null?st.feeIss:fxSettings.feeIss,r.cardFee,r.rnd,'amFxPickIss')}</div>
     ${lbl('체크카드 결제수수료')}
     <div style="display:flex;gap:4px;align-items:center;"><input class="fx-rate-input mono" type="number" step="0.01" value="${r.ckA||''}" placeholder="0" style="${inpS}" onchange="amFxSet('checkAmt',this.value)">
@@ -3784,7 +3786,7 @@ function bmwFormulaFee(card,A,solo){
   if(c.checkAmt)D=c.checkCur==='pay'?Math.floor(c.checkAmt*(rate||fxRateOf(payCur))):Math.floor(c.checkAmt);
   return {has,B,C,D,fee:B+C+D,pay,rate,payCur,round:c.round,mul:c.mul};
 }
-function bmwFeeBasisTxt(ff){return ff.pay>0&&ff.rate>0&&ff.round!=='krw'?` <span style="color:var(--text3);">· ${curSym(ff.payCur)} ${(+ff.pay.toFixed(2)).toLocaleString('ko-KR',{maximumFractionDigits:2})} × ${+ff.rate.toFixed(2)} · ${feeRoundLabel(ff.round)}${ff.mul&&ff.mul!==1?' · 기준 ×'+ff.mul:''}</span>`:(ff.round==='krw'?' <span style="color:var(--text3);">· 원화로 계산</span>':'');}
+function bmwFeeBasisTxt(ff){return ff.pay>0&&ff.rate>0&&ff.round!=='krw'?` <span style="color:var(--text3);">· ${curSym(ff.payCur)} ${(+ff.pay.toFixed(2)).toLocaleString('ko-KR',{maximumFractionDigits:2})} × ${+ff.rate.toFixed(2)} · ${feeRoundLabel(ff.round)}${ff.mul&&feeDivOf(ff.mul)!==1?' · 기준 ÷'+feeDivOf(ff.mul):''}</span>`:(ff.round==='krw'?' <span style="color:var(--text3);">· 원화로 계산</span>':'');}
 function bmwExistingFee(k){const {o,f}=bmwItem(k);const it=pcOrderFees(o,true).find(x=>x.field===f&&!x.auto);return it?Number(it.amount)||0:0;}
 function bmwSplit(total,keys){const w=keys.map(k=>bmwKeyKrw(k)),ws=w.reduce((a,b)=>a+b,0),out={};
   keys.forEach((k,i)=>out[k]=ws>0?Math.floor(total*w[i]/ws):(i===0?total:0));
@@ -4169,7 +4171,7 @@ function renderPayCards(){
   const _rb=pcOrphanBannerHtml();
   if(!iss){main.innerHTML=_rb+`<div class="pc-empty">왼쪽 <b>＋ 추가</b>로 카드사를 만들고,<br>카드사 안에 카드를 추가해 카드별 할인·적립 한도를 정리해보세요.</div>`;return;}
   const card=pcCard(iss,_pcSel.card);
-  let h=_rb+`<div class="pc-head"><span style="width:14px;height:14px;border-radius:50%;background:${iss.color||'#6c757d'};"></span><h3>${pcEsc(iss.name)}</h3><span class="sub">카드 ${(iss.cards||[]).length}장</span>${(()=>{const f=pcIssFee(iss);return `<span class="pc-issfee ${f.rate==null?'need':''}" onclick="pcEditIssuer('${iss.id}')" title="카드사 수정에서 바꿔요">해외결제 ${f.rate!=null?cfPctTxt(f.rate)+'%':'수수료율 미입력'}${f.mul!==1?' (기준 ×'+f.mul+')':''} · ${feeRoundLabel(f.round)}${f.ok?' <em>확인됨</em>':''}</span>`;})()}
+  let h=_rb+`<div class="pc-head"><span style="width:14px;height:14px;border-radius:50%;background:${iss.color||'#6c757d'};"></span><h3>${pcEsc(iss.name)}</h3><span class="sub">카드 ${(iss.cards||[]).length}장</span>${(()=>{const f=pcIssFee(iss);return `<span class="pc-issfee ${f.rate==null?'need':''}" onclick="pcEditIssuer('${iss.id}')" title="카드사 수정에서 바꿔요">해외결제 ${f.rate!=null?cfPctTxt(f.rate)+'%':'수수료율 미입력'}${feeDivOf(f.mul)!==1?' (기준 ÷'+feeDivOf(f.mul)+')':''} · ${feeRoundLabel(f.round)}${f.ok?' <em>확인됨</em>':''}</span>`;})()}
     <div class="act"><button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="pcEditIssuer('${iss.id}')">카드사 수정</button></div></div>`;
   h+=`<div class="pc-cards">${(iss.cards||[]).map(c=>{const k=pcCaps(c);return `<div class="pc-plastic ${c.id===_pcSel.card?'on':''}" style="background:${pcGrad(c.color||iss.color||'#2b2d42')};" onclick="_pcSel.card='${c.id}';pcSaveSel();renderPayCards()">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;"><span class="iss">${pcEsc(iss.name)}</span><span class="kind">${c.kind==='check'?'체크':'신용'}</span></div>
@@ -4279,7 +4281,7 @@ function fxIssPick(id){if(!id)return {rate:0,round:null,mul:1};if(id.startsWith(
 // 해외결제 수수료 버튼: 0%(트래블·우대) + 등록한 카드사별 수수료율 (끝처리도 그 카드사 방식으로)
 function issFeeBtns(curIss,curFee,curRnd,fnName){
   const ch=fxIssChoices();const zero=Number(curFee)===0;
-  return `<button type="button" class="fx-btn ${zero?'active':''}" onclick="${fnName}('')">0%</button>`+ch.map(x=>`<button type="button" class="fx-btn ${!zero&&(curIss===x.id||(!curIss&&Math.abs(x.rate-curFee)<1e-9&&x.round===curRnd))?'active':''}" title="${pcEsc(x.name)} · ${feeRoundLabel(x.round)}${x.mul&&x.mul!==1?' · 기준 금액 ×'+x.mul:''}" onclick="${fnName}('${x.id}')">${pcEsc(x.name.replace(/카드$|은행$/,''))} ${cfPctTxt(x.rate)}%</button>`).join('');
+  return `<button type="button" class="fx-btn ${zero?'active':''}" onclick="${fnName}('')">0%</button>`+ch.map(x=>`<button type="button" class="fx-btn ${!zero&&(curIss===x.id||(!curIss&&Math.abs(x.rate-curFee)<1e-9&&x.round===curRnd))?'active':''}" title="${pcEsc(x.name)} · ${feeRoundLabel(x.round)}${x.mul&&feeDivOf(x.mul)!==1?' · 기준 금액 ÷'+feeDivOf(x.mul):''}" onclick="${fnName}('${x.id}')">${pcEsc(x.name.replace(/카드$|은행$/,''))} ${cfPctTxt(x.rate)}%</button>`).join('');
 }
 function amFxPickIss(id){const v=fxIssPick(id);if(!v)return;const st=amFxState();if(!st)return;st.feeIss=id;st.cardFee=v.rate;st.feeMul=v.mul;if(v.round)st.rnd=v.round;fxSettings.feeIss=id;fxSettings.cardFee=v.rate;fxSettings.feeMul=v.mul;if(v.round)fxSettings.feeRound=v.round;saveFxSettings();updateLocalPreview();}
 function pmFxPickIss(id,oid){const v=fxIssPick(id);if(!v)return;fxSettings.feeIss=id;fxSettings.cardFee=v.rate;fxSettings.feeMul=v.mul;if(v.round)fxSettings.feeRound=v.round;saveFxSettings();renderPriceModal(orders.find(i=>i.id===oid));}
@@ -4296,7 +4298,7 @@ function pcFeeCfgOf(card){const c=(card&&card.feeCfg)||{};const iss=pcIssOf(card
   const free=c.feeFree!=null?!!c.feeFree:(c.cardFee===0);
   return {brand:c.brand||null,free,cardFee:free?0:f.rate,issRate:f.rate,mul:f.mul,checkAmt:Number(c.checkAmt)||0,checkCur:c.checkCur||'krw',round:f.round,ok:f.ok,iss};}
 function pcFeeCfgText(card){const c=pcFeeCfgOf(card);if(!c.brand&&c.cardFee==null)return '미설정';
-  const bl=(PC_BRANDS.find(x=>x[0]===c.brand)||[,'브랜드 미설정'])[1];return bl+' · 해외결제 '+(c.cardFee!=null?cfPctTxt(c.cardFee)+'%'+(c.free?' (면제)':(c.mul!==1?' (기준 ×'+c.mul+')':'')):'미설정')+(c.checkAmt?' · 체크카드 '+(c.checkCur==='pay'?c.checkAmt+'(외화)':'￦'+c.checkAmt.toLocaleString('ko-KR')):'')+' · '+feeRoundLabel(c.round);}
+  const bl=(PC_BRANDS.find(x=>x[0]===c.brand)||[,'브랜드 미설정'])[1];return bl+' · 해외결제 '+(c.cardFee!=null?cfPctTxt(c.cardFee)+'%'+(c.free?' (면제)':(feeDivOf(c.mul)!==1?' (기준 ÷'+feeDivOf(c.mul)+')':'')):'미설정')+(c.checkAmt?' · 체크카드 '+(c.checkCur==='pay'?c.checkAmt+'(외화)':'￦'+c.checkAmt.toLocaleString('ko-KR')):'')+' · '+feeRoundLabel(c.round);}
 function pcSetFee(k,v){const {card}=pcCur();if(!card)return;card.feeCfg=Object.assign({},card.feeCfg||{},{[k]:v});if(k==='feeFree'){delete card.feeCfg.cardFee;delete card.feeCfg.round;pcTouchCard(card.id);}autoSave();renderPayCards();}
 function pcFeeCfgHtml(card){const c=pcFeeCfgOf(card);
   return `<div class="pc-feecfg"><div class="h"><b>해외결제 수수료 공식</b><span>${(!c.brand||c.cardFee==null)?'<em style="color:var(--yellow);">미설정</em>':pcEsc(pcFeeCfgText(card))}</span></div>
@@ -4305,7 +4307,7 @@ function pcFeeCfgHtml(card){const c=pcFeeCfgOf(card);
       <button type="button" class="fx-btn ${c.free?'active':''}" onclick="pcSetFee('feeFree',true)" title="트래블카드·해외결제 우대 카드">0% <span style="font-weight:400;opacity:.8;">면제</span></button>
       ${c.issRate!=null?`<button type="button" class="fx-btn ${!c.free?'active':''}" onclick="pcSetFee('feeFree',false)">${pcEsc(c.iss?c.iss.name:'카드사')} ${cfPctTxt(c.issRate)}%</button>`
         :`<button type="button" class="fx-btn" style="border-style:dashed;" onclick="pcEditIssuer('${c.iss?c.iss.id:''}')">${pcEsc(c.iss?c.iss.name:'카드사')} 수수료율 입력</button>`}
-      <span style="font-size:11px;color:var(--text3);margin-left:4px;">끝처리 ${feeRoundLabel(c.round)}${c.mul!==1?' · 기준 금액 ×'+c.mul:''}${c.ok?' · 청구서로 확인된 값':''} — 카드사 수정에서 바꿔요</span></div></div>
+      <span style="font-size:11px;color:var(--text3);margin-left:4px;">끝처리 ${feeRoundLabel(c.round)}${feeDivOf(c.mul)!==1?' · 기준 금액 ÷'+feeDivOf(c.mul):''}${c.ok?' · 청구서로 확인된 값':''} — 카드사 수정에서 바꿔요</span></div></div>
     <div class="row"><label>체크카드 결제수수료</label><div style="display:flex;gap:6px;align-items:center;"><input class="form-input mono" style="width:110px;padding:5px 8px;text-align:right;" type="number" step="0.01" value="${c.checkAmt||''}" placeholder="0" onchange="pcSetFee('checkAmt',Number(this.value)||0)">
       <select class="form-select" style="width:110px;padding:5px;" onchange="pcSetFee('checkCur',this.value)"><option value="krw" ${c.checkCur!=='pay'?'selected':''}>￦ 원</option><option value="pay" ${c.checkCur==='pay'?'selected':''}>결제 외화</option></select></div></div>
   </div>`;}
@@ -4355,8 +4357,8 @@ function pcEditIssuer(id){
     <input id="pc-in-name" class="form-input" maxlength="20" value="${pcEsc(iss.name)}" style="width:100%;box-sizing:border-box;">
     <div style="font-size:12px;color:var(--text2);margin:12px 0 4px;">해외결제(해외서비스) 수수료율 <span style="color:var(--text3);">— 이 카드사의 모든 카드에 적용 (면제 카드는 카드에서 0%)</span></div>
     <div style="display:flex;align-items:center;gap:6px;"><input id="pc-in-rate" class="form-input mono" type="number" step="0.0001" min="0" value="${f.rate!=null?cfPctTxt(f.rate):''}" placeholder="예: 0.25" style="width:120px;text-align:right;"><span>%</span>${f.preset&&f.preset.rate!=null?`<span style="font-size:11px;color:var(--text3);">기본 ${cfPctTxt(f.preset.rate)}%</span>`:''}</div>
-    <div style="font-size:12px;color:var(--text2);margin:12px 0 4px;">수수료 기준 금액 배율 <span style="color:var(--text3);">— 보통 1, 삼성카드는 결제 외화 × 0.992</span></div>
-    <div style="display:flex;align-items:center;gap:6px;"><span>결제 외화 ×</span><input id="pc-in-mul" class="form-input mono" type="number" step="0.001" min="0" value="${f.mul}" style="width:100px;text-align:right;"></div>
+    <div style="font-size:12px;color:var(--text2);margin:12px 0 4px;">수수료 기준 금액 <span style="color:var(--text3);">— 브랜드 수수료가 표시 USD에 이미 들어 있으면 ÷ (1 + 브랜드율). 보통 1 · 삼성 유니온 1.008 · 농협 유니온 1.006</span></div>
+    <div style="display:flex;align-items:center;gap:6px;"><span>결제 외화 ÷</span><input id="pc-in-mul" class="form-input mono" type="number" step="0.001" min="1" value="${feeDivOf(f.mul)}" style="width:100px;text-align:right;"></div>
     <div style="font-size:12px;color:var(--text2);margin:12px 0 4px;">수수료 끝처리</div>
     <div class="fx-btn-group" id="pc-in-rnd">${FEE_ROUNDS.map(([k,l,t])=>`<button type="button" class="fx-btn ${f.round===k?'active':''}" data-k="${k}" title="${t}" onclick="window._pcRnd='${k}';this.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===this))">${l}</button>`).join('')}</div>
     <div style="font-size:11px;color:var(--text3);margin-top:4px;line-height:1.5;">${FEE_ROUNDS.map(x=>'<b>'+x[1]+'</b>: '+x[2]).join('<br>')}${f.preset&&f.preset.ok?'<br><span style="color:var(--green);">'+pcEsc(f.preset.name)+' 기본값은 실제 청구서로 1원 단위까지 확인된 값이에요.</span>':''}</div>
@@ -4373,7 +4375,7 @@ function pcEditIssuer(id){
        iss.name=name;iss.color=c;
        if(rate==null||(p&&p.rate!=null&&Math.abs(p.rate-rate)<1e-9))delete iss.feeRate;else iss.feeRate=rate;
        const rnd=window._pcRnd||'trunc4';if((p&&p.round===rnd)||(!(p&&p.round)&&rnd==='trunc4'))delete iss.round;else iss.round=rnd;
-       const mv=Number(document.getElementById('pc-in-mul').value)||1;if(Math.abs(mv-((p&&p.mul)||1))<1e-9)delete iss.feeMul;else iss.feeMul=mv;
+       const mv=feeDivOf(document.getElementById('pc-in-mul').value);if(Math.abs(mv-((p&&p.mul)||1))<1e-9)delete iss.feeMul;else iss.feeMul=mv;
        (iss.cards||[]).forEach(cd=>pcTouchCard(cd.id));
        autoSave();renderPayCards();}}]);
 }
@@ -4417,7 +4419,8 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.10.22',['카드 탭: 카드별 해외결제 수수료 공식 · 혜택마다 수수료 포함/제외 기록','카드·묶음 마법사: 할인·적립 전에 카드 수수료 확인 (수수료 칸 맞추기)','묶음 마법사: 카드를 고르면 카드 공식으로 수수료를 계산해 결제금액 비율로 자동 분배 (직접 수정 가능, 적용 시 각 결제의 수수료 칸에 기록)','마법사에서 혜택별 수수료 포함/제외 최종 확인 — 카드 탭 값이 기본, 바꾸면 그 결제에만 적용','수수료 제외/포함 버튼 선택 표시 수정','카드 버튼 마법사: 1페이지에 한화 직접 입력 칸 · 정한 한화/외화/수수료를 상품에 바로 저장 (수정을 안 눌러도 남음)','묶음 결제 카드 버튼: 한화가 빈 결제가 있으면 묶음 마법사를 처음부터 열기','해외결제 카드사 수수료 직접 입력 (예: 0.1985%) — 카드 탭 · 원화 환산 · 예상가','수정 창에서 연 묶음 마법사: 나눠 넣은 한화가 수정 창 칸에 안 들어가 수정을 누르면 0으로 덮이던 문제 수정','해외결제 수수료를 실제 청구 방식으로: 결제 외화(달러)에 수수료율을 곱해 외화로 먼저 끊고(KB 센트 반올림 · 신한 0.0001 버림) × 환율 → 원 미만 절사','카드 탭: 카드사 추가는 미리 등록된 카드사·은행에서 고르기 — 해외결제 수수료율·끝처리를 카드사 단위로 하위 카드 전체에 적용 (KB국민 0.25% 센트 반올림 · 신한 0.18% 0.0001 버림 확인됨)','카드별 해외결제 수수료는 0%(트래블·우대) 또는 카드사 수수료율 중 선택 · 원화 환산·예상가도 0% + 등록한 카드사 수수료율','유니온 0% 브랜드 추가','삼성카드 프리셋: 0.2% · 기준 금액 결제 외화 × 0.992 · 끊지 않음 (청구서로 확인)','따로 정하지 않은 카드사의 끝처리 기본값 = 신한 방식(0.0001 버림)','구매목록 묶음 코드 창에 묶음 정보 수정(마법사) 버튼','중고거래 배송비 칸에서 원화 환산·한화 입력·카드 버튼이 안 되던 문제 수정','기타비용에서 옮긴 수수료도 잠금','ESC 로 가장 최근에 연 창·팝업부터 하나씩 닫기','수정 창 카드 버튼: 저장 없이 바로 진행 (한화 없는 묶음은 묶음 마법사 3단계에서 예상 원화 계산)','카드 혜택 금액 구간별 비율 (직접 입력 · 막대 끌기)','결제일 없이 현지가만 적힌 결제칸은 보류에서 제외 (기록용)','환산에서 자동 입력된 수수료는 고칠 수 없게 (다시 환산하거나 지우기)','수수료 칸 호버 강조 — 연결된 결제칸·이 수수료를 포함한 카드 칸','원화 환산 창 위쪽부터 정렬','구매목록 쿠폰 창에 묶음 정보 수정(마법사) 버튼']],
+  ['26.10.26',['NH농협카드 프리셋: 0.25% · 기준 금액 결제 외화 ÷ 1.006 (유니온 브랜드 0.6% 포함분 제외) · 끊지 않음 (청구서로 확인)','삼성카드 기준 금액을 ÷ 1.008 로 (브랜드 수수료 포함 구조)','카드사 수정: 수수료 기준 금액을 결제 외화 ÷ (1 + 브랜드율) 로 입력']],
+  ['26.10.22',['카드 탭: 카드별 해외결제 수수료 공식 · 혜택마다 수수료 포함/제외 기록','카드·묶음 마법사: 할인·적립 전에 카드 수수료 확인 (수수료 칸 맞추기)','묶음 마법사: 카드를 고르면 카드 공식으로 수수료를 계산해 결제금액 비율로 자동 분배 (직접 수정 가능, 적용 시 각 결제의 수수료 칸에 기록)','마법사에서 혜택별 수수료 포함/제외 최종 확인 — 카드 탭 값이 기본, 바꾸면 그 결제에만 적용','수수료 제외/포함 버튼 선택 표시 수정','카드 버튼 마법사: 1페이지에 한화 직접 입력 칸 · 정한 한화/외화/수수료를 상품에 바로 저장 (수정을 안 눌러도 남음)','묶음 결제 카드 버튼: 한화가 빈 결제가 있으면 묶음 마법사를 처음부터 열기','해외결제 카드사 수수료 직접 입력 (예: 0.1985%) — 카드 탭 · 원화 환산 · 예상가','수정 창에서 연 묶음 마법사: 나눠 넣은 한화가 수정 창 칸에 안 들어가 수정을 누르면 0으로 덮이던 문제 수정','해외결제 수수료를 실제 청구 방식으로: 결제 외화(달러)에 수수료율을 곱해 외화로 먼저 끊고(KB 센트 반올림 · 신한 0.0001 버림) × 환율 → 원 미만 절사','카드 탭: 카드사 추가는 미리 등록된 카드사·은행에서 고르기 — 해외결제 수수료율·끝처리를 카드사 단위로 하위 카드 전체에 적용 (KB국민 0.25% 센트 반올림 · 신한 0.18% 0.0001 버림 확인됨)','카드별 해외결제 수수료는 0%(트래블·우대) 또는 카드사 수수료율 중 선택 · 원화 환산·예상가도 0% + 등록한 카드사 수수료율','유니온 0% 브랜드 추가','삼성카드 프리셋: 0.2% · 기준 금액 결제 외화 ÷ 1.008 (유니온 브랜드 0.8% 포함분 제외) · 끊지 않음 (청구서로 확인)','따로 정하지 않은 카드사의 끝처리 기본값 = 신한 방식(0.0001 버림)','구매목록 묶음 코드 창에 묶음 정보 수정(마법사) 버튼','중고거래 배송비 칸에서 원화 환산·한화 입력·카드 버튼이 안 되던 문제 수정','기타비용에서 옮긴 수수료도 잠금','ESC 로 가장 최근에 연 창·팝업부터 하나씩 닫기','수정 창 카드 버튼: 저장 없이 바로 진행 (한화 없는 묶음은 묶음 마법사 3단계에서 예상 원화 계산)','카드 혜택 금액 구간별 비율 (직접 입력 · 막대 끌기)','결제일 없이 현지가만 적힌 결제칸은 보류에서 제외 (기록용)','환산에서 자동 입력된 수수료는 고칠 수 없게 (다시 환산하거나 지우기)','수수료 칸 호버 강조 — 연결된 결제칸·이 수수료를 포함한 카드 칸','원화 환산 창 위쪽부터 정렬','구매목록 쿠폰 창에 묶음 정보 수정(마법사) 버튼']],
   ['26.10.21',['수정 창 카드 버튼: 한화가 없어도 진행 — 마법사 1페이지에서 예상 원화 계산 후 2페이지 카드 선택','카드 혜택에 수수료 포함 여부 체크리스트','수수료 칸을 쿠폰·포인트 아래로 분리 (총비용 포함 · 카드 할인·적립 제외)','환산 창: 한화 입력(구매금액) / 수수료 입력 버튼, 결제칸별 계산기 설정 저장, 설명 글씨 정리','한화 입력칸 클릭 → 원화 환산 창 (표기외화·적용외화 선택, 결제칸에 바로 입력)','환산 공식 변경: 구매금액(절삭) + 브랜드 수수료 + 해외결제 수수료 (+ 체크카드 결제수수료)','적용 환율 선택 제거 · 체크카드 결제수수료 직접 입력','현지전액가 환산: 매매기준율·전신환매도율을 직접 입력하면 하나은행 고시 대신 사용 (항목별 저장)']],
   ['26.10.20',['결제금액 보류 알림 — 결제일·외화만 있고 한화가 빈 결제를 ! 알림 옆에 따로 표시','할인 탭 묶음에 묶음 정보 수정(마법사) 버튼']],
   ['26.10.19',['수정 창에서 금액 입력 후 바로 수정을 눌러도 카드 혜택 확인창이 뜨게 수정','구매목록에서 결제 금액을 고쳐도 연동된 카드 혜택·쿠폰·포인트 조정 확인창','수정 창 저장 시 놓친 금액 변경도 확인','카드 혜택 한도를 결제 순서대로 — 추가·수정·삭제 시 같은 달 혜택 자동 재계산','결제 금액이 바뀌면 연동된 카드 할인·적립도 다시 계산 (확인/취소, 저장 시 월 한도 반영)','수정 창 묶음그룹 칸 클릭 → 그 결제일의 묶음 고르기 · 새 묶음 · 직접 입력','묶음 카드 혜택: 결제별 체크리스트로 일부 빼기','기타비용을 수수료로 표시 — 카드 할인·적립 계산에서 제외','결제와 연동된 쿠폰·포인트: 결제 금액이 바뀌면 같은 비율로 조정 (확인/취소)']],
