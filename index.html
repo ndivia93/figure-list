@@ -920,6 +920,9 @@ td:hover>.pd-wrap.has-rel .pd-b{display:block;}
 .pc-feem button.fb{background:#b7791f;color:#fff;}
 .pc-feem button.fi{background:var(--accent,#7c5cff);color:#fff;}
 .pc-feem.need{outline:2px solid var(--yellow);outline-offset:1px;border-radius:20px;}
+.pc-tsum{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:12px;color:var(--text2);}
+.pc-tsum b{color:var(--text);}
+.pc-tsum em{flex-basis:100%;font-style:normal;color:var(--text3);font-size:11px;}
 .pc-feewarn{font-size:12px;color:var(--yellow);background:var(--ydim);border:1px solid var(--yborder);border-radius:var(--rs);padding:7px 10px;margin:4px 0 8px;}
 .pc-feecfg{border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;margin:10px 0;background:var(--surface2);}
 .pc-feecfg .h{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px;}
@@ -944,6 +947,14 @@ td:hover>.pd-wrap.has-rel .pd-b{display:block;}
 .bmw-fxcard select{font-family:inherit;font-size:14px;font-weight:700;padding:4px 8px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);max-width:100%;}
 .bmw-fxcard small{flex-basis:100%;font-size:12px;color:var(--text2);}
 .bmw-fxcard small em{font-style:normal;color:var(--yellow);}
+.bmw-final{margin-top:10px;border:1px solid var(--aborder);background:var(--adim);border-radius:10px;padding:8px 14px;font-size:14px;}
+.bmw-final>div{display:flex;justify-content:space-between;align-items:baseline;padding:2px 0;color:var(--text2);}
+.bmw-final b{color:var(--text);font-size:15px;}
+.bmw-final .sub{border-top:1px dashed var(--border2);margin-top:2px;padding-top:4px;}
+.bmw-final .tot{border-top:1px solid var(--aborder);margin-top:4px;padding-top:6px;}
+.bmw-final .tot span{font-weight:700;color:var(--text);font-size:15px;}
+.bmw-final .tot b{color:var(--accent);font-size:20px;}
+.bmw-final .pt b{color:var(--cyan);}
 .bmw-soloin{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);}
 .bmw-soloin label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:15px;color:var(--text2);}
 .bmw-soloin label em{font-style:normal;font-size:12px;color:var(--text3);}
@@ -4016,6 +4027,23 @@ function bmwCardSelectHtml(){
   const opts=payCards.flatMap(i=>(i.cards||[]).map(c=>`<option value="${i.id}|${c.id}" ${_bmw.pcCard===c.id?'selected':''}>${pcEsc(i.name)} · ${pcEsc(c.name)}${c.last4?' ('+pcEsc(c.last4)+')':''}</option>`)).join('');
   return `<select id="bmw-card-sel" onchange="const v=this.value.split('|');bmwPickBoth(v[0]||null,v[1]||null)" style="font-family:inherit;font-size:16px;font-weight:700;padding:4px 8px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);max-width:60%;"><option value="" ${!_bmw.pcCard?'selected':''}>카드 안 씀</option>${opts}</select>`;
 }
+// 이 결제의 최종 결제금액 = 결제금액 + 수수료(전부) − 카드 할인 — 혜택·포함/제외를 바꿀 때마다 다시 계산
+function bmwAllFeeSum(){if(!_bmw)return 0;
+  if(_bmw.solo)return bmwFeeList().filter(x=>x.f.field===_bmw.solo.f).reduce((a,x)=>a+(Number(x.f.amount)||0),0);
+  bmwFeeInit();const inc=new Set(_bmw.feeInc||[]);
+  if(_bmw.feePlan)return bmwPlanSum()+bmwFeeList().filter(x=>!bmwFeeOnKey(x)&&inc.has(x.f.id)).reduce((a,x)=>a+(Number(x.f.amount)||0),0);
+  return bmwFeeList().filter(x=>inc.has(x.f.id)).reduce((a,x)=>a+(Number(x.f.amount)||0),0);}
+function bmwFinalHtml(r){
+  const pay=_bmw.solo?(Number(_bmw.totalKrw)||bmwBase()):(Number(_bmw.totalKrw)>0?Number(_bmw.totalKrw):bmwPayTotal());
+  const fee=bmwAllFeeSum(),gross=pay+fee,fin=gross-(Number(r.disc)||0);const w=n=>'￦ '+Number(n).toLocaleString('ko-KR');
+  return `<div class="bmw-final">
+    <div><span>결제금액</span><b class="mono">${w(pay)}</b></div>
+    <div><span>+ 수수료</span><b class="mono">${w(fee)}</b></div>
+    <div class="sub"><span>= 한화 결제금액</span><b class="mono">${w(gross)}</b></div>
+    <div><span>− 카드 할인</span><b class="mono" style="color:var(--yellow);">${w(r.disc||0)}</b></div>
+    <div class="tot"><span>최종 결제금액</span><b class="mono">${w(fin)}</b></div>
+    ${r.point?`<div class="pt"><span>카드 적립 (따로 쌓임)</span><b class="mono">${Number(r.point).toLocaleString('ko-KR')} P</b></div>`:''}
+  </div>`;}
 function bmwCardStepHtml(){
   const base=bmwBase();
   let h=`<div style="font-size:18px;color:var(--text2);margin-bottom:14px;line-height:1.6;">결제한 <b style="color:var(--text);">카드</b>를 고르면 카드 혜택(할인·적립)을 월 한도에 맞춰 자동으로 계산합니다. <span style="color:var(--text3);">(카드 안 씀이면 그냥 다음)</span></div>`;
@@ -4030,7 +4058,7 @@ function bmwCardStepHtml(){
   h+=bmwModesHtml(r.card);
   h+=`<div style="font-size:14px;color:var(--text3);margin-bottom:6px;">결제금액 · 혜택 확인 <span style="color:var(--text3);">(${r.month} 기준 월 한도)</span></div>
     <div style="display:flex;justify-content:space-between;align-items:baseline;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 16px;margin-bottom:8px;">
-      <span style="font-size:16px;color:var(--text2);">결제금액 ${Number(_bmw.totalKrw)>0?'(한화 총액)':'(각 결제칸 합계)'}${_bmw.keys.some(bmwSkipped)?' <span style="font-size:13px;color:var(--text3);">· 빠진 결제 제외</span>':''}${(_bmw.feeInc||[]).length&&bmwFeeSum()?' <span style="font-size:13px;color:var(--text3);">· 수수료 포함</span>':''}</span><b class="mono" style="font-size:20px;">￦ ${base.toLocaleString('ko-KR')}</b></div>`;
+      <span style="font-size:16px;color:var(--text2);">결제금액 ${Number(_bmw.totalKrw)>0?'(한화 총액)':'(각 결제칸 합계)'}${_bmw.keys.some(bmwSkipped)?' <span style="font-size:13px;color:var(--text3);">· 빠진 결제 제외</span>':''} <span style="font-size:13px;color:var(--text3);">· 수수료 별도</span></span><b class="mono" style="font-size:20px;">￦ ${base.toLocaleString('ko-KR')}</b></div>`;
   h+=`<div style="margin-bottom:8px;">${pcMonthToggleHtml(r.card,r.month,'bmwRender')}</div>`;
   if(!r.active)h+=`<div style="font-size:13px;color:var(--yellow);margin-bottom:8px;">${pcMonthLabel(r.month)} 혜택이 꺼져 있어 할인·적립이 0으로 계산됩니다. 위 스위치로 켤 수 있어요.</div>`;
   if(r.card.prevReq)h+=`<div style="font-size:13px;color:var(--text3);margin-bottom:8px;">전월 실적 조건 ￦ ${Number(r.card.prevReq).toLocaleString('ko-KR')} — 충족 여부는 직접 확인해주세요</div>`;
@@ -4046,6 +4074,7 @@ function bmwCardStepHtml(){
   h+=`<div style="display:flex;gap:10px;margin-top:10px;">
     <div style="flex:1;padding:11px 14px;border-radius:10px;background:var(--ydim);border:1px solid var(--yborder);display:flex;justify-content:space-between;align-items:baseline;"><span style="font-size:15px;color:var(--yellow);font-weight:700;">할인 합계</span><b class="mono" style="font-size:19px;color:var(--yellow);">▼ ￦ ${r.disc.toLocaleString('ko-KR')}</b></div>
     <div style="flex:1;padding:11px 14px;border-radius:10px;background:var(--cdim);border:1px solid var(--cborder);display:flex;justify-content:space-between;align-items:baseline;"><span style="font-size:15px;color:var(--cyan);font-weight:700;">적립 합계</span><b class="mono" style="font-size:19px;color:var(--cyan);">${r.point.toLocaleString('ko-KR')} P</b></div></div>
+    ${bmwFinalHtml(r)}
     <div style="font-size:12px;color:var(--text3);margin-top:8px;line-height:1.6;">할인은 각 상품 총비용에서 빠지고(▼ 표시), 적립은 포인트로 기록됩니다. 상품별로는 결제금액 비율대로 나눠 들어가요.</div>`;
   return h;
 }
@@ -4268,16 +4297,22 @@ function pcTierBarHtml(b){
   const hds=b.tiers.slice(0,-1).map((t,i)=>{const v=Number(t.max)||0;return `<div class="hd" style="left:${v/sc*100}%;" onmousedown="pcTierDrag(event,'${b.id}',${i})" ontouchstart="pcTierDrag(event,'${b.id}',${i})" title="끌어서 구간 경계 조정"><em>${(v/10000).toLocaleString('ko-KR')}만</em></div>`;}).join('');
   return `<div class="pc-tbar" id="pc-tbar-${b.id}">${segs}${hds}</div><div class="pc-tscale"><span>0</span><span>${(sc/10000).toLocaleString('ko-KR')}만+</span></div>`;
 }
+// 구간 = [이상, 미만) — 경계 금액은 항상 위 구간에 들어감 (예: 0~100,000 / 100,000~300,000 이면 100,000원은 두 번째 구간)
+function pcTierSummary(b){const w=n=>Number(n).toLocaleString('ko-KR')+'원';
+  return b.tiers.map(t=>{const lo=Number(t.min)||0,hi=Number(t.max)||0;const r=(Number(t.rate)||0)+'%';
+    return `<span>${lo&&hi?w(lo)+' 이상 '+w(hi)+' 미만':lo?w(lo)+' 이상':hi?w(hi)+' 미만':'전체'} <b>${r}</b></span>`;}).join('')
+    +`<em>경계 금액은 높은 쪽 구간에 들어가요 (예: ${w(Number((b.tiers[1]||{}).min)||100000)}은 ${b.tiers[1]?'두 번째':'다음'} 구간)</em>`;}
 function pcTierEditorHtml(b){
   return `<div class="pc-tier">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><b style="font-size:13px;">금액 구간별 비율</b><span style="font-size:12px;color:var(--text2);">이 결제금액이 든 구간의 비율이 결제금액 전체에 적용돼요</span>
       <button type="button" class="pc-mini-btn" style="margin-left:auto;" onclick="pcTierClear('${b.id}')">구간 끄기</button><button type="button" class="pc-mini-btn" onclick="pcTierToggle('${b.id}')">닫기</button></div>
     ${pcTierBarHtml(b)}
     <div class="pc-trows">${b.tiers.map((t,i)=>`<div class="r">
-      <input class="num" inputmode="numeric" value="${Number(t.min)||0}" onchange="pcTierSet('${b.id}',${i},'min',this.value)"><span>원 ~</span>
-      <input class="num" inputmode="numeric" value="${Number(t.max)||''}" placeholder="이상" onchange="pcTierSet('${b.id}',${i},'max',this.value)"><span>원</span>
+      <input class="num" inputmode="numeric" value="${Number(t.min)||0}" onchange="pcTierSet('${b.id}',${i},'min',this.value)"><span>원 <b>이상</b> ~</span>
+      <input class="num" inputmode="numeric" value="${Number(t.max)||''}" placeholder="끝 없음" onchange="pcTierSet('${b.id}',${i},'max',this.value)"><span>${Number(t.max)>0?'원 <b>미만</b>':'원'}</span>
       <input class="num" inputmode="decimal" value="${Number(t.rate)||''}" placeholder="0" style="width:70px !important;" onchange="pcTierSet('${b.id}',${i},'rate',this.value)"><span>%</span>
       ${b.tiers.length>1?`<button type="button" class="del-btn" onclick="pcTierDel('${b.id}',${i})">✕</button>`:''}</div>`).join('')}</div>
+    <div class="pc-tsum">${pcTierSummary(b)}</div>
     <button type="button" class="pc-addb" style="margin-top:6px;" onclick="pcTierAdd('${b.id}')">＋ 구간 추가</button>
   </div>`;
 }
@@ -4450,7 +4485,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.11.02',['롯데카드 프리셋: 해외이용수수료 0.2% 끊지 않음 · 브랜드 수수료는 센트 반올림 후 × 환율 (청구서로 확인)','카드사 수정: 브랜드 수수료 끝처리를 따로 정할 수 있게']],
+  ['26.11.02',['카드·묶음 마법사: 결제금액 + 수수료 − 카드 할인 = 최종 결제금액 표시 (혜택을 바꾸면 바로 다시 계산)','카드 혜택 금액 구간: \'이상 ~ 미만\'으로 표시 · 경계 금액은 높은 쪽 구간에 포함 · 구간 요약 줄','롯데카드 프리셋: 해외이용수수료 0.2% 끊지 않음 · 브랜드 수수료는 센트 반올림 후 × 환율 (청구서로 확인)','카드사 수정: 브랜드 수수료 끝처리를 따로 정할 수 있게']],
   ['26.10.28',['NH농협카드 결제대금: 원래USD(표시 USD ÷ 1.006) × 환율 + 브랜드 수수료 0.6% 를 따로 절사해 합산 (청구서와 1원까지 일치)','카드사 수정: 결제대금 따로 절사(농협 방식) 선택']],
   ['26.10.27',['배송완료 표시: 썸네일 오른쪽 아래 초록 점 (구매목록·카드보기 · 방출하면 사라짐)','카드·묶음 마법사: 한화 계산 단계에서 결제 카드를 먼저 고르면 브랜드·해외결제 수수료·끝처리를 그 카드 설정으로 자동 선택 (카드 단계로 그대로 이어짐)','혜택 수수료 기준에 \'브랜드만\' 추가 — 원금 + 브랜드 수수료 (카드사 해외서비스수수료 제외, 예: KB NEED Global 청구할인)','수수료 칸에 브랜드 수수료 몫을 함께 기록 (원화 환산·마법사에서 넣은 수수료)','탭 이동 단축키: 1 구매목록 · 2 카드보기 · 3 위시 · 4 방출 · 5 할인 · 6 구매처 · 7 통계 · 8 랭킹 · 9 잔금 · 0 카드 · ` 설정 (입력 중·창이 열려 있을 땐 안 됨)']],
   ['26.10.26',['NH농협카드 프리셋: 0.25% · 기준 금액 결제 외화 ÷ 1.006 (유니온 브랜드 0.6% 포함분 제외) · 끊지 않음 (청구서로 확인)','삼성카드 기준 금액을 ÷ 1.008 로 (브랜드 수수료 포함 구조)','카드사 수정: 수수료 기준 금액을 결제 외화 ÷ (1 + 브랜드율) 로 입력']],
