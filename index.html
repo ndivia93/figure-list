@@ -1854,7 +1854,7 @@ function saveFxSettings(){try{localStorage.setItem('fxSettings',JSON.stringify({
 const CARD_BRAND_FEES={visa:0.011, master:0.010, union0:0, union1:0.006, union2:0.008, travel:0};
 const FX_BRAND_BTNS=[['visa','비자 1.1%'],['master','마스터 1.0%'],['union0','유니온 0%'],['union1','유니온 0.6%'],['union2','유니온 0.8%'],['travel','트래블 0%']];
 // 수수료 끝처리 — 실제 청구서 역산 규칙: 결제 외화(달러)에 수수료율을 곱해 외화로 먼저 끊고 × 환율 → 원 미만 절사 (브랜드·해외결제 따로)
-const FEE_ROUNDS=[['cent','센트 반올림','KB국민 방식 — 외화 수수료를 소수 둘째 자리(센트)로 반올림'],['trunc4','0.0001 버림','신한 방식 — 외화 수수료를 소수 넷째 자리 아래 버림'],['none','끊지 않음','삼성 방식 — 외화 수수료를 끊지 않고 바로 × 환율'],['krw','원화로 계산','원화 결제금액 × 수수료율 (예전 방식, 몇 원씩 어긋날 수 있음)']];
+const FEE_ROUNDS=[['cent','센트 반올림','KB국민 방식 — 외화 수수료를 소수 둘째 자리(센트)로 반올림'],['trunc4','0.0001 버림','신한 방식 — 외화 수수료를 소수 넷째 자리 아래 버림'],['trunc2','센트 버림','롯데 브랜드 방식 — 외화 수수료를 소수 둘째 자리(센트) 아래 버림'],['none','끊지 않음','삼성 방식 — 외화 수수료를 끊지 않고 바로 × 환율'],['krw','원화로 계산','원화 결제금액 × 수수료율 (예전 방식, 몇 원씩 어긋날 수 있음)']];
 // 카드사 프리셋 — 해외결제(해외서비스) 수수료율·끝처리는 카드사 단위로 하위 카드 전체에 적용
 //   ok:true = 실제 청구서로 1원 단위까지 확인 · 나머지는 율 미입력(청구서 보고 한 번 입력) · 끝처리 기본 = 신한 방식(0.0001 버림, 가장 소비자 친화)
 const PC_ISSUER_PRESETS=[
@@ -1862,7 +1862,7 @@ const PC_ISSUER_PRESETS=[
   {key:'shinhan',name:'신한카드',color:'#0046ff',rate:0.0018,round:'trunc4',ok:true,re:/신한|shinhan/i},
   {key:'samsung',name:'삼성카드',color:'#1428a0',rate:0.002,round:'none',mul:1.008,ok:true,re:/삼성|samsung/i},
   {key:'hyundai',name:'현대카드',color:'#222222',re:/현대|hyundai/i},
-  {key:'lotte',name:'롯데카드',color:'#e60012',rate:0.002,round:'none',brandRound:'cent',ok:true,re:/롯데|lotte/i},
+  {key:'lotte',name:'롯데카드',color:'#e60012',rate:0.002,round:'none',brandRound:'trunc2',ok:true,re:/롯데|lotte/i},
   {key:'hana',name:'하나카드',color:'#00927f',re:/하나|hana|트래블로그/i},
   {key:'woori',name:'우리카드',color:'#0067ac',re:/우리|woori/i},
   {key:'nh',name:'NH농협카드',color:'#00a651',rate:0.0025,round:'none',mul:1.006,splitA:true,ok:true,re:/농협|^nh/i},
@@ -1905,7 +1905,7 @@ function feeDivOf(m){let d=Number(m)>0?Number(m):1;if(d<1)d=1/d;return d;}
 function feeByRule(pay,rate,A,pct,mode,mul){
   pct=Number(pct)||0;if(!pct)return 0;const d=feeDivOf(mul);
   if(mode!=='krw'&&pay>0&&rate>0){const raw=pay/d*pct;if(mode==='none')return Math.floor(raw*rate+1e-7);
-    const r=mode==='cent'?Math.round(raw*100+1e-9)/100:Math.floor(raw*10000+1e-6)/10000;return Math.floor(r*rate+1e-7);}
+    const r=mode==='cent'?Math.round(raw*100+1e-9)/100:mode==='trunc2'?Math.floor(raw*100+1e-6)/100:Math.floor(raw*10000+1e-6)/10000;return Math.floor(r*rate+1e-7);}
   return Math.floor(A/d*pct);
 }
 const CARD_FEES=[0,0.0018,0.0020,0.0025,0.0030];
@@ -4028,17 +4028,20 @@ function bmwCardSelectHtml(){
   return `<select id="bmw-card-sel" onchange="const v=this.value.split('|');bmwPickBoth(v[0]||null,v[1]||null)" style="font-family:inherit;font-size:16px;font-weight:700;padding:4px 8px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);max-width:60%;"><option value="" ${!_bmw.pcCard?'selected':''}>카드 안 씀</option>${opts}</select>`;
 }
 // 이 결제의 최종 결제금액 = 결제금액 + 수수료(전부) − 카드 할인 — 혜택·포함/제외를 바꿀 때마다 다시 계산
-function bmwAllFeeSum(){if(!_bmw)return 0;
-  if(_bmw.solo)return bmwFeeList().filter(x=>x.f.field===_bmw.solo.f).reduce((a,x)=>a+(Number(x.f.amount)||0),0);
+// 이 결제의 수수료 전부 → {all, brand} (브랜드 몫은 기록값, 없으면 카드 공식 비율)
+function bmwAllFees(card){if(!_bmw)return {all:0,brand:0};let all=0,brand=0;const add=(a,b)=>{all+=a;brand+=Math.min(a,b);};
+  if(_bmw.solo){bmwFeeList().filter(x=>x.f.field===_bmw.solo.f).forEach(x=>add(Number(x.f.amount)||0,feeBrandOf(card,x.f)));return {all,brand};}
   bmwFeeInit();const inc=new Set(_bmw.feeInc||[]);
-  if(_bmw.feePlan)return bmwPlanSum()+bmwFeeList().filter(x=>!bmwFeeOnKey(x)&&inc.has(x.f.id)).reduce((a,x)=>a+(Number(x.f.amount)||0),0);
-  return bmwFeeList().filter(x=>inc.has(x.f.id)).reduce((a,x)=>a+(Number(x.f.amount)||0),0);}
+  if(_bmw.feePlan){const pb=_bmw.feePlanBrand||{};bmwPayKeys().forEach(k=>{const v=Number(_bmw.feePlan[k])||0;add(v,pb[k]!=null?pb[k]:pcBrandShare(card,v));});
+    bmwFeeList().filter(x=>!bmwFeeOnKey(x)&&inc.has(x.f.id)).forEach(x=>add(Number(x.f.amount)||0,feeBrandOf(card,x.f)));return {all,brand};}
+  bmwFeeList().filter(x=>inc.has(x.f.id)).forEach(x=>add(Number(x.f.amount)||0,feeBrandOf(card,x.f)));return {all,brand};}
 function bmwFinalHtml(r){
   const pay=_bmw.solo?(Number(_bmw.totalKrw)||bmwBase()):(Number(_bmw.totalKrw)>0?Number(_bmw.totalKrw):bmwPayTotal());
-  const fee=bmwAllFeeSum(),gross=pay+fee,fin=gross-(Number(r.disc)||0);const w=n=>'￦ '+Number(n).toLocaleString('ko-KR');
+  const fs=bmwAllFees(r.card),fee=fs.all,gross=pay+fee,fin=gross-(Number(r.disc)||0);const w=n=>'￦ '+Number(n).toLocaleString('ko-KR');
   return `<div class="bmw-final">
     <div><span>결제금액</span><b class="mono">${w(pay)}</b></div>
-    <div><span>+ 수수료</span><b class="mono">${w(fee)}</b></div>
+    <div><span>+ 브랜드 수수료</span><b class="mono">${w(fs.brand)}</b></div>
+    <div><span>+ 해외결제 수수료</span><b class="mono">${w(fee-fs.brand)}</b></div>
     <div class="sub"><span>= 한화 결제금액</span><b class="mono">${w(gross)}</b></div>
     <div><span>− 카드 할인</span><b class="mono" style="color:var(--yellow);">${w(r.disc||0)}</b></div>
     <div class="tot"><span>최종 결제금액</span><b class="mono">${w(fin)}</b></div>
@@ -4424,7 +4427,7 @@ function pcEditIssuer(id){
     <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--text2);"><input type="checkbox" id="pc-in-split" ${f.splitA?'checked':''}> 결제대금 = 원래USD × 환율 + 브랜드 수수료 따로 절사 <span style="color:var(--text3);">(농협 방식)</span></label>
     <div style="font-size:12px;color:var(--text2);margin:12px 0 4px;">수수료 끝처리</div>
     <div class="fx-btn-group" id="pc-in-rnd">${FEE_ROUNDS.map(([k,l,t])=>`<button type="button" class="fx-btn ${f.round===k?'active':''}" data-k="${k}" title="${t}" onclick="window._pcRnd='${k}';this.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===this))">${l}</button>`).join('')}</div>
-    <div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:var(--text2);">브랜드 수수료 끝처리 <select id="pc-in-brnd" class="form-select" style="width:auto;padding:3px 6px;font-size:12px;"><option value="" ${!f.brandRound?'selected':''}>카드사 수수료와 같음</option>${FEE_ROUNDS.filter(x=>x[0]!=='krw').map(([k,l])=>`<option value="${k}" ${f.brandRound===k?'selected':''}>${l}</option>`).join('')}</select><span style="color:var(--text3);">롯데: 센트 반올림</span></div>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:var(--text2);">브랜드 수수료 끝처리 <select id="pc-in-brnd" class="form-select" style="width:auto;padding:3px 6px;font-size:12px;"><option value="" ${!f.brandRound?'selected':''}>카드사 수수료와 같음</option>${FEE_ROUNDS.filter(x=>x[0]!=='krw').map(([k,l])=>`<option value="${k}" ${f.brandRound===k?'selected':''}>${l}</option>`).join('')}</select><span style="color:var(--text3);">롯데: 센트 버림</span></div>
     <div style="font-size:11px;color:var(--text3);margin-top:4px;line-height:1.5;">${FEE_ROUNDS.map(x=>'<b>'+x[1]+'</b>: '+x[2]).join('<br>')}${f.preset&&f.preset.ok?'<br><span style="color:var(--green);">'+pcEsc(f.preset.name)+' 기본값은 실제 청구서로 1원 단위까지 확인된 값이에요.</span>':''}</div>
     <div style="font-size:12px;color:var(--text2);margin:12px 0 6px;">대표 색상</div>
     <div class="pc-colors" id="pc-in-colors">${[...new Set([col,...PC_COLORS])].map(c=>`<span data-c="${c}" style="background:${c};" class="${c===col?'on':''}" onclick="this.parentNode.querySelectorAll('span').forEach(s=>s.classList.remove('on'));this.classList.add('on');"></span>`).join('')}</div></div>`,
@@ -4485,7 +4488,8 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.11.02',['카드·묶음 마법사: 결제금액 + 수수료 − 카드 할인 = 최종 결제금액 표시 (혜택을 바꾸면 바로 다시 계산)','카드 혜택 금액 구간: \'이상 ~ 미만\'으로 표시 · 경계 금액은 높은 쪽 구간에 포함 · 구간 요약 줄','롯데카드 프리셋: 해외이용수수료 0.2% 끊지 않음 · 브랜드 수수료는 센트 반올림 후 × 환율 (청구서로 확인)','카드사 수정: 브랜드 수수료 끝처리를 따로 정할 수 있게']],
+  ['26.11.03',['롯데카드 브랜드 수수료: 센트 반올림 → 센트 버림 (청구서로 확인) · 끝처리에 \'센트 버림\' 추가','수정 창: 기타비용 칸의 통화·현지가 입력 크기를 다른 결제칸과 같게']],
+  ['26.11.02',['카드·묶음 마법사: 결제금액 + 브랜드 수수료 + 해외결제 수수료 − 카드 할인 = 최종 결제금액 표시 (혜택을 바꾸면 바로 다시 계산)','카드 혜택 금액 구간: \'이상 ~ 미만\'으로 표시 · 경계 금액은 높은 쪽 구간에 포함 · 구간 요약 줄','롯데카드 프리셋: 해외이용수수료 0.2% 끊지 않음 · 브랜드 수수료는 센트 반올림 후 × 환율 (청구서로 확인)','카드사 수정: 브랜드 수수료 끝처리를 따로 정할 수 있게']],
   ['26.10.28',['NH농협카드 결제대금: 원래USD(표시 USD ÷ 1.006) × 환율 + 브랜드 수수료 0.6% 를 따로 절사해 합산 (청구서와 1원까지 일치)','카드사 수정: 결제대금 따로 절사(농협 방식) 선택']],
   ['26.10.27',['배송완료 표시: 썸네일 오른쪽 아래 초록 점 (구매목록·카드보기 · 방출하면 사라짐)','카드·묶음 마법사: 한화 계산 단계에서 결제 카드를 먼저 고르면 브랜드·해외결제 수수료·끝처리를 그 카드 설정으로 자동 선택 (카드 단계로 그대로 이어짐)','혜택 수수료 기준에 \'브랜드만\' 추가 — 원금 + 브랜드 수수료 (카드사 해외서비스수수료 제외, 예: KB NEED Global 청구할인)','수수료 칸에 브랜드 수수료 몫을 함께 기록 (원화 환산·마법사에서 넣은 수수료)','탭 이동 단축키: 1 구매목록 · 2 카드보기 · 3 위시 · 4 방출 · 5 할인 · 6 구매처 · 7 통계 · 8 랭킹 · 9 잔금 · 0 카드 · ` 설정 (입력 중·창이 열려 있을 땐 안 됨)']],
   ['26.10.26',['NH농협카드 프리셋: 0.25% · 기준 금액 결제 외화 ÷ 1.006 (유니온 브랜드 0.6% 포함분 제외) · 끊지 않음 (청구서로 확인)','삼성카드 기준 금액을 ÷ 1.008 로 (브랜드 수수료 포함 구조)','카드사 수정: 수수료 기준 금액을 결제 외화 ÷ (1 + 브랜드율) 로 입력']],
@@ -5050,7 +5054,7 @@ function extraCardHtml(f,c,cd,ex){
     <div style="display:flex;gap:4px;align-items:center;">
       <span onclick="removeExtraField('${f}',${ex?.id})" title="이 기타비용 삭제" style="flex-shrink:0;cursor:pointer;color:var(--text3);font-size:12px;line-height:1;padding:3px 2px;user-select:none;">✕</span>
       <span style="flex:1;min-width:0;"></span>
-      <select style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);color:var(--yellow);font-size:10px;padding:2px 3px;outline:none;flex-shrink:0;width:52px;" onchange="(()=>{const o=orders.find(i=>i.id===${ex?.id});if(o){if(!o.localPrices)o.localPrices={};if(!o.localPrices['${f}'])o.localPrices['${f}']={currency:'¥(위안)',amount:0};o.localPrices['${f}'].currency=this.value;autoSave();}})()">${['¥(위안)','$(달러)','¥(엔)'].map(cur=>`<option ${((ex?.localPrices||{})[f]?.currency||'¥(위안)')===cur?'selected':''} value="${cur}">${curLabel(cur)}</option>`).join('')}</select><input type="number" id="cf-${f}-lp" value="${(ex?.localPrices||{})[f]?.amount||''}" placeholder="현지가" style="width:50px;text-align:right;background:var(--surface);border:1px solid var(--yborder);border-radius:var(--rs);color:var(--yellow);font-size:10px;font-family:'Space Mono',monospace;padding:2px 5px;outline:none;" title="현지가 입력">
+      <select style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);color:var(--yellow);font-size:10px;padding:2px 3px;outline:none;flex-shrink:0;width:76px;" onchange="(()=>{const o=orders.find(i=>i.id===${ex?.id});if(o){if(!o.localPrices)o.localPrices={};if(!o.localPrices['${f}'])o.localPrices['${f}']={currency:'¥(위안)',amount:0};o.localPrices['${f}'].currency=this.value;autoSave();}})()">${['¥(위안)','$(달러)','¥(엔)'].map(cur=>`<option ${((ex?.localPrices||{})[f]?.currency||'¥(위안)')===cur?'selected':''} value="${cur}">${curLabel(cur)}</option>`).join('')}</select><input type="number" id="cf-${f}-lp" value="${(ex?.localPrices||{})[f]?.amount||''}" placeholder="현지가" style="width:64px;background:var(--surface);border:1px solid var(--yborder);border-radius:var(--rs);color:var(--yellow);font-size:10px;font-family:'Space Mono',monospace;padding:2px 5px;text-align:right;outline:none;" title="현지가 입력">
       <input type="text" id="cf-${f}-grp" value="${(ex?.costGroups||{})[f]?.replace(/\d+/g,'')||''}" placeholder="A" style="width:32px;background:var(--surface);border:1px solid var(--pborder);border-radius:var(--rs);color:var(--pink);font-size:11px;font-family:'Space Mono',monospace;padding:3px 5px;outline:none;text-align:center;text-transform:uppercase;" maxlength="2" title="묶음그룹">
     </div>
   </div>`;
