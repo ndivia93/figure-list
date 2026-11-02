@@ -4488,7 +4488,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.11.03',['롯데카드 브랜드 수수료: 센트 반올림 → 센트 버림 (청구서로 확인) · 끝처리에 \'센트 버림\' 추가','수정 창: 기타비용 칸의 통화·현지가 입력 크기를 다른 결제칸과 같게']],
+  ['26.11.03',['통계 막대그래프와 결제달력의 합계가 다르던 문제 수정 — 같은 결제 항목(기타비용 3~6·중고 배송비·수수료 포함, 날짜 없는 칸은 상품 결제일)으로 계산','롯데카드 브랜드 수수료: 센트 반올림 → 센트 버림 (청구서로 확인) · 끝처리에 \'센트 버림\' 추가','수정 창: 기타비용 칸의 통화·현지가 입력 크기를 다른 결제칸과 같게']],
   ['26.11.02',['카드·묶음 마법사: 결제금액 + 브랜드 수수료 + 해외결제 수수료 − 카드 할인 = 최종 결제금액 표시 (혜택을 바꾸면 바로 다시 계산)','카드 혜택 금액 구간: \'이상 ~ 미만\'으로 표시 · 경계 금액은 높은 쪽 구간에 포함 · 구간 요약 줄','롯데카드 프리셋: 해외이용수수료 0.2% 끊지 않음 · 브랜드 수수료는 센트 반올림 후 × 환율 (청구서로 확인)','카드사 수정: 브랜드 수수료 끝처리를 따로 정할 수 있게']],
   ['26.10.28',['NH농협카드 결제대금: 원래USD(표시 USD ÷ 1.006) × 환율 + 브랜드 수수료 0.6% 를 따로 절사해 합산 (청구서와 1원까지 일치)','카드사 수정: 결제대금 따로 절사(농협 방식) 선택']],
   ['26.10.27',['배송완료 표시: 썸네일 오른쪽 아래 초록 점 (구매목록·카드보기 · 방출하면 사라짐)','카드·묶음 마법사: 한화 계산 단계에서 결제 카드를 먼저 고르면 브랜드·해외결제 수수료·끝처리를 그 카드 설정으로 자동 선택 (카드 단계로 그대로 이어짐)','혜택 수수료 기준에 \'브랜드만\' 추가 — 원금 + 브랜드 수수료 (카드사 해외서비스수수료 제외, 예: KB NEED Global 청구할인)','수수료 칸에 브랜드 수수료 몫을 함께 기록 (원화 환산·마법사에서 넣은 수수료)','탭 이동 단축키: 1 구매목록 · 2 카드보기 · 3 위시 · 4 방출 · 5 할인 · 6 구매처 · 7 통계 · 8 랭킹 · 9 잔금 · 0 카드 · ` 설정 (입력 중·창이 열려 있을 땐 안 됨)']],
@@ -9169,6 +9169,18 @@ function pruneCoupons(o){if(o&&Array.isArray(o.coupons))o.coupons=o.coupons.filt
 
 // ── 기간별 결제 금액 정확 계산 ──────────────────────────────────
 // 각 결제 항목을 해당 날짜의 월에 귀속
+// 결제 항목 목록 (통계 막대그래프·결제달력 공용 — 둘의 합계가 항상 같도록 한 곳에서 계산)
+//   구매유형별 결제칸(금액 > 0) + 수수료. 날짜: 그 칸의 결제일 → 없으면 상품 결제일
+const PAY_FIELD_LABEL={pre:'선행예약금',official:'정식예약금',balance:'잔금결제',fullPayment:'전액결제',used:'중고거래',shipping:'배송비'};
+function payEntriesOf(o){
+  const c=o.costs||{},cd=o.costDates||{};const ok=d=>d&&/^\d{2}-\d{2}-\d{2}/.test(d)?d:null;
+  const fb=ok(o.paymentDate)||ok(earliestPayDate(o));
+  const base=o.purchaseType==='중고거래'?['used']:o.purchaseType==='예약구매'?['pre','official','balance']:['fullPayment'];
+  const out=[];
+  [...base,'shipping',...EXTRA_FIELDS].forEach(f=>{const a=Number(c[f])||0;if(a>0)out.push({field:f,label:PAY_FIELD_LABEL[f]||(f.startsWith('extra')?extraLabel(f):f),amt:a,date:ok(cd[f])||fb});});
+  feesOf(o).forEach((x,i)=>{const a=Number(x.amount)||0;if(a>0)out.push({field:'fee',label:'수수료'+(i+1),amt:a,date:ok(x.date)||(x.field&&ok(cd[x.field]))||fb});});
+  return out;
+}
 function getPaymentsByPeriod(){
   // {YYYY-MM: {amount, items:[{name,maker,field,amt,date}]}}
   const map={};
@@ -9179,32 +9191,10 @@ function getPaymentsByPeriod(){
     map[yyyymm].items.push({name,maker,field,amt,date});
   };
 
-  orders.forEach(o=>{
-    const cd=o.costDates||{};
-    const costs=o.costs||{};
-    const fallback=()=>{
-      const d=o.paymentDate||earliestPayDate(o);
-      return d?'20'+d.slice(0,2)+'-'+d.slice(3,5):null;
-    };
-
-    const toYYYYMM=(d)=>d&&d.match(/\d{2}-\d{2}-\d{2}/)?'20'+d.slice(0,2)+'-'+d.slice(3,5):null;
-
-    if(o.purchaseType==='중고거래'){
-      add(toYYYYMM(cd.used)||fallback(), o.charName, o.maker, '중고거래', costs.used||0, cd.used||o.paymentDate);
-    } else if(o.purchaseType==='예약구매'){
-      if(costs.pre)    add(toYYYYMM(cd.pre)||fallback(),      o.charName,o.maker,'선행예약금',costs.pre,    cd.pre||o.paymentDate);
-      if(costs.official)add(toYYYYMM(cd.official)||fallback(),o.charName,o.maker,'정식예약금',costs.official,cd.official||o.paymentDate);
-      if(costs.balance) add(toYYYYMM(cd.balance)||fallback(), o.charName,o.maker,'잔금결제',  costs.balance, cd.balance||o.paymentDate);
-      if(costs.shipping)add(toYYYYMM(cd.shipping)||fallback(),o.charName,o.maker,'배송비',    costs.shipping,cd.shipping||o.paymentDate);
-      if(costs.extra)   add(toYYYYMM(cd.extra)||fallback(),   o.charName,o.maker,'기타',      costs.extra,   cd.extra||o.paymentDate);
-      if(costs.extra2)  add(toYYYYMM(cd.extra2)||fallback(),  o.charName,o.maker,'기타2',    costs.extra2,  cd.extra2||o.paymentDate);
-    } else {
-      if(costs.fullPayment)add(toYYYYMM(cd.fullPayment)||fallback(),o.charName,o.maker,'전액결제',costs.fullPayment,cd.fullPayment||o.paymentDate);
-      if(costs.shipping)   add(toYYYYMM(cd.shipping)||fallback(),   o.charName,o.maker,'배송비',   costs.shipping,   cd.shipping||o.paymentDate);
-      if(costs.extra)      add(toYYYYMM(cd.extra)||fallback(),      o.charName,o.maker,'기타',      costs.extra,      cd.extra||o.paymentDate);
-      if(costs.extra2)     add(toYYYYMM(cd.extra2)||fallback(),     o.charName,o.maker,'기타2',     costs.extra2,     cd.extra2||o.paymentDate);
-    }
-  });
+  orders.forEach(o=>payEntriesOf(o).forEach(e=>{
+    if(!e.date)return;
+    add('20'+e.date.slice(0,2)+'-'+e.date.slice(3,5),o.charName,o.maker,e.label,e.amt,e.date);
+  }));
   return map;
 }
 
@@ -10364,24 +10354,11 @@ function renderPayCalendar(){
 
   const fieldLabel={pre:'선행예약금',official:'정식예약금',balance:'잔금',fullPayment:'전액결제',used:'중고거래',shipping:'배송비',extra:'기타비용',extra2:'기타비용2',extra3:'기타비용3',extra4:'기타비용4',extra5:'기타비용5',extra6:'기타비용6'};
   orders.forEach(o=>{
-    const cd=o.costDates||{},cs=o.costs||{};
-    let hasCostDate=false;
-    Object.entries(cd).forEach(([field,dstr])=>{
-      const dy=inMonth(dstr);
-      if(dy===null)return;
-      hasCostDate=true;
-      const amt=Number(cs[field])||0;
-      if(!amt)return;
-      ensure(dy).amt+=amt;
-      addItem(dy,o,'pay',fieldLabel[field]||field,amt,field);
+    payEntriesOf(o).forEach(e=>{
+      const dy=inMonth(e.date);if(dy===null)return;
+      ensure(dy).amt+=e.amt;
+      addItem(dy,o,'pay',e.label,e.amt,e.field==='fee'?'etc':e.field);
     });
-    if(!hasCostDate){
-      const dy=inMonth(earliestPayDate(o));
-      if(dy!==null){
-        const tc=totalCost(o);
-        if(tc){ensure(dy).amt+=tc;addItem(dy,o,'pay','결제',tc,'etc');}
-      }
-    }
     const dd=inMonth(o.deliveredDate);
     if(dd!==null)addItem(dd,o,'deliver','배송도착',0,'deliver');
     const rd=inMonth(o.releasedDate);
