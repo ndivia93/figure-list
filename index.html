@@ -121,6 +121,9 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 /* save-bar 제거됨 — 저장상태는 헤더 내 표시 */
 .header-save{font-size:10px;color:var(--green);font-family:'Space Mono',monospace;margin-top:2px;}
 .header-save.unsaved{color:var(--yellow);}
+.gd-ttl{font-size:10px;font-family:'Space Mono',monospace;margin-top:2px;color:var(--accent);white-space:nowrap;text-align:right;}
+.gd-ttl.soon{color:var(--yellow);}
+.gd-ttl.off{color:var(--text3);}
 .toast{position:fixed;bottom:18px;right:18px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);padding:10px 15px;font-size:13px;font-weight:600;opacity:0;transform:translateY(8px);transition:all .2s;z-index:9999;pointer-events:none;}
 .toast.show{opacity:1;transform:translateY(0);}
 .toast.success{border-color:var(--green);color:var(--green);}
@@ -1099,6 +1102,7 @@ body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-o
     <div style="text-align:right;display:flex;flex-direction:column;justify-content:center;">
       <div class="hdr-credit" style="font-size:11px;color:var(--text2);opacity:0.6;font-family:'Space Mono',monospace;white-space:nowrap;">제작 : 아지타니히후미</div>
       <div class="header-save unsaved" id="save-info"><span id="save-status">저장되지 않음</span></div>
+      <div class="gd-ttl" id="gd-ttl" style="display:none;"></div>
     </div>
   </div>
 </div>
@@ -4488,6 +4492,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
+  ['26.11.04',['헤더: 구글 연결 중이면 토큰 남은 시간과 만료 시각 표시 (5분 이하면 노란색)']],
   ['26.11.03',['통계 막대그래프와 결제달력의 합계가 다르던 문제 수정 — 같은 결제 항목(기타비용 3~6·중고 배송비·수수료 포함, 날짜 없는 칸은 상품 결제일)으로 계산','롯데카드 브랜드 수수료: 센트 반올림 → 센트 버림 (청구서로 확인) · 끝처리에 \'센트 버림\' 추가','수정 창: 기타비용 칸의 통화·현지가 입력 크기를 다른 결제칸과 같게']],
   ['26.11.02',['카드·묶음 마법사: 결제금액 + 브랜드 수수료 + 해외결제 수수료 − 카드 할인 = 최종 결제금액 표시 (혜택을 바꾸면 바로 다시 계산)','카드 혜택 금액 구간: \'이상 ~ 미만\'으로 표시 · 경계 금액은 높은 쪽 구간에 포함 · 구간 요약 줄','롯데카드 프리셋: 해외이용수수료 0.2% 끊지 않음 · 브랜드 수수료는 센트 반올림 후 × 환율 (청구서로 확인)','카드사 수정: 브랜드 수수료 끝처리를 따로 정할 수 있게']],
   ['26.10.28',['NH농협카드 결제대금: 원래USD(표시 USD ÷ 1.006) × 환율 + 브랜드 수수료 0.6% 를 따로 절사해 합산 (청구서와 1원까지 일치)','카드사 수정: 결제대금 따로 절사(농협 방식) 선택']],
@@ -8245,6 +8250,19 @@ function gdMarkDisconnected(){
   gdToken=null;clearTimeout(gdRefreshTimer);gdClearToken();
   gdSetBtn();gdSetStatus('동기화 끊김 · 다시 연결 필요','var(--yellow)');
 }
+// 헤더: 구글 연결 토큰의 남은 시간 (만료 시각 포함) — 1초마다 갱신
+function gdTokenExp(){try{return Number(localStorage.getItem('gd_exp'))||0;}catch(e){return 0;}}
+function gdTtlTick(){
+  const el=document.getElementById('gd-ttl');if(!el)return;
+  if(!gdToken){el.style.display='none';return;}
+  const exp=gdTokenExp();if(!exp){el.style.display='none';return;}
+  const left=Math.max(0,exp-Date.now()),m=Math.floor(left/60000),sec=Math.floor(left/1000)%60;
+  const at=new Date(exp);const hhmm=at.getHours()+':'+String(at.getMinutes()).padStart(2,'0');
+  el.style.display='';el.className='gd-ttl'+(left<5*60000?' soon':'');
+  el.textContent=`구글 연결 ${m}:${String(sec).padStart(2,'0')} 남음 · ${hhmm} 만료`;
+  el.title='구글 로그인 토큰은 1시간마다 만료돼요. 만료되면 동기화 버튼을 눌러 다시 연결해요.';
+}
+setInterval(gdTtlTick,1000);
 function gdHH(){const d=new Date();return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');}
 function gdSetStatus(t,color){
   const el=document.getElementById('gd-status');if(el){el.textContent=t||'';if(color)el.style.color=color;}
@@ -8260,12 +8278,12 @@ function gdEver(){try{return localStorage.getItem('gd_ever')==='1'||localStorage
 function gdState(){return gdToken?'on':(gdEver()?'warn':'off');}
 function gdOrbTitle(){
   const s=gdState();
-  const t=s==='on'?('구글 동기화 켜짐'+(gdEmail?' · '+gdEmail:'')+(gdLastStatus?' · '+gdLastStatus:''))
+  const exp=gdTokenExp();const t=s==='on'?('구글 동기화 켜짐'+(gdEmail?' · '+gdEmail:'')+(exp?' · '+new Date(exp).getHours()+':'+String(new Date(exp).getMinutes()).padStart(2,'0')+' 만료':'')+(gdLastStatus?' · '+gdLastStatus:''))
          :s==='warn'?'동기화 끊김 · 클릭해서 다시 연결':'구글 동기화 켜기 (로그인)';
   gdOrbs().forEach(o=>o.title=t);
 }
 function gdSetBtn(){
-  const s=gdState();
+  const s=gdState();setTimeout(gdTtlTick,0);
   const b=document.getElementById('gd-btn');
   if(b){
     b.textContent=s==='on'?'☁ 로그아웃':s==='warn'?'☁ 다시 연결':'☁ 구글 동기화';
