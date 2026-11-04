@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta name="build" content="2026-11-05 04:53">
+<meta name="build" content="2026-11-05 05:06">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>피규어 구매 리스트 v125</title>
@@ -187,26 +187,26 @@ body.list-wide #tbody-order .wrow .w-sel{width:auto !important;min-width:0;}
 .w-scale{white-space:nowrap;flex-shrink:0;}
 .w-detail{white-space:nowrap;}
 .wrow .w-date{width:130px;min-width:124px;text-align:center;cursor:pointer;white-space:nowrap;}
-.w-lbl{font-size:10px;color:var(--text3);font-family:'Noto Sans KR',sans-serif;}
+.w-lbl{font-size:13px;color:var(--text3);font-family:'Noto Sans KR',sans-serif;}
 .w-pd{font-size:19px;font-weight:700;white-space:nowrap;}
-.w-rd{font-size:14px;color:var(--text2);}
+.w-rd{font-size:17px;color:var(--text2);font-weight:600;}
 .wrow .w-selc{width:40px;}
-.wrow .w-names{width:24%;min-width:170px;}
-.wrow .w-attrs{width:15%;text-align:center;}
+.wrow .w-names{width:20%;min-width:170px;}
+.wrow .w-attrs{width:19%;text-align:center;}
 .w-attrs-in{display:inline-block;text-align:left;}
 .wrow .w-names .w-maker,.wrow .w-names .w-subname{max-width:300px;}
 .w-stat{margin:0;}
-.w-del{display:block;margin:10px auto 0;}
-.w-attr{display:flex;align-items:center;justify-content:center;margin:6px 0;}
+.w-del{display:block;margin:0 auto;}
+.w-attr{display:flex;align-items:center;justify-content:center;margin:12px 0;}
 .w-attr>span{flex:0 0 52px;font-size:11px;color:var(--text3);}
-.w-brk{font-size:12px;line-height:1.55;color:var(--text2);padding-bottom:6px;margin-bottom:6px;border-bottom:1px dashed var(--border2);}
+.w-brk{font-size:14px;line-height:1.55;color:var(--text2);padding-bottom:6px;margin-bottom:6px;border-bottom:1px dashed var(--border2);}
 .w-brk>div{display:flex;justify-content:space-between;gap:10px;}
 .w-brk span{color:var(--text3);}
 .w-brk b{color:var(--text);font-weight:600;}
 .w-brk .fee b{color:var(--red);}
 .wrow td.w-cpn{width:11%;text-align:center;}
 .wrow td.w-cpn>div{display:flex;justify-content:center;}
-.w-maker{font-size:14px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px;}
+.w-maker{font-size:14px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:12px;}
 .w-char{width:100%;background:transparent;border:none;border-bottom:1px solid transparent;color:var(--text);font-family:inherit;font-size:19px;font-weight:700;outline:none;padding:2px 0;}
 .w-char:focus{border-bottom-color:var(--accent);}
 .w-subname{font-size:13px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -218,8 +218,15 @@ body.list-wide #tbody-order .wrow .w-sel{width:auto !important;min-width:0;}
 /* Wide 행: 다크 모드에서 회색 글씨를 흰색 계열로 (가독성) */
 html:not([data-theme="light"]) body.list-wide #tbody-order .wrow{--text2:#e8e8f0;--text3:#c9c9d8;}
 .wrow .w-state{width:100px;text-align:center;}
-.wrow .w-act{width:9%;text-align:center;}
-.w-detail{font-size:12px;padding:3px 12px;background:var(--adim);border:1px solid var(--aborder);border-radius:20px;color:var(--accent);cursor:pointer;font-family:inherit;font-weight:600;display:inline-block;margin-top:10px;}
+.wrow .w-act{width:34px;text-align:center;padding-left:2px !important;padding-right:2px !important;}
+#order-thead tr.wide-head th.wh-act{width:34px;padding-left:2px;padding-right:2px;}
+.wrow .w-cost>div:not(:first-child){font-size:13px !important;}
+.wrow .w-cost>div:not(:first-child) span{font-size:12px !important;}
+.wrow .w-date .w-stat{margin-top:12px;}
+.wrow .w-date .w-stat>div{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.wh-box{flex-wrap:nowrap !important;}
+#order-thead tr.wide-head th.wh-attr .wh-box{gap:4px 8px;}
+.w-detail{font-size:14px;padding:6px 20px;background:var(--adim);border:1px solid var(--aborder);border-radius:20px;color:var(--accent);cursor:pointer;font-family:inherit;font-weight:600;display:inline-block;margin-top:10px;}
 #order-thead tr.wide-head th{vertical-align:middle;}
 #order-thead tr.wide-head th.wh-sel{width:40px;}
 .wh-title{font-size:11px;color:var(--text2);margin-bottom:3px;}
@@ -2346,8 +2353,10 @@ function widePayHtml(o){const short={pre:'선행',official:'정식',balance:'잔
   return `<div class="w-only w-pay">${es.slice(0,4).map(e=>`<div><span>${short[e.field]||e.label}</span>${e.amt.toLocaleString('ko-KR')}</div>`).join('')}${es.length>4?`<div><span>외 ${es.length-4}건</span></div>`:''}</div>`;}
 let _listStyle=(()=>{try{return localStorage.getItem('listStyle')==='wide'?'wide':'classic';}catch(e){return 'classic';}})();
 // Wide 머리줄: 기존 정렬·필터 버튼(같은 id)을 그대로 옮겨 담아 씀 → Classic 으로 돌아가면 제자리로
-const WIDE_HEAD=[['sel',[0],''],['img',[1],''],['date',[2],'x'],['name',[4,3],'x'],['attr',[8,9,7],'x'],['money',[5],'x'],['cpn',[10],''],['act',[11,12],'']];
-function wideHeadApply(on){
+const WIDE_HEAD=[['sel',[0],''],['img',[1],''],['date',[2,11],'x'],['name',[4,3],'x'],['attr',[8,9,7],'x'],['money',[5],'x'],['cpn',[10],''],['act',[12],'']];
+const WIDE_LBL={'th-figType':'종류','th-scale':'스케일','th-purchaseType':'유형'};
+function wideHeadLabels(on){Object.entries(WIDE_LBL).forEach(([id,t])=>{const el=document.getElementById(id);if(!el)return;if(on){if(el.dataset.full==null)el.dataset.full=el.textContent;el.textContent=t;}else if(el.dataset.full!=null){el.textContent=el.dataset.full;}});}
+function wideHeadApply(on){wideHeadLabels(on);
   const thead=document.getElementById('order-thead');if(!thead)return;const tr=thead.querySelector('tr:not(.wide-head)');if(!tr)return;
   const ths=[...tr.children];let wtr=thead.querySelector('tr.wide-head');
   if(on){
@@ -2379,7 +2388,7 @@ document.addEventListener('DOMContentLoaded',applyListStyle);
 // ── Wide 보기 행: 썸네일 / 결제일·발매일 / 이름·종류·스케일 / 금액·쿠폰 / 구매유형·상태 / 상세 ──
 function wideRowHtml(o,v){
   const sel=(opt,col,on)=>`<select class="w-sel" style="color:${col};" onchange="${on}">${opt}</select>`;
-  const L=[];if(o.deliveredDate)L.push(['도착',o.deliveredDate]);if(o.releasedDate)L.push(['방출',o.releasedDate]);
+  const L=[];if(o.releasedDate)L.push(['방출',o.releasedDate]);
   const SH={pre:'선행예약',official:'정식예약',balance:'잔금',fullPayment:'전액결제',used:'중고거래',shipping:'배송비'};
   let fi=0;const es=payEntriesOf(o).map(e=>({...e,lb:e.field==='fee'?'수수료'+(++fi):(SH[e.field]||(e.field.startsWith('extra')?'기타'+(e.field==='extra'?1:e.field.slice(5)):e.label))}));
   return `<tr class="main-row wrow${o.released?' released':''}" data-oid="${o.id}">
@@ -2390,7 +2399,8 @@ function wideRowHtml(o,v){
     <td class="w-date mono${v.colorIdx?` grp-date-${v.colorIdx}`:''}" onclick="event.stopPropagation();togglePayDatePopup(event,${o.id})">
       <div class="w-lbl">최초 결제일</div><div class="w-pd">${earliestPayDate(o)||'<span style="color:var(--text3)">-</span>'}</div>
       <div class="w-lbl" style="margin-top:10px;">예상 발매일</div><div class="w-rd">${o.date||'<span style="color:var(--text3)">-</span>'}</div>
-      ${L.length?`<div class="w-dates">${L.map(([k,d])=>`<div><span>${k}</span> ${d}</div>`).join('')}</div>`:''}</td>
+      ${L.length?`<div class="w-dates">${L.map(([k,d])=>`<div><span>${k}</span> ${d}</div>`).join('')}</div>`:''}
+      <div class="w-stat" onclick="event.stopPropagation()">${statusCellHtml(o,v.status)}</div></td>
     <td class="w-names" onclick="event.stopPropagation()">
       <input type="text" class="w-char" value="${pcEsc(o.charName||'')}" placeholder="캐릭터명"
         onmousedown="event.stopPropagation();openCharDropdown(this,${o.id},event);this.focus();" oninput="openCharDropdown(this,${o.id},event)"
@@ -2407,7 +2417,7 @@ function wideRowHtml(o,v){
       <div class="w-brk">${es.length?es.map(e=>`<div class="${e.field==='fee'?'fee':''}"><span>${e.lb}</span><b class="mono">${e.amt.toLocaleString('ko-KR')}</b></div>`).join(''):'<div><span>결제 없음</span></div>'}</div>
       <div class="mono w-cost" onclick="openPriceModal(${o.id})" onmouseenter="showPricePop(event,${o.id})" onmouseleave="hidePricePop()" title="클릭 시 수정">${costCellHtml(o,v.tc)}</div></td>
     <td class="w-cpn" onclick="event.stopPropagation()">${couponColHtml(o)}</td>
-    <td class="w-act" onclick="event.stopPropagation()"><div class="w-stat">${statusCellHtml(o,v.status)}</div><button class="del-btn w-del" title="삭제" onclick="event.stopPropagation();if(confirm('삭제?')){pcBeforeOrderDelete(${o.id});orders=orders.filter(i=>i.id!==${o.id});pcSettle();renderOrder();autoSave();}">✕</button></td>
+    <td class="w-act" onclick="event.stopPropagation()"><button class="del-btn w-del" title="삭제" onclick="event.stopPropagation();if(confirm('삭제?')){pcBeforeOrderDelete(${o.id});orders=orders.filter(i=>i.id!==${o.id});pcSettle();renderOrder();autoSave();}">✕</button></td>
   </tr>`;
 }
 function couponColHtml(o){
@@ -4754,7 +4764,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.11.05',['Wide 보기: 열 구성 — 썸네일 / 결제일·발매일 / 캐릭터명(크게)·상호명·피규어명·상세 / 종류·스케일·구매유형 / 결제 내역(항목별)·총비용 / 쿠폰 / 상태·삭제 (정렬·필터 버튼은 그대로)','Wide 썸네일: 지정한 구간보다 조금 넓게 (사진 밖으로는 안 나가고 반대쪽을 더 포함)','쿠폰·포인트·수수료 한도 4개 → 10개','수정 창 오른쪽 창: 결제상세(원화 환산) / 결제내역 전환 — 결제내역은 이 상품의 결제를 날짜순으로, 연동된 쿠폰·포인트·수수료·카드 혜택과 묶음으로 함께 결제한 상품(썸네일)까지 표시','설정: 구매목록 보기 Classic / Wide — Wide 는 행 높이 2배, 큰 썸네일, 발매·도착일, 구매처, 결제 내역, 메모를 함께 표시','구매목록 외화 보기: 통화가 다른 외화 할인 쿠폰을 상품 외화로 환산해 할인액 옆 ( ) 로 표시','외화 쿠폰: 쿠폰 통화가 결제 외화와 다르면 그 외화로, 같으면 원화로 환산 금액을 괄호로 함께 표시 (수정 창 · 구매목록 쿠폰 칸 · 쿠폰 창 · 할인 탭)','수정 창 연동 강조를 한 가지 색으로 — 쿠폰·포인트·수수료·카드 칸·결제칸 중 하나에 올리면 연결된 것 전부 함께','수정 창: 카드 할인·적립이 자동 적용된 뒤 쿠폰·포인트 + 버튼이 안 되던 문제 수정']],
+  ['26.11.05',['Wide 보기: 열 구성 — 썸네일 / 결제일·발매일·상태 / 캐릭터명(크게)·상호명·피규어명·상세 / 종류·스케일·유형 / 결제 내역(항목별)·총비용 / 쿠폰 / 삭제 (정렬·필터 버튼은 그대로)','Wide 썸네일: 지정한 구간을 약 70% 배율로 넓게 (사진 밖으로는 안 나가고 반대쪽을 더 포함)','쿠폰·포인트·수수료 한도 4개 → 10개','수정 창 오른쪽 창: 결제상세(원화 환산) / 결제내역 전환 — 결제내역은 이 상품의 결제를 날짜순으로, 연동된 쿠폰·포인트·수수료·카드 혜택과 묶음으로 함께 결제한 상품(썸네일)까지 표시','설정: 구매목록 보기 Classic / Wide — Wide 는 행 높이 2배, 큰 썸네일, 발매·도착일, 구매처, 결제 내역, 메모를 함께 표시','구매목록 외화 보기: 통화가 다른 외화 할인 쿠폰을 상품 외화로 환산해 할인액 옆 ( ) 로 표시','외화 쿠폰: 쿠폰 통화가 결제 외화와 다르면 그 외화로, 같으면 원화로 환산 금액을 괄호로 함께 표시 (수정 창 · 구매목록 쿠폰 칸 · 쿠폰 창 · 할인 탭)','수정 창 연동 강조를 한 가지 색으로 — 쿠폰·포인트·수수료·카드 칸·결제칸 중 하나에 올리면 연결된 것 전부 함께','수정 창: 카드 할인·적립이 자동 적용된 뒤 쿠폰·포인트 + 버튼이 안 되던 문제 수정']],
   ['26.11.04',['헤더: 구글 연결 중이면 토큰 남은 시간과 만료 시각 표시 (5분 이하면 노란색)']],
   ['26.11.03',['통계 막대그래프와 결제달력의 합계가 다르던 문제 수정 — 같은 결제 항목(기타비용 3~6·중고 배송비·수수료 포함, 날짜 없는 칸은 상품 결제일)으로 계산','롯데카드 브랜드 수수료: 센트 반올림 → 센트 버림 (청구서로 확인) · 끝처리에 \'센트 버림\' 추가','수정 창: 기타비용 칸의 통화·현지가 입력 크기를 다른 결제칸과 같게']],
   ['26.11.02',['카드·묶음 마법사: 결제금액 + 브랜드 수수료 + 해외결제 수수료 − 카드 할인 = 최종 결제금액 표시 (혜택을 바꾸면 바로 다시 계산)','카드 혜택 금액 구간: \'이상 ~ 미만\'으로 표시 · 경계 금액은 높은 쪽 구간에 포함 · 구간 요약 줄','롯데카드 프리셋: 해외이용수수료 0.2% 끊지 않음 · 브랜드 수수료는 센트 반올림 후 × 환율 (청구서로 확인)','카드사 수정: 브랜드 수수료 끝처리를 따로 정할 수 있게']],
@@ -10832,8 +10842,8 @@ function focusOf(o,fb){
   var f=(o&&o.imgFocus)||{};
   return {x:(f.x==null?fb.x:+f.x), y:(f.y==null?fb.y:+f.y), z:(f.z==null?fb.z:+f.z)};
 }
-// Wide 보기 썸네일: 지정한 구간보다 조금 넓게 (확대 배율을 줄임 — 1 미만으로는 안 내려가므로 사진 밖은 보이지 않고, 넓어진 만큼 반대쪽이 더 들어옴)
-function focusCssWide(o){var f=focusOf(o);var z=Math.max(1,(f.z||1)*0.82);
+// Wide 보기 썸네일: 지정한 구간보다 넓게 (확대 배율 × 0.7 — 1 미만으로는 안 내려가므로 사진 밖은 보이지 않고, 넓어진 만큼 반대쪽이 더 들어옴)
+function focusCssWide(o){var f=focusOf(o);var z=Math.max(1,(f.z||1)*0.7);
   var s='object-fit:cover;object-position:'+f.x+'% '+f.y+'%;';if(z>1.001)s+='transform:scale('+z.toFixed(3)+');transform-origin:'+f.x+'% '+f.y+'%;';return s;}
 function focusCss(o,fb){
   var f=focusOf(o,fb);
