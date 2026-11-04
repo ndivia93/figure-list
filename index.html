@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta name="build" content="2026-11-05 05:06">
+<meta name="build" content="2026-11-05 05:25">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>피규어 구매 리스트 v125</title>
@@ -191,7 +191,7 @@ body.list-wide #tbody-order .wrow .w-sel{width:auto !important;min-width:0;}
 .w-pd{font-size:19px;font-weight:700;white-space:nowrap;}
 .w-rd{font-size:17px;color:var(--text2);font-weight:600;}
 .wrow .w-selc{width:40px;}
-.wrow .w-names{width:20%;min-width:170px;}
+.wrow .w-names{width:18%;min-width:170px;}
 .wrow .w-attrs{width:19%;text-align:center;}
 .w-attrs-in{display:inline-block;text-align:left;}
 .wrow .w-names .w-maker,.wrow .w-names .w-subname{max-width:300px;}
@@ -204,7 +204,9 @@ body.list-wide #tbody-order .wrow .w-sel{width:auto !important;min-width:0;}
 .w-brk span{color:var(--text3);}
 .w-brk b{color:var(--text);font-weight:600;}
 .w-brk .fee b{color:var(--red);}
-.wrow td.w-cpn{width:11%;text-align:center;}
+.w-brk .w-more{justify-content:center;cursor:pointer;color:var(--text3);font-size:13px;border-radius:4px;user-select:none;}
+.w-brk .w-more:hover{background:var(--bg3);color:var(--text);}
+.wrow td.w-cpn{width:12.1%;text-align:center;}
 .wrow td.w-cpn>div{display:flex;justify-content:center;}
 .w-maker{font-size:14px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:12px;}
 .w-char{width:100%;background:transparent;border:none;border-bottom:1px solid transparent;color:var(--text);font-family:inherit;font-size:19px;font-weight:700;outline:none;padding:2px 0;}
@@ -218,8 +220,8 @@ body.list-wide #tbody-order .wrow .w-sel{width:auto !important;min-width:0;}
 /* Wide 행: 다크 모드에서 회색 글씨를 흰색 계열로 (가독성) */
 html:not([data-theme="light"]) body.list-wide #tbody-order .wrow{--text2:#e8e8f0;--text3:#c9c9d8;}
 .wrow .w-state{width:100px;text-align:center;}
-.wrow .w-act{width:34px;text-align:center;padding-left:2px !important;padding-right:2px !important;}
-#order-thead tr.wide-head th.wh-act{width:34px;padding-left:2px;padding-right:2px;}
+.wrow .w-act{width:41px;min-width:41px;text-align:center;padding-left:2px !important;padding-right:2px !important;}
+#order-thead tr.wide-head th.wh-act{width:41px;padding-left:2px;padding-right:2px;}
 .wrow .w-cost>div:not(:first-child){font-size:13px !important;}
 .wrow .w-cost>div:not(:first-child) span{font-size:12px !important;}
 .wrow .w-date .w-stat{margin-top:12px;}
@@ -2414,11 +2416,32 @@ function wideRowHtml(o,v){
       <div class="w-attr"><b class="w-scale" style="color:${o.scale?'var(--text)':'var(--text3)'};" onclick="scPick(event,'${o.scale||'(없음)'}',v=>{const ord=orders.find(i=>i.id===${o.id});if(ord){ord.scale=v==='(없음)'?'':v;autoSave();renderOrder();}})">${o.scale?scaleLabel(o.scale):'(없음)'}</b></div>
       <div class="w-attr">${sel(v.PT_OPT,v.ptSelColor,`const o=orders.find(i=>i.id===${o.id});if(o){o.purchaseType=this.value;renderOrder();autoSave();}`)}</div></div></td>
     <td class="w-money" onclick="event.stopPropagation()">
-      <div class="w-brk">${es.length?es.map(e=>`<div class="${e.field==='fee'?'fee':''}"><span>${e.lb}</span><b class="mono">${e.amt.toLocaleString('ko-KR')}</b></div>`).join(''):'<div><span>결제 없음</span></div>'}</div>
+      <div class="w-brk${_wBrkOpen.has(o.id)?' open':''}" data-oid="${o.id}">${es.length?es.map(e=>`<div class="${e.field==='fee'?'fee':''}"><span>${e.lb}</span><b class="mono">${e.amt.toLocaleString('ko-KR')}</b></div>`).join(''):'<div><span>결제 없음</span></div>'}</div>
       <div class="mono w-cost" onclick="openPriceModal(${o.id})" onmouseenter="showPricePop(event,${o.id})" onmouseleave="hidePricePop()" title="클릭 시 수정">${costCellHtml(o,v.tc)}</div></td>
     <td class="w-cpn" onclick="event.stopPropagation()">${couponColHtml(o)}</td>
     <td class="w-act" onclick="event.stopPropagation()"><button class="del-btn w-del" title="삭제" onclick="event.stopPropagation();if(confirm('삭제?')){pcBeforeOrderDelete(${o.id});orders=orders.filter(i=>i.id!==${o.id});pcSettle();renderOrder();autoSave();}">✕</button></td>
   </tr>`;
+}
+// 총비용 내역: 칸 높이를 넘기면 일부만 보이고 '… 외 N개' → 클릭 시 아래로 펼침
+var _wBrkOpen=new Set();
+function wBrkFit(root){
+  if(!document.body.classList.contains('list-wide'))return;
+  (root?[root]:document.querySelectorAll('#tbody-order .wrow .w-brk')).forEach(b=>{
+    b.querySelectorAll('.w-more').forEach(x=>x.remove());
+    const rows=[...b.children]; rows.forEach(r=>r.style.display='');
+    if(rows.length<2)return;
+    const td=b.closest('td'), cost=td&&td.querySelector('.w-cost'); if(!td||!td.offsetHeight)return;
+    const cs=getComputedStyle(td), bs=getComputedStyle(b);
+    const avail=196-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-(cost?cost.offsetHeight:0)-parseFloat(bs.paddingBottom)-parseFloat(bs.marginBottom)-parseFloat(bs.borderBottomWidth)-2;
+    const lh=rows[0].offsetHeight||21, fit=Math.max(1,Math.floor(avail/lh));
+    if(rows.length<=fit)return;
+    const oid=+b.dataset.oid, open=_wBrkOpen.has(oid), more=document.createElement('div');
+    more.className='w-more';
+    if(open){more.textContent='접기 ▴';}
+    else{const keep=fit-1; rows.slice(keep).forEach(r=>r.style.display='none'); more.textContent='… 외 '+(rows.length-keep)+'개 ▾';}
+    more.onclick=e=>{e.stopPropagation(); if(_wBrkOpen.has(oid))_wBrkOpen.delete(oid); else _wBrkOpen.add(oid); b.classList.toggle('open'); wBrkFit(b);};
+    b.appendChild(more);
+  });
 }
 function couponColHtml(o){
           // 묶음구매 그룹코드 확인
@@ -4764,7 +4787,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.11.05',['Wide 보기: 열 구성 — 썸네일 / 결제일·발매일·상태 / 캐릭터명(크게)·상호명·피규어명·상세 / 종류·스케일·유형 / 결제 내역(항목별)·총비용 / 쿠폰 / 삭제 (정렬·필터 버튼은 그대로)','Wide 썸네일: 지정한 구간을 약 70% 배율로 넓게 (사진 밖으로는 안 나가고 반대쪽을 더 포함)','쿠폰·포인트·수수료 한도 4개 → 10개','수정 창 오른쪽 창: 결제상세(원화 환산) / 결제내역 전환 — 결제내역은 이 상품의 결제를 날짜순으로, 연동된 쿠폰·포인트·수수료·카드 혜택과 묶음으로 함께 결제한 상품(썸네일)까지 표시','설정: 구매목록 보기 Classic / Wide — Wide 는 행 높이 2배, 큰 썸네일, 발매·도착일, 구매처, 결제 내역, 메모를 함께 표시','구매목록 외화 보기: 통화가 다른 외화 할인 쿠폰을 상품 외화로 환산해 할인액 옆 ( ) 로 표시','외화 쿠폰: 쿠폰 통화가 결제 외화와 다르면 그 외화로, 같으면 원화로 환산 금액을 괄호로 함께 표시 (수정 창 · 구매목록 쿠폰 칸 · 쿠폰 창 · 할인 탭)','수정 창 연동 강조를 한 가지 색으로 — 쿠폰·포인트·수수료·카드 칸·결제칸 중 하나에 올리면 연결된 것 전부 함께','수정 창: 카드 할인·적립이 자동 적용된 뒤 쿠폰·포인트 + 버튼이 안 되던 문제 수정']],
+  ['26.11.05',['Wide 결제 내역: 항목이 많아 칸 높이를 넘기면 일부만 보이고 \'… 외 N개\' 표시 — 누르면 아래로 펼침 / 접기','Wide 보기: 열 구성 — 썸네일 / 결제일·발매일·상태 / 캐릭터명(크게)·상호명·피규어명·상세 / 종류·스케일·유형 / 결제 내역(항목별)·총비용 / 쿠폰 / 삭제 (정렬·필터 버튼은 그대로)','Wide 썸네일: 지정한 구간을 약 70% 배율로 넓게 (사진 밖으로는 안 나가고 반대쪽을 더 포함)','쿠폰·포인트·수수료 한도 4개 → 10개','수정 창 오른쪽 창: 결제상세(원화 환산) / 결제내역 전환 — 결제내역은 이 상품의 결제를 날짜순으로, 연동된 쿠폰·포인트·수수료·카드 혜택과 묶음으로 함께 결제한 상품(썸네일)까지 표시','설정: 구매목록 보기 Classic / Wide — Wide 는 행 높이 2배, 큰 썸네일, 발매·도착일, 구매처, 결제 내역, 메모를 함께 표시','구매목록 외화 보기: 통화가 다른 외화 할인 쿠폰을 상품 외화로 환산해 할인액 옆 ( ) 로 표시','외화 쿠폰: 쿠폰 통화가 결제 외화와 다르면 그 외화로, 같으면 원화로 환산 금액을 괄호로 함께 표시 (수정 창 · 구매목록 쿠폰 칸 · 쿠폰 창 · 할인 탭)','수정 창 연동 강조를 한 가지 색으로 — 쿠폰·포인트·수수료·카드 칸·결제칸 중 하나에 올리면 연결된 것 전부 함께','수정 창: 카드 할인·적립이 자동 적용된 뒤 쿠폰·포인트 + 버튼이 안 되던 문제 수정']],
   ['26.11.04',['헤더: 구글 연결 중이면 토큰 남은 시간과 만료 시각 표시 (5분 이하면 노란색)']],
   ['26.11.03',['통계 막대그래프와 결제달력의 합계가 다르던 문제 수정 — 같은 결제 항목(기타비용 3~6·중고 배송비·수수료 포함, 날짜 없는 칸은 상품 결제일)으로 계산','롯데카드 브랜드 수수료: 센트 반올림 → 센트 버림 (청구서로 확인) · 끝처리에 \'센트 버림\' 추가','수정 창: 기타비용 칸의 통화·현지가 입력 크기를 다른 결제칸과 같게']],
   ['26.11.02',['카드·묶음 마법사: 결제금액 + 브랜드 수수료 + 해외결제 수수료 − 카드 할인 = 최종 결제금액 표시 (혜택을 바꾸면 바로 다시 계산)','카드 혜택 금액 구간: \'이상 ~ 미만\'으로 표시 · 경계 금액은 높은 쪽 구간에 포함 · 구간 요약 줄','롯데카드 프리셋: 해외이용수수료 0.2% 끊지 않음 · 브랜드 수수료는 센트 반올림 후 × 환율 (청구서로 확인)','카드사 수정: 브랜드 수수료 끝처리를 따로 정할 수 있게']],
@@ -5822,7 +5845,7 @@ function clearColFilter(col){
   if(panel)panel.style.display='none';
   renderOrder();
 }
-function switchTab(t,el){document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.panel').forEach(e=>e.classList.remove('active'));el.classList.add('active');document.getElementById('panel-'+t).classList.add('active');window.scrollTo(0,0);if(t==='manage'){renderManage();syncThemeUI();}if(t==='paycard')renderPayCards();if(t==='stats')renderStats();if(t==='ranking')renderRanking();if(t==='expbal')renderExpBalTab();if(t==='bundle')renderBundle();if(t==='cards')renderCards();}
+function switchTab(t,el){document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.panel').forEach(e=>e.classList.remove('active'));el.classList.add('active');document.getElementById('panel-'+t).classList.add('active');window.scrollTo(0,0);if(t==='manage'){renderManage();syncThemeUI();}if(t==='paycard')renderPayCards();if(t==='stats')renderStats();if(t==='ranking')renderRanking();if(t==='expbal')renderExpBalTab();if(t==='bundle')renderBundle();if(t==='cards')renderCards();if(t==='order')wBrkFit();}
 function toggleRow(id){openRows[id]=!openRows[id];renderOrder();}
 
 // ── 강화 검색: 일반 / 금액 / 날짜 + 기간, 칩으로 중복 검색 ──
@@ -6916,6 +6939,7 @@ function renderOrder(){
   const _sy=window.scrollY;
   document.getElementById('tbody-order').innerHTML=html;
   renderOrderMobile(data);
+  wBrkFit();
   syncSelectAll();
   if(typeof updateScrollBtns==='function')updateScrollBtns();
   syncImgLockBtn();
