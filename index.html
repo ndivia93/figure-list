@@ -4492,6 +4492,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
+  ['26.11.05',['수정 창: 카드 할인·적립이 자동 적용된 뒤 쿠폰·포인트 + 버튼이 안 되던 문제 수정']],
   ['26.11.04',['헤더: 구글 연결 중이면 토큰 남은 시간과 만료 시각 표시 (5분 이하면 노란색)']],
   ['26.11.03',['통계 막대그래프와 결제달력의 합계가 다르던 문제 수정 — 같은 결제 항목(기타비용 3~6·중고 배송비·수수료 포함, 날짜 없는 칸은 상품 결제일)으로 계산','롯데카드 브랜드 수수료: 센트 반올림 → 센트 버림 (청구서로 확인) · 끝처리에 \'센트 버림\' 추가','수정 창: 기타비용 칸의 통화·현지가 입력 크기를 다른 결제칸과 같게']],
   ['26.11.02',['카드·묶음 마법사: 결제금액 + 브랜드 수수료 + 해외결제 수수료 − 카드 할인 = 최종 결제금액 표시 (혜택을 바꾸면 바로 다시 계산)','카드 혜택 금액 구간: \'이상 ~ 미만\'으로 표시 · 경계 금액은 높은 쪽 구간에 포함 · 구간 요약 줄','롯데카드 프리셋: 해외이용수수료 0.2% 끊지 않음 · 브랜드 수수료는 센트 반올림 후 × 환율 (청구서로 확인)','카드사 수정: 브랜드 수수료 끝처리를 따로 정할 수 있게']],
@@ -4946,7 +4947,7 @@ function pcRemoveBen(code,key){
 function renderAmCoupons(){
   const box=document.getElementById('am-coupon-box');if(!box)return;
   const cb=amCardBens('disc');
-  if(cb.length)_amCoupons=_amCoupons.filter(c=>Number(c.amount)||c.field);   // 카드 할인이 있으면 빈 쿠폰칸은 비켜줌 (값 있는 칸은 그대로)
+  if(cb.length)_amCoupons=_amCoupons.filter(c=>Number(c.amount)||c.field||c.keep);   // 카드 할인이 있으면 기본 빈 쿠폰칸은 비켜줌 (값 있는 칸·+로 직접 추가한 칸은 그대로)
   if(!_amCoupons.length&&!cb.length)_amCoupons=[{amount:0,currency:'₩'}]; // 기본 1개 활성화
   let cards='';
   _amCoupons.forEach((c,i)=>{cards+=couponCardHtml(c,i);});
@@ -4954,7 +4955,7 @@ function renderAmCoupons(){
   if(_amCoupons.length+cb.length<MAX_COUPONS)cards+=couponAddCardHtml();
   box.innerHTML=`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">${cards}</div>`;
 }
-function amAddCoupon(){if(_amCoupons.length+amCardBens('disc').length>=MAX_COUPONS)return;_amCoupons.push({amount:0,currency:'₩'});renderAmCoupons();}
+function amAddCoupon(){if(_amCoupons.length+amCardBens('disc').length>=MAX_COUPONS)return;_amCoupons.push({amount:0,currency:'₩',keep:true});renderAmCoupons();}
 function amRemoveCoupon(i){_amCoupons.splice(i,1);if(!_amCoupons.length&&!amCardBens('disc').length)_amCoupons=[{amount:0,currency:'₩'}];renderAmCoupons();}
 function amSetCoupon(i,field,val){
   if(!_amCoupons[i])return;
@@ -5005,7 +5006,7 @@ function renderAmFees(){
 function renderAmPoints(){
   const box=document.getElementById('am-point-box');if(!box)return;
   const cb=amCardBens('point');
-  if(cb.length)_amPoints=_amPoints.filter(c=>Number(c.amount)||c.field);
+  if(cb.length)_amPoints=_amPoints.filter(c=>Number(c.amount)||c.field||c.keep);
   if(!_amPoints.length&&!cb.length)_amPoints=[{amount:0,currency:'₩'}];
   let cards='';
   _amPoints.forEach((c,i)=>{cards+=pointCardHtml(c,i);});
@@ -5013,7 +5014,7 @@ function renderAmPoints(){
   if(_amPoints.length+cb.length<MAX_POINTS)cards+=pointAddCardHtml();
   box.innerHTML=`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">${cards}</div>`;
 }
-function amAddPoint(){if(_amPoints.length+amCardBens('point').length>=MAX_POINTS)return;_amPoints.push({amount:0,currency:'₩'});renderAmPoints();}
+function amAddPoint(){if(_amPoints.length+amCardBens('point').length>=MAX_POINTS)return;_amPoints.push({amount:0,currency:'₩',keep:true});renderAmPoints();}
 function amRemovePoint(i){_amPoints.splice(i,1);if(!_amPoints.length&&!amCardBens('point').length)_amPoints=[{amount:0,currency:'₩'}];renderAmPoints();}
 function amSetPoint(i,field,val){
   if(!_amPoints[i])return;
