@@ -177,30 +177,39 @@ td{padding:7px 9px;border-bottom:1px solid var(--border);vertical-align:middle;c
 .seg-btn.on{color:#fff;}
 .main-row{cursor:pointer;}
 .w-only{display:none;}
-body.list-wide #tbody-order tr.main-row.wrow>td{height:150px;vertical-align:middle;padding:8px 10px;}
-.wrow .w-thumb{width:144px;padding:6px !important;}
-body.list-wide #tbody-order .wrow .fig-icon{width:136px;height:136px;}
+body.list-wide #tbody-order tr.main-row.wrow>td{height:196px;vertical-align:middle;padding:10px 10px;}
+.wrow .w-thumb{width:188px;padding:6px !important;}
+body.list-wide #tbody-order .wrow .fig-icon{width:180px;height:180px;}
 body.list-wide #tbody-order .fig-icon.has-img img{width:100%;height:100%;}
 body.list-wide #tbody-order .wrow .w-char{font-size:19px !important;font-weight:700 !important;}
 body.list-wide #tbody-order .wrow .w-sel{width:auto !important;min-width:0;}
 .w-scale{white-space:nowrap;flex-shrink:0;}
 .w-detail{white-space:nowrap;}
-.wrow .w-date{width:120px;text-align:center;cursor:pointer;}
+.wrow .w-date{width:160px;text-align:center;cursor:pointer;}
 .w-lbl{font-size:10px;color:var(--text3);font-family:'Noto Sans KR',sans-serif;}
-.w-pd{font-size:17px;font-weight:700;}
+.w-pd{font-size:19px;font-weight:700;}
 .w-rd{font-size:14px;color:var(--text2);}
-.wrow .w-names{min-width:240px;}
-.w-maker{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.wrow .w-names{width:24%;}
+.wrow .w-attrs{width:17%;}
+.w-attr{display:flex;align-items:center;gap:8px;margin:4px 0;}
+.w-attr>span{flex:0 0 52px;font-size:11px;color:var(--text3);}
+.w-brk{font-size:12px;line-height:1.55;color:var(--text2);padding-bottom:6px;margin-bottom:6px;border-bottom:1px dashed var(--border2);}
+.w-brk>div{display:flex;justify-content:space-between;gap:10px;}
+.w-brk span{color:var(--text3);}
+.w-brk b{color:var(--text);font-weight:600;}
+.w-brk .fee b{color:var(--red);}
+.wrow td.w-cpn{width:96px;text-align:center;}
+.wrow td.w-cpn>div{display:flex;justify-content:center;}
+.w-maker{font-size:14px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px;}
 .w-char{width:100%;background:transparent;border:none;border-bottom:1px solid transparent;color:var(--text);font-family:inherit;font-size:19px;font-weight:700;outline:none;padding:2px 0;}
 .w-char:focus{border-bottom-color:var(--accent);}
-.w-subname{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.w-subname{font-size:13px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .w-tags{display:flex;gap:8px;align-items:center;margin-top:6px;}
 .w-sel{font-size:13px;font-weight:700;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:2px 8px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;text-align:center;}
 .w-scale{font-size:13px;cursor:pointer;border:1px solid var(--border);border-radius:14px;padding:2px 10px;}
-.wrow .w-money{width:170px;}
+.wrow .w-money{width:190px;}
 .wrow .w-cost{font-size:16px;font-weight:700;cursor:pointer;text-align:right;}
-.wrow .w-cpn{margin-top:8px;display:flex;justify-content:center;}
-.wrow .w-state{width:120px;text-align:center;}
+.wrow .w-state{width:100px;text-align:center;}
 .wrow .w-act{width:60px;text-align:center;}
 .w-detail{font-size:12px;padding:3px 10px;background:var(--adim);border:1px solid var(--aborder);border-radius:20px;color:var(--accent);cursor:pointer;font-family:inherit;font-weight:600;display:block;margin:0 auto 10px;}
 #order-thead tr.wide-head th{vertical-align:middle;}
@@ -2328,7 +2337,7 @@ function widePayHtml(o){const short={pre:'선행',official:'정식',balance:'잔
   return `<div class="w-only w-pay">${es.slice(0,4).map(e=>`<div><span>${short[e.field]||e.label}</span>${e.amt.toLocaleString('ko-KR')}</div>`).join('')}${es.length>4?`<div><span>외 ${es.length-4}건</span></div>`:''}</div>`;}
 let _listStyle=(()=>{try{return localStorage.getItem('listStyle')==='wide'?'wide':'classic';}catch(e){return 'classic';}})();
 // Wide 머리줄: 기존 정렬·필터 버튼(같은 id)을 그대로 옮겨 담아 씀 → Classic 으로 돌아가면 제자리로
-const WIDE_HEAD=[['sel',[0],''],['img',[1],''],['date',[2],'결제일 · 발매일'],['name',[4,3,8,9],'캐릭터·피규어명 · 종류 · 스케일'],['money',[5,10],'총비용 · 쿠폰'],['state',[7,11],'구매유형 · 상태'],['act',[6,12],'']];
+const WIDE_HEAD=[['sel',[0],''],['img',[1],''],['date',[2],'결제일 · 발매일'],['name',[4,3],'캐릭터명 · 상호명 · 피규어명'],['attr',[8,9,7],'종류 · 스케일 · 구매유형'],['money',[5],'결제 내역 · 총비용'],['cpn',[10],''],['state',[11],''],['act',[6,12],'']];
 function wideHeadApply(on){
   const thead=document.getElementById('order-thead');if(!thead)return;const tr=thead.querySelector('tr:not(.wide-head)');if(!tr)return;
   const ths=[...tr.children];let wtr=thead.querySelector('tr.wide-head');
@@ -2362,6 +2371,8 @@ document.addEventListener('DOMContentLoaded',applyListStyle);
 function wideRowHtml(o,v){
   const sel=(opt,col,on)=>`<select class="w-sel" style="color:${col};" onchange="${on}">${opt}</select>`;
   const L=[];if(o.deliveredDate)L.push(['도착',o.deliveredDate]);if(o.releasedDate)L.push(['방출',o.releasedDate]);
+  const SH={pre:'선행예약',official:'정식예약',balance:'잔금',fullPayment:'전액결제',used:'중고거래',shipping:'배송비'};
+  let fi=0;const es=payEntriesOf(o).map(e=>({...e,lb:e.field==='fee'?'수수료'+(++fi):(SH[e.field]||(e.field.startsWith('extra')?'기타'+(e.field==='extra'?1:e.field.slice(5)):e.label))}));
   return `<tr class="main-row wrow${o.released?' released':''}" data-oid="${o.id}">
     <td style="padding:4px 0;text-align:center;vertical-align:middle;" onclick="event.stopPropagation()">
       <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="drag-grip" data-oid="${o.id}" title="드래그하여 순서 변경">⠿</span>
@@ -2369,23 +2380,24 @@ function wideRowHtml(o,v){
     <td class="w-thumb" onclick="event.stopPropagation()">${imgThumbHtml(o)}</td>
     <td class="w-date mono${v.colorIdx?` grp-date-${v.colorIdx}`:''}" onclick="event.stopPropagation();togglePayDatePopup(event,${o.id})">
       <div class="w-lbl">최초 결제일</div><div class="w-pd">${earliestPayDate(o)||'<span style="color:var(--text3)">-</span>'}</div>
-      <div class="w-lbl" style="margin-top:8px;">예상 발매일</div><div class="w-rd">${o.date||'<span style="color:var(--text3)">-</span>'}</div>
+      <div class="w-lbl" style="margin-top:10px;">예상 발매일</div><div class="w-rd">${o.date||'<span style="color:var(--text3)">-</span>'}</div>
       ${L.length?`<div class="w-dates">${L.map(([k,d])=>`<div><span>${k}</span> ${d}</div>`).join('')}</div>`:''}</td>
     <td class="w-names" onclick="event.stopPropagation()">
-      ${o.maker?`<div class="w-maker">${pcEsc(o.maker)}</div>`:''}
       <input type="text" class="w-char" value="${pcEsc(o.charName||'')}" placeholder="캐릭터명"
         onmousedown="event.stopPropagation();openCharDropdown(this,${o.id},event);this.focus();" oninput="openCharDropdown(this,${o.id},event)"
         onblur="const o=orders.find(i=>i.id===${o.id});if(o){o.charName=this.value.trim();autoSave();}">
+      <div class="w-maker">${o.maker?pcEsc(o.maker):'<span style="color:var(--text3)">상호명 없음</span>'}</div>
       ${o.subName?`<div class="w-subname">${pcEsc(o.subName)}</div>`:''}
-      <div class="w-tags">${sel(v.FIG_TYPES_OPT,v.figSelColor,`const o=orders.find(i=>i.id===${o.id});if(o){o.figType=this.value;renderOrder();autoSave();}`)}
-        <span class="w-scale" style="color:${o.scale?'var(--text)':'var(--text3)'};" onclick="scPick(event,'${o.scale||'(없음)'}',v=>{const ord=orders.find(i=>i.id===${o.id});if(ord){ord.scale=v==='(없음)'?'':v;autoSave();renderOrder();}})">${o.scale?scaleLabel(o.scale):'스케일 없음'}</span></div>
       ${(o.memo||'').trim()?`<div class="w-memo" title="${pcEsc(o.memo)}">${pcEsc((o.memo||'').trim())}</div>`:''}</td>
+    <td class="w-attrs" onclick="event.stopPropagation()">
+      <div class="w-attr"><span>종류</span>${sel(v.FIG_TYPES_OPT,v.figSelColor,`const o=orders.find(i=>i.id===${o.id});if(o){o.figType=this.value;renderOrder();autoSave();}`)}</div>
+      <div class="w-attr"><span>스케일</span><b class="w-scale" style="color:${o.scale?'var(--text)':'var(--text3)'};" onclick="scPick(event,'${o.scale||'(없음)'}',v=>{const ord=orders.find(i=>i.id===${o.id});if(ord){ord.scale=v==='(없음)'?'':v;autoSave();renderOrder();}})">${o.scale?scaleLabel(o.scale):'(없음)'}</b></div>
+      <div class="w-attr"><span>구매유형</span>${sel(v.PT_OPT,v.ptSelColor,`const o=orders.find(i=>i.id===${o.id});if(o){o.purchaseType=this.value;renderOrder();autoSave();}`)}</div></td>
     <td class="w-money" onclick="event.stopPropagation()">
-      <div class="mono w-cost" onclick="openPriceModal(${o.id})" onmouseenter="showPricePop(event,${o.id})" onmouseleave="hidePricePop()" title="클릭 시 수정">${costCellHtml(o,v.tc)}</div>
-      <div class="w-cpn">${couponColHtml(o)}</div></td>
-    <td class="w-state" onclick="event.stopPropagation()">
-      ${sel(v.PT_OPT,v.ptSelColor,`const o=orders.find(i=>i.id===${o.id});if(o){o.purchaseType=this.value;renderOrder();autoSave();}`)}
-      <div style="margin-top:8px;">${statusCellHtml(o,v.status)}</div></td>
+      <div class="w-brk">${es.length?es.map(e=>`<div class="${e.field==='fee'?'fee':''}"><span>${e.lb}</span><b class="mono">${e.amt.toLocaleString('ko-KR')}</b></div>`).join(''):'<div><span>결제 없음</span></div>'}</div>
+      <div class="mono w-cost" onclick="openPriceModal(${o.id})" onmouseenter="showPricePop(event,${o.id})" onmouseleave="hidePricePop()" title="클릭 시 수정">${costCellHtml(o,v.tc)}</div></td>
+    <td class="w-cpn" onclick="event.stopPropagation()">${couponColHtml(o)}</td>
+    <td class="w-state" onclick="event.stopPropagation()">${statusCellHtml(o,v.status)}</td>
     <td class="w-act" onclick="event.stopPropagation()">
       <button onclick="openAddModal(${o.id})" class="w-detail">상세</button>
       <button class="del-btn" onclick="event.stopPropagation();if(confirm('삭제?')){pcBeforeOrderDelete(${o.id});orders=orders.filter(i=>i.id!==${o.id});pcSettle();renderOrder();autoSave();}">✕</button></td>
@@ -4735,7 +4747,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.11.05',['Wide 보기: 열 구성 변경 — 썸네일 / 결제일·발매일 / 캐릭터·피규어명·종류·스케일 / 총비용·쿠폰 / 구매유형·상태 / 상세 (정렬·필터 버튼은 그대로)','Wide 썸네일: 지정한 구간보다 조금 넓게 (사진 밖으로는 안 나가고 반대쪽을 더 포함)','쿠폰·포인트·수수료 한도 4개 → 10개','수정 창 오른쪽 창: 결제상세(원화 환산) / 결제내역 전환 — 결제내역은 이 상품의 결제를 날짜순으로, 연동된 쿠폰·포인트·수수료·카드 혜택과 묶음으로 함께 결제한 상품(썸네일)까지 표시','설정: 구매목록 보기 Classic / Wide — Wide 는 행 높이 2배, 큰 썸네일, 발매·도착일, 구매처, 결제 내역, 메모를 함께 표시','구매목록 외화 보기: 통화가 다른 외화 할인 쿠폰을 상품 외화로 환산해 할인액 옆 ( ) 로 표시','외화 쿠폰: 쿠폰 통화가 결제 외화와 다르면 그 외화로, 같으면 원화로 환산 금액을 괄호로 함께 표시 (수정 창 · 구매목록 쿠폰 칸 · 쿠폰 창 · 할인 탭)','수정 창 연동 강조를 한 가지 색으로 — 쿠폰·포인트·수수료·카드 칸·결제칸 중 하나에 올리면 연결된 것 전부 함께','수정 창: 카드 할인·적립이 자동 적용된 뒤 쿠폰·포인트 + 버튼이 안 되던 문제 수정']],
+  ['26.11.05',['Wide 보기: 열 구성 — 썸네일 / 결제일·발매일 / 캐릭터명·상호명·피규어명 / 종류·스케일·구매유형 / 결제 내역(항목별)·총비용 / 쿠폰 / 상태 / 상세 (정렬·필터 버튼은 그대로)','Wide 썸네일: 지정한 구간보다 조금 넓게 (사진 밖으로는 안 나가고 반대쪽을 더 포함)','쿠폰·포인트·수수료 한도 4개 → 10개','수정 창 오른쪽 창: 결제상세(원화 환산) / 결제내역 전환 — 결제내역은 이 상품의 결제를 날짜순으로, 연동된 쿠폰·포인트·수수료·카드 혜택과 묶음으로 함께 결제한 상품(썸네일)까지 표시','설정: 구매목록 보기 Classic / Wide — Wide 는 행 높이 2배, 큰 썸네일, 발매·도착일, 구매처, 결제 내역, 메모를 함께 표시','구매목록 외화 보기: 통화가 다른 외화 할인 쿠폰을 상품 외화로 환산해 할인액 옆 ( ) 로 표시','외화 쿠폰: 쿠폰 통화가 결제 외화와 다르면 그 외화로, 같으면 원화로 환산 금액을 괄호로 함께 표시 (수정 창 · 구매목록 쿠폰 칸 · 쿠폰 창 · 할인 탭)','수정 창 연동 강조를 한 가지 색으로 — 쿠폰·포인트·수수료·카드 칸·결제칸 중 하나에 올리면 연결된 것 전부 함께','수정 창: 카드 할인·적립이 자동 적용된 뒤 쿠폰·포인트 + 버튼이 안 되던 문제 수정']],
   ['26.11.04',['헤더: 구글 연결 중이면 토큰 남은 시간과 만료 시각 표시 (5분 이하면 노란색)']],
   ['26.11.03',['통계 막대그래프와 결제달력의 합계가 다르던 문제 수정 — 같은 결제 항목(기타비용 3~6·중고 배송비·수수료 포함, 날짜 없는 칸은 상품 결제일)으로 계산','롯데카드 브랜드 수수료: 센트 반올림 → 센트 버림 (청구서로 확인) · 끝처리에 \'센트 버림\' 추가','수정 창: 기타비용 칸의 통화·현지가 입력 크기를 다른 결제칸과 같게']],
   ['26.11.02',['카드·묶음 마법사: 결제금액 + 브랜드 수수료 + 해외결제 수수료 − 카드 할인 = 최종 결제금액 표시 (혜택을 바꾸면 바로 다시 계산)','카드 혜택 금액 구간: \'이상 ~ 미만\'으로 표시 · 경계 금액은 높은 쪽 구간에 포함 · 구간 요약 줄','롯데카드 프리셋: 해외이용수수료 0.2% 끊지 않음 · 브랜드 수수료는 센트 반올림 후 × 환율 (청구서로 확인)','카드사 수정: 브랜드 수수료 끝처리를 따로 정할 수 있게']],
