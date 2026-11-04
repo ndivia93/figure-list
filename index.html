@@ -176,6 +176,25 @@ td{padding:7px 9px;border-bottom:1px solid var(--border);vertical-align:middle;c
 .seg-btn{position:relative;z-index:1;flex:1;min-width:94px;border:none;background:transparent;cursor:pointer;padding:5px 12px;font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap;transition:color .18s;font-family:inherit;}
 .seg-btn.on{color:#fff;}
 .main-row{cursor:pointer;}
+.w-only{display:none;}
+body.list-wide #tbody-order .w-only{display:block;}
+body.list-wide #tbody-order .main-row>td{height:136px;padding-top:6px;padding-bottom:6px;vertical-align:middle;}
+body.list-wide #tbody-order .fig-icon{width:124px;height:124px;}
+body.list-wide #tbody-order .fig-icon.no-img{font-size:26px;}
+body.list-wide #tbody-order .pd-a{font-size:15px !important;}
+body.list-wide #tbody-order .row-name input{font-size:17px !important;font-weight:600 !important;}
+body.list-wide #tbody-order .main-row td[contenteditable],body.list-wide #tbody-order .main-row td div[contenteditable]{font-size:16px;}
+.w-sub{font-size:12px;color:var(--cyan);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;}
+.w-memo{font-size:12px;color:var(--text2);margin-top:6px;line-height:1.4;display:-webkit-box !important;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;word-break:break-all;}
+body:not(.list-wide) .w-memo{display:none !important;}
+.w-dates{margin-top:6px;font-size:11px;color:var(--text2);line-height:1.5;}
+.w-dates span{color:var(--text3);font-family:'Noto Sans KR',sans-serif;margin-right:2px;}
+.w-pay{margin-top:6px;padding-top:5px;border-top:1px dashed var(--border2);font-size:11px;font-weight:500;color:var(--text2);line-height:1.5;}
+.w-pay>div{display:flex;justify-content:space-between;gap:8px;}
+.w-pay span{color:var(--text3);font-family:'Noto Sans KR',sans-serif;}
+.lstyle-tog{display:inline-flex;border:1px solid var(--border2);border-radius:20px;overflow:hidden;flex-shrink:0;}
+.lstyle-tog button{border:none;background:transparent;color:var(--text3);font-family:inherit;font-size:12px;font-weight:700;padding:6px 14px;cursor:pointer;}
+.lstyle-tog button.on{background:var(--accent);color:#fff;}
 /* 순서 변경 드래그 */
 .drag-grip{display:inline-block;color:var(--text3);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;font-size:14px;line-height:1;padding:2px 4px;border-radius:4px;}
 .drag-grip:hover{color:var(--accent);background:rgba(123,108,255,.12);}
@@ -992,7 +1011,10 @@ td:hover>.pd-wrap.has-rel .pd-b{display:block;}
 .dup-card .r em{font-style:normal;color:var(--text3);}
 .dup-card .r .v{margin-left:auto;font-family:'Space Mono',monospace;font-weight:700;}
 .dup-card .r .w{flex-basis:100%;color:var(--yellow);font-size:11px;}
-.am-cpn.pc-hl{border-color:var(--pcc) !important;box-shadow:0 0 0 2px var(--pcc);}
+.cpn-alt{font-size:11px;color:var(--yellow);opacity:.8;text-align:right;margin-top:3px;min-height:0;}
+.cpn-alt:empty{display:none;}
+.cpn-alt-l{display:block;font-size:10px;color:var(--yellow);opacity:.75;font-family:'Space Mono',monospace;white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px;}
+.am-cpn.pc-hl{border-color:var(--link-hl) !important;box-shadow:0 0 0 2px var(--link-hl);}
 .am-drag{cursor:grab;user-select:none;}
 .am-drag:active{cursor:grabbing;}
 .am-link{flex-shrink:0;font-size:10px;font-weight:700;padding:1px 6px;border-radius:9px;border:1px solid currentColor;color:var(--accent);cursor:pointer;white-space:nowrap;line-height:1.5;}
@@ -1002,9 +1024,10 @@ body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-o
 .am-cardbtn{flex-shrink:0;font-family:inherit;font-size:11px;font-weight:700;padding:2px 7px;line-height:1.5;border-radius:10px;cursor:pointer;background:transparent;border:1px solid var(--border2);color:var(--text2);}
 .am-cardbtn:hover{border-color:var(--accent);color:var(--accent);}
 .am-cardbtn.on{border-color:var(--accent);color:var(--accent);background:var(--adim);}
-.cost-field.pc-src{border-color:var(--pcc) !important;box-shadow:0 0 0 2px var(--pcc);}
+.cost-field.pc-src{border-color:var(--link-hl) !important;box-shadow:0 0 0 2px var(--link-hl);}
 .am-cardben{transition:border-color .12s,box-shadow .12s;}
-.am-cardben.pc-hl{border-color:var(--pcc) !important;box-shadow:0 0 0 2px var(--pcc);}
+.am-cardben.pc-hl{border-color:var(--link-hl) !important;box-shadow:0 0 0 2px var(--link-hl);}
+:root{--link-hl:#ff5fa8;}
 .pc-btable{width:100%;border-collapse:separate;border-spacing:0 6px;}
 .pc-btable th{font-size:11px;color:var(--text3);font-weight:700;text-align:left;padding:0 6px;}
 .pc-btable td{padding:0 4px;vertical-align:middle;}
@@ -1610,6 +1633,11 @@ body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-o
         <span style="font-size:13px;color:var(--text2);flex-shrink:0;">화면 테마</span>
         <span id="theme-label" style="font-size:13px;color:var(--text);flex:1;"></span>
         <button class="btn" id="theme-btn" onclick="toggleTheme()" style="min-width:120px;">전환</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+        <span style="font-size:13px;color:var(--text2);flex-shrink:0;">구매목록 보기</span>
+        <span style="font-size:12px;color:var(--text3);flex:1;">Wide = 행 높이 2배 · 큰 썸네일 · 발매/도착일·구매처·결제 내역·메모를 함께 표시</span>
+        <div class="lstyle-tog"><button type="button" data-lstyle="classic" onclick="setListStyle('classic')">Classic</button><button type="button" data-lstyle="wide" onclick="setListStyle('wide')">Wide</button></div>
       </div>
     </div>
     <div class="manage-grid" style="grid-template-columns:1fr 1fr 1fr;">
@@ -2238,6 +2266,18 @@ function singleCouponForeignDisc(o,fsym){
   },0);
 }
 // 총비용 셀 — 통화기호는 항상 맨 왼쪽, 숫자는 오른쪽 정렬
+// ── 구매목록 Wide 보기: 행 높이 2배 + 늘어난 칸에 보조 정보 (Classic 에선 숨김) ──
+function wideDateHtml(o){const L=[];if(o.date)L.push(['발매',o.date]);if(o.deliveredDate)L.push(['도착',o.deliveredDate]);if(o.releasedDate)L.push(['방출',o.releasedDate]);
+  return L.length?`<div class="w-only w-dates">${L.map(([k,v])=>`<div><span>${k}</span> ${v}</div>`).join('')}</div>`:'';}
+function widePayHtml(o){const short={pre:'선행',official:'정식',balance:'잔금',fullPayment:'전액',used:'중고',shipping:'배송',fee:'수수료'};
+  const es=(typeof payEntriesOf==='function'?payEntriesOf(o):[]);if(!es.length)return '';
+  return `<div class="w-only w-pay">${es.slice(0,4).map(e=>`<div><span>${short[e.field]||e.label}</span>${e.amt.toLocaleString('ko-KR')}</div>`).join('')}${es.length>4?`<div><span>외 ${es.length-4}건</span></div>`:''}</div>`;}
+let _listStyle=(()=>{try{return localStorage.getItem('listStyle')==='wide'?'wide':'classic';}catch(e){return 'classic';}})();
+function applyListStyle(){document.body.classList.toggle('list-wide',_listStyle==='wide');
+  document.querySelectorAll('[data-lstyle]').forEach(b=>b.classList.toggle('on',b.dataset.lstyle===_listStyle));}
+function setListStyle(v){_listStyle=v==='wide'?'wide':'classic';try{localStorage.setItem('listStyle',_listStyle);}catch(e){}applyListStyle();
+  showToast(_listStyle==='wide'?'구매목록을 Wide 보기로 바꿨어요':'구매목록을 Classic 보기로 바꿨어요','success');}
+document.addEventListener('DOMContentLoaded',applyListStyle);
 function costCellHtml(o,tc){
   const f=_showForeign?foreignTotal(o):null;
   const sym=f?curSym(f.currency):'₩';
@@ -2250,7 +2290,11 @@ function costCellHtml(o,tc){
   const krwDisc=couponDeduction(o)+bundleKrwShare(o)+cpnSums(o,true).pos;
   // 외화 모드: 위=할인 후 금액 / 원화 모드: 위=총비용(이미 할인 후)
   const val=f?fmtForeign(f.amount-fDisc):(tc?Number(tc).toLocaleString('ko-KR'):'-');
-  const sub=f?((fDisc+fPos)?fmtForeign(fDisc+fPos):''):(krwDisc?krwDisc.toLocaleString('ko-KR'):'');
+  let sub=f?((fDisc+fPos)?fmtForeign(fDisc+fPos):''):(krwDisc?krwDisc.toLocaleString('ko-KR'):'');
+  // 통화가 다른 외화 할인 쿠폰 → 이 상품의 외화로 환산해 ( ) 로 함께 표시 (계산에는 넣지 않음)
+  if(f){const mis=validCoupons(o).filter(c=>Number(c.amount)<0&&!isKRW(c.currency||'₩')&&curSym(c.currency)!==sym);
+    if(mis.length){const v=mis.reduce((a,c)=>a+Math.abs(Number(c.amount))*fxRateK(c.currency)/fxRateK(f.currency),0);
+      sub=(sub?sub+' ':'')+`<span title="${pcEsc(mis.map(c=>fmtCur(c.amount,c.currency)).join(' · '))} 쿠폰 환산">(${fmtForeign(Math.round(v*100)/100)})</span>`;}}
   // 포인트 획득금액 (초록색, 할인액과 동일 폰트 스타일)
   const pKrw=pointTotalKrw(o);
   const pStr=pKrw?pKrw.toLocaleString('ko-KR'):'';
@@ -2302,6 +2346,22 @@ function couponsOf(o){
 }
 // 금액이 0이 아닌 유효 쿠폰만
 function validCoupons(o){return couponsOf(o).filter(c=>c&&Number(c.amount));}
+// ── 외화 쿠폰의 환산 표기: 쿠폰 통화가 그 결제(또는 상품)의 외화와 다르면 그 외화로, 같거나 외화가 없으면 원화로 → '(元 72.40)' ──
+function fxRateK(cur){const s=curSym(cur);return s==='$'?(exchangeRates.usd||1380):s==='元'?(exchangeRates.cny||195):s==='円'?(exchangeRates.jpy||9.5):1;}
+function cpnTargetCur(o,c,live){
+  const f=c&&c.field;
+  if(live&&f){const lp=document.getElementById('cf-'+(PC_FIELD_ID[f]||f)+'-lp');const sel=lp&&lp.parentElement.querySelector('select');if(sel&&sel.value)return sel.value;}
+  const lps=(o&&o.localPrices)||{};if(f&&lps[f]&&lps[f].currency)return lps[f].currency;
+  const any=Object.values(lps).find(e=>e&&Number(e.amount)>0&&e.currency&&!isKRW(e.currency));if(any)return any.currency;
+  if(o&&o.localPrice&&o.localPrice.currency&&!isKRW(o.localPrice.currency))return o.localPrice.currency;
+  return null;
+}
+function cpnAltTxt(o,c,live){
+  const cur=c.currency||'₩',a=Number(c.amount)||0;if(!a||isKRW(cur))return '';
+  const t=cpnTargetCur(o,c,live);const sg=a<0?'−':'';
+  if(t&&!isKRW(t)&&curSym(t)!==curSym(cur)){const v=Math.abs(a)*fxRateK(cur)/fxRateK(t);return '('+sg+curSym(t)+' '+fmtForeign(Math.round(v*100)/100)+')';}
+  return '('+sg+'₩ '+Math.round(Math.abs(a)*fxRateK(cur)).toLocaleString('ko-KR')+')';
+}
 // 전체 쿠폰 원화 합 (부호 유지)
 function couponTotalKrw(o){return validCoupons(o).reduce((a,c)=>a+toKRW(Number(c.amount),c.currency||'₩',exchangeRates),0);}
 // 실제 차감액(음수 쿠폰의 절댓값 합, 원화 양수 반환) — 원화 단일쿠폰만. 외화 단일쿠폰은 외화 쪽에만 반영
@@ -2313,11 +2373,11 @@ function couponPosKrw(o){return validCoupons(o).reduce((a,c)=>{const k=toKRW(Num
 function cpnChipsHtml(o){
   const unit={'₩':'원','$':'달러','¥':'위안','$(달러)':'달러','¥(위안)':'위안','¥(엔)':'엔'};
   return validCoupons(o).map(c=>{const a=Number(c.amount);
-    return `<div onclick="openCouponPop(event,${o.id})" title="단일쿠폰 — 클릭하여 수정" style="cursor:pointer;display:flex;align-items:center;justify-content:center;width:74px;box-sizing:border-box;padding:0 4px;line-height:1.15;border-radius:8px;border:1px solid var(--yborder);background:var(--ydim);"><span style="font-size:12px;color:var(--yellow);font-family:'Space Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:66px;">${a.toLocaleString()}<span style="margin-left:2px;font-family:inherit;font-size:11px;">${unit[c.currency||'₩']||''}</span></span></div>`;}).join('');
+    return `<div onclick="openCouponPop(event,${o.id})" title="단일쿠폰 — 클릭하여 수정" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;width:74px;box-sizing:border-box;padding:0 4px;line-height:1.15;border-radius:8px;border:1px solid var(--yborder);background:var(--ydim);"><span style="font-size:12px;color:var(--yellow);font-family:'Space Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:66px;">${a.toLocaleString()}<span style="margin-left:2px;font-family:inherit;font-size:11px;">${unit[c.currency||'₩']||''}</span></span>${(()=>{const t=cpnAltTxt(o,c);return t?`<span class="cpn-alt-l">${t}</span>`:'';})()}</div>`;}).join('');
 }
 function couponCellText(o){
   const vc=validCoupons(o);if(!vc.length)return null;
-  return vc.map(c=>fmtCur(c.amount,c.currency)).join(' · '); // 장수로 묶지 않고 쿠폰마다 개별 표기
+  return vc.map(c=>{const t=cpnAltTxt(o,c);return fmtCur(c.amount,c.currency)+(t?' '+t:'');}).join(' · '); // 장수로 묶지 않고 쿠폰마다 개별 표기 (외화는 환산 괄호)
 }
 function feesOf(o){return (o&&Array.isArray(o.fees))?o.fees.filter(f=>f&&Number(f.amount)>0):[];}
 function feeTotal(o){return feesOf(o).reduce((a,f)=>a+(Number(f.amount)||0),0);}
@@ -3539,7 +3599,7 @@ function renderCouponPopRows(o){
         <select style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:12px;padding:3px 6px;outline:none;" onchange="setCouponField(${o.id},${i},'currency',this.value)">${couponCurOptions(c.currency)}</select>
         <input type="number" value="${c.amount||''}" placeholder="쿠폰 금액" style="flex:1;min-width:0;background:var(--surface);border:1px solid var(--yborder);border-radius:var(--rs);color:var(--yellow);font-size:13px;font-family:'Space Mono',monospace;padding:4px 8px;text-align:right;outline:none;" onchange="setCouponField(${o.id},${i},'amount',this.value)">
         <button onclick="removeCouponRow(${o.id},${i})" title="삭제" style="flex-shrink:0;width:24px;padding:4px 0;background:transparent;border:1px solid var(--border2);border-radius:var(--rs);color:var(--text3);cursor:pointer;font-family:inherit;">✕</button>
-      </div>`;
+      </div>${(()=>{const t=cpnAltTxt(o,c);return t?`<div class="cpn-alt mono" style="margin:1px 4px 0;">${t}</div>`:'';})()}`;
     });
   }
   box.innerHTML=h;
@@ -4492,7 +4552,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.11.05',['수정 창: 카드 할인·적립이 자동 적용된 뒤 쿠폰·포인트 + 버튼이 안 되던 문제 수정']],
+  ['26.11.05',['설정: 구매목록 보기 Classic / Wide — Wide 는 행 높이 2배, 큰 썸네일, 발매·도착일, 구매처, 결제 내역, 메모를 함께 표시','구매목록 외화 보기: 통화가 다른 외화 할인 쿠폰을 상품 외화로 환산해 할인액 옆 ( ) 로 표시','외화 쿠폰: 쿠폰 통화가 결제 외화와 다르면 그 외화로, 같으면 원화로 환산 금액을 괄호로 함께 표시 (수정 창 · 구매목록 쿠폰 칸 · 쿠폰 창 · 할인 탭)','수정 창 연동 강조를 한 가지 색으로 — 쿠폰·포인트·수수료·카드 칸·결제칸 중 하나에 올리면 연결된 것 전부 함께','수정 창: 카드 할인·적립이 자동 적용된 뒤 쿠폰·포인트 + 버튼이 안 되던 문제 수정']],
   ['26.11.04',['헤더: 구글 연결 중이면 토큰 남은 시간과 만료 시각 표시 (5분 이하면 노란색)']],
   ['26.11.03',['통계 막대그래프와 결제달력의 합계가 다르던 문제 수정 — 같은 결제 항목(기타비용 3~6·중고 배송비·수수료 포함, 날짜 없는 칸은 상품 결제일)으로 계산','롯데카드 브랜드 수수료: 센트 반올림 → 센트 버림 (청구서로 확인) · 끝처리에 \'센트 버림\' 추가','수정 창: 기타비용 칸의 통화·현지가 입력 크기를 다른 결제칸과 같게']],
   ['26.11.02',['카드·묶음 마법사: 결제금액 + 브랜드 수수료 + 해외결제 수수료 − 카드 할인 = 최종 결제금액 표시 (혜택을 바꾸면 바로 다시 계산)','카드 혜택 금액 구간: \'이상 ~ 미만\'으로 표시 · 경계 금액은 높은 쪽 구간에 포함 · 구간 요약 줄','롯데카드 프리셋: 해외이용수수료 0.2% 끊지 않음 · 브랜드 수수료는 센트 반올림 후 × 환율 (청구서로 확인)','카드사 수정: 브랜드 수수료 끝처리를 따로 정할 수 있게']],
@@ -4671,15 +4731,30 @@ function amLinkDrop(f){
   showToast(`${kind==='pt'?'포인트':'쿠폰'}${i+1}을 ${BM_FIELDS[f]||f}에 연동했어요 — 수정을 눌러 저장`,'success');
 }
 function amUnlink(kind,i){const arr=kind==='pt'?_amPoints:_amCoupons;if(arr[i]){delete arr[i].field;delete arr[i].base;kind==='pt'?renderAmPoints():renderAmCoupons();}}
+// ── 수정 창 연동 강조 (한 가지 색) — 쿠폰·포인트·수수료·카드 칸·결제칸 중 하나에 올리면 서로 연결된 것 전부 ──
+function amHlClear(){document.querySelectorAll('.pc-hl').forEach(e=>e.classList.remove('pc-hl'));document.querySelectorAll('.cost-field.pc-src').forEach(e=>e.classList.remove('pc-src'));}
+function amHlCodesOfField(o,f){const out=[];const sc='@'+o.id+':'+f;if(bundleCoupons[sc]&&bundleCoupons[sc].card)out.push(sc);
+  const c=String((o.costGroups||{})[f]||'');if(c&&bundleCoupons[c]&&bundleCoupons[c].card)out.push(c);return out;}
+function amHlFieldsOfCode(o,code){const bc=bundleCoupons[code];if(!bc)return [];if(bc.solo)return bc.solo.id===o.id?[bc.solo.f]:[];
+  return Object.entries(o.costGroups||{}).filter(([f,c])=>String(c)===code).map(([f])=>f);}
+function amHlRun(start){
+  amHlClear();const o=_addEditId!=null?orders.find(x=>x.id===_addEditId):null;
+  const F=new Set(start.fields||[]),C=new Set(start.codes||[]),I=new Set(start.fids||[]);
+  if(o){
+    for(let k=0;k<2;k++){   // 결제칸 ↔ 카드 ↔ 수수료 연결을 두 번 펼침
+      [...F].forEach(f=>amHlCodesOfField(o,f).forEach(c=>C.add(c)));
+      [...C].forEach(c=>{amHlFieldsOfCode(o,c).forEach(f=>F.add(f));const bc=bundleCoupons[c];((bc&&bc.card&&bc.card.feeInc)||[]).forEach(id=>I.add(id));});
+      document.querySelectorAll('.am-fee').forEach(e=>{if(I.has(e.dataset.fid)&&e.dataset.link)F.add(e.dataset.link);});
+    }
+  }
+  document.querySelectorAll('.am-cpn').forEach(e=>{if((e.dataset.link&&F.has(e.dataset.link))||(e.dataset.fid&&I.has(e.dataset.fid)))e.classList.add('pc-hl');});
+  document.querySelectorAll('.am-cardben').forEach(e=>{if(C.has(e.dataset.code))e.classList.add('pc-hl');});
+  F.forEach(f=>{const box=amFieldBox(f);if(box)box.classList.add('pc-src');});
+  if(start.el)start.el.classList.add('pc-hl');
+}
 function amLinkHl(el,on){
-  document.querySelectorAll('.cost-field.pc-src').forEach(e=>{e.classList.remove('pc-src');e.style.removeProperty('--pcc');});
-  document.querySelectorAll('.am-cpn.pc-hl').forEach(e=>e.classList.remove('pc-hl'));
-  document.querySelectorAll('.am-cardben.pc-hl').forEach(e=>e.classList.remove('pc-hl'));
-  if(on&&el.dataset.fid){el.classList.add('pc-hl');   // 수수료: 이 수수료를 포함한 카드 칸도
-    document.querySelectorAll('.am-cardben').forEach(e=>{const bc=bundleCoupons[e.dataset.code];if(bc&&bc.card&&(bc.card.feeInc||[]).includes(el.dataset.fid))e.classList.add('pc-hl');});}
-  if(!on||!el.dataset.link)return;
-  el.classList.add('pc-hl');const box=amFieldBox(el.dataset.link);
-  if(box){box.style.setProperty('--pcc',getComputedStyle(el).getPropertyValue('--pcc'));box.classList.add('pc-src');}
+  if(!on){amHlClear();return;}
+  amHlRun({el,fields:el.dataset.link?[el.dataset.link]:[],fids:el.dataset.fid?[el.dataset.fid]:[]});
 }
 // ── 수정 창 묶음그룹 칸: 클릭하면 그 결제일의 묶음을 골라 넣기 (+ 새 묶음 / 직접 입력) ──
 function amGrpPick(inp,f){
@@ -4792,12 +4867,8 @@ function amLinkSync(f){
 }
 // 결제칸 호버 → 그 결제에 연동된 쿠폰·포인트·카드 칸 강조
 function amFieldHl(f,on){
-  document.querySelectorAll('.am-cpn.pc-hl,.am-cardben.pc-hl').forEach(e=>e.classList.remove('pc-hl'));
-  if(!on)return;
-  document.querySelectorAll('.am-cpn').forEach(e=>{if(e.dataset.link===f)e.classList.add('pc-hl');});
-  const o=_addEditId!=null?orders.find(x=>x.id===_addEditId):null;if(!o)return;
-  const code=String((o.costGroups||{})[f]||''),sc='@'+o.id+':'+f;
-  document.querySelectorAll('.am-cardben').forEach(e=>{if(e.dataset.code===sc||(code&&e.dataset.code===code))e.classList.add('pc-hl');});
+  if(!on){amHlClear();return;}
+  amHlRun({fields:[f]});
 }
 // ── 모달 쿠폰 편집기 (모달-로컬 _amCoupons, 최대 4개) ──────────
 let _amCoupons=[];
@@ -4810,6 +4881,7 @@ function couponCardHtml(c,i){
       <input type="number" class="mono" value="${c.amount||''}" placeholder="0" style="flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:13px;font-weight:600;padding:6px 6px;text-align:right;outline:none;" oninput="amSetCoupon(${i},'amount',this.value)">
       <button type="button" onclick="amRemoveCoupon(${i})" title="삭제" style="flex-shrink:0;width:22px;height:28px;padding:0;line-height:1;background:transparent;border:none;color:var(--text3);cursor:pointer;font-family:inherit;">✕</button>
     </div>
+    <div class="cpn-alt mono" id="cpn-alt-${i}">${cpnAltTxt(_addEditId!=null?orders.find(x=>x.id===_addEditId):null,c,true)}</div>
   </div>`;
 }
 // "+" 카드 — 기타비용 추가 카드와 동일한 방식(고스트로 높이 일치)
@@ -4845,20 +4917,8 @@ function amAmtEl(f){const fid=PC_FIELD_ID[f]||f;const g=document.getElementById(
   if(box){const el=[...box.querySelectorAll('input')].find(i=>i.id&&i.id.startsWith('cf-'+fid)&&!/-(date|lp|grp)$/.test(i.id));if(el)return el;}
   return document.getElementById('cf-'+fid);}
 function pcHl(el,on){
-  document.querySelectorAll('.am-cardben.pc-hl').forEach(e=>e.classList.remove('pc-hl'));
-  document.querySelectorAll('.am-fee.pc-hl').forEach(e=>{e.classList.remove('pc-hl');e.style.setProperty('--pcc','var(--red)');});
-  document.querySelectorAll('.cost-field.pc-src').forEach(e=>{e.classList.remove('pc-src');e.style.removeProperty('--pcc');});
-  if(!on)return;
-  const code=el.dataset.code,col=el.style.getPropertyValue('--pcc');
-  const slots=[...document.querySelectorAll('.am-cardben')].filter(e=>e.dataset.code===code);   // 같은 결제(묶음·단일)에서 나온 칸끼리만
-  slots.forEach(e=>e.classList.add('pc-hl'));
-  const codes=new Set(slots.map(e=>e.dataset.code));
-  const o=_addEditId!=null?orders.find(x=>x.id===_addEditId):null;if(!o)return;
-  const mark=f=>{const inp=document.getElementById('cf-'+(PC_FIELD_ID[f]||f)+'-grp');const box=inp&&inp.closest('.cost-field');
-    if(box){box.style.setProperty('--pcc',col);box.classList.add('pc-src');}};
-  Object.entries(o.costGroups||{}).forEach(([f,c])=>{if(codes.has(String(c)))mark(f);});
-  codes.forEach(c=>{const bc=bundleCoupons[c];if(bc&&bc.solo&&bc.solo.id===o.id)mark(bc.solo.f);
-    const fi=new Set((bc&&bc.card&&bc.card.feeInc)||[]);if(fi.size)document.querySelectorAll('.am-fee').forEach(e=>{if(fi.has(e.dataset.fid)){e.style.setProperty('--pcc',col);e.classList.add('pc-hl');}});});
+  if(!on){amHlClear();return;}
+  amHlRun({el,codes:[el.dataset.code]});
 }
 // ── 수정 창 결제칸 '카드' 버튼 → 카드 혜택 마법사 ──
 const PC_FIELD_REV={ship:'shipping',full:'fullPayment'};
@@ -4961,6 +5021,7 @@ function amSetCoupon(i,field,val){
   if(!_amCoupons[i])return;
   if(field==='amount'){
     _amCoupons[i].amount=Number(val)||0; // 입력 포커스 유지 (재렌더 안 함)
+    {const el=document.getElementById('cpn-alt-'+i);if(el)el.textContent=cpnAltTxt(_addEditId!=null?orders.find(x=>x.id===_addEditId):null,_amCoupons[i],true);}
   }else{
     _amCoupons[i].currency=val;renderAmCoupons();
   }
@@ -6568,7 +6629,7 @@ function renderOrder(){
         const bShare=(couponDeduction(o)-couponDeductionKrw(o))+bundleKrwShare(o);
         if(bShare>0)parts.push(`<span class="badge bg-p" style="font-size:10px;cursor:pointer;white-space:nowrap;" title="묶음 할인 분담분 — 클릭하면 할인 탭" onclick="event.stopPropagation();const t=document.querySelector('.tab[onclick*=&quot;bundle&quot;]');if(t)switchTab('bundle',t);">🎟묶음 −￦ ${bShare.toLocaleString('ko-KR')}</span>`);
       }
-      validCoupons(o).forEach(c=>parts.push(`<span class="badge bg-y" style="font-size:10px;cursor:pointer;white-space:nowrap;" onclick="event.stopPropagation();openCouponPop(event,${o.id})">🎟 ${fmtCur(c.amount,c.currency)}</span>`));
+      validCoupons(o).forEach(c=>parts.push(`<span class="badge bg-y" style="font-size:10px;cursor:pointer;white-space:nowrap;" onclick="event.stopPropagation();openCouponPop(event,${o.id})">🎟 ${fmtCur(c.amount,c.currency)}${(()=>{const t=cpnAltTxt(o,c);return t?' <span style="opacity:.75;">'+t+'</span>':'';})()}</span>`));
       if(parts.length)couponCell=`<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">${parts.join('')}</div>`;
     }
     const FIG_TYPES_OPT=FIG_TYPES.map(t=>`<option value="${t}" ${t===o.figType?'selected':''}>${t}</option>`).join('');
@@ -6587,6 +6648,7 @@ function renderOrder(){
         onclick="event.stopPropagation();togglePayDatePopup(event,${o.id})"
 >
         <span class="pd-wrap${o.date?' has-rel':''}"${o.date?' title="예상발매일 '+o.date+'"':''}><span class="pd-a" style="font-size:14px;font-family:'Space Mono',monospace;white-space:nowrap;">${earliestPayDate(o)||'<span style="color:var(--text3)">-</span>'}</span>${o.date?`<span class="pd-b"><div class="l">예상발매일</div><div class="d">${o.date}</div></span>`:''}</span>
+        ${wideDateHtml(o)}
       </td>
       <td style="font-size:15px;position:relative;width:130px;min-width:130px;">
         <div contenteditable="true" spellcheck="false"
@@ -6597,6 +6659,7 @@ function renderOrder(){
           onfocus="event.stopPropagation();"
           onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}event.stopPropagation();"
           >${o.maker?o.maker.replace(/\s*\((.+)\)/,'<br><span style="font-size:12px;color:var(--text2);">($1)</span>'):'-'}</div>
+        ${o.storeName?`<div class="w-only w-sub" title="구매처">🛒 ${pcEsc(o.storeName)}</div>`:''}
       </td>
       <td class="row-name" style="font-weight:500;width:155px;max-width:155px;overflow:hidden;"
         onclick="event.stopPropagation()"
@@ -6606,9 +6669,10 @@ function renderOrder(){
           onmousedown="event.stopPropagation();openCharDropdown(this,${o.id},event);this.focus();" oninput="openCharDropdown(this,${o.id},event)"
           onblur="const o=orders.find(i=>i.id===${o.id});if(o){o.charName=this.value.trim();autoSave();}">
         ${o.subName?`<div style="font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;padding-left:1px;cursor:default;" onmouseenter="showSubNamePop(event,this)" onmouseleave="hideSubNamePop()">${o.subName}</div>`:''}
+        ${(o.memo||'').trim()?`<div class="w-only w-memo" title="${pcEsc(o.memo)}">${pcEsc((o.memo||'').trim())}</div>`:''}
       </td>
    
-      <td class="mono" style="text-align:right;font-size:15px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation();openPriceModal(${o.id})" onmouseenter="showPricePop(event,${o.id})" onmouseleave="hidePricePop()" title="클릭 시 수정">${costCellHtml(o,tc)}</td>
+      <td class="mono" style="text-align:right;font-size:15px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation();openPriceModal(${o.id})" onmouseenter="showPricePop(event,${o.id})" onmouseleave="hidePricePop()" title="클릭 시 수정">${costCellHtml(o,tc)}${widePayHtml(o)}</td>
       <td style="text-align:center;" onclick="event.stopPropagation()">
         <button onclick="openAddModal(${o.id})" style="font-size:12px;padding:2px 8px;background:var(--adim);border:1px solid var(--aborder);border-radius:20px;color:var(--accent);cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;">상세</button>
       </td>
@@ -9510,6 +9574,7 @@ function renderBundle(){
     const f=foreignTotal(o);
     let fx='<span style="font-size:11px;color:var(--text3);">외화 없음</span>';
     if(f){const sym=curSym(f.currency);const s=cpnSums(o,false,sym);const post=f.amount-s.neg;fx=bdSplit(f.amount+s.pos,s.pos+s.neg,post,n=>fmtForeignU(n,f.currency));}
+    {const mis=validCoupons(o).filter(c=>!isKRW(c.currency||'₩')&&(!f||curSym(c.currency)!==curSym(f.currency)));if(mis.length)fx+=`<div style="font-size:11px;color:var(--yellow);opacity:.85;margin-top:2px;">쿠폰 ${mis.map(c=>fmtCur(c.amount,c.currency)+' '+cpnAltTxt(o,c)).join(' · ')}</div>`;}
     const cpnTxt=[bdAmtList(validCoupons(o)),...sdl.map(x=>x.name+' 카드할인 −￦ '+x.amount.toLocaleString('ko-KR'))].filter(Boolean).join(' · ');
     const nC=validCoupons(o).length;
     return{kind:'single',html:`<div class="bundle-group" style="border-color:var(--yborder);">
