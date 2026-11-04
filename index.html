@@ -185,12 +185,15 @@ body.list-wide #tbody-order .wrow .w-char{font-size:19px !important;font-weight:
 body.list-wide #tbody-order .wrow .w-sel{width:auto !important;min-width:0;}
 .w-scale{white-space:nowrap;flex-shrink:0;}
 .w-detail{white-space:nowrap;}
-.wrow .w-date{width:160px;text-align:center;cursor:pointer;}
+.wrow .w-date{width:160px;min-width:150px;text-align:center;cursor:pointer;white-space:nowrap;}
 .w-lbl{font-size:10px;color:var(--text3);font-family:'Noto Sans KR',sans-serif;}
-.w-pd{font-size:19px;font-weight:700;}
+.w-pd{font-size:19px;font-weight:700;white-space:nowrap;}
 .w-rd{font-size:14px;color:var(--text2);}
-.wrow .w-names{width:24%;}
-.wrow .w-attrs{width:17%;}
+.wrow .w-selc{width:40px;}
+.wrow .w-names{width:12%;min-width:150px;max-width:220px;}
+.wrow .w-attrs{width:auto !important;text-align:center;}
+.w-attrs-in{display:inline-block;text-align:left;}
+.wrow .w-names .w-maker,.wrow .w-names .w-subname{max-width:220px;}
 .w-attr{display:flex;align-items:center;gap:8px;margin:4px 0;}
 .w-attr>span{flex:0 0 52px;font-size:11px;color:var(--text3);}
 .w-brk{font-size:12px;line-height:1.55;color:var(--text2);padding-bottom:6px;margin-bottom:6px;border-bottom:1px dashed var(--border2);}
@@ -213,6 +216,7 @@ body.list-wide #tbody-order .wrow .w-sel{width:auto !important;min-width:0;}
 .wrow .w-act{width:60px;text-align:center;}
 .w-detail{font-size:12px;padding:3px 10px;background:var(--adim);border:1px solid var(--aborder);border-radius:20px;color:var(--accent);cursor:pointer;font-family:inherit;font-weight:600;display:block;margin:0 auto 10px;}
 #order-thead tr.wide-head th{vertical-align:middle;}
+#order-thead tr.wide-head th.wh-sel{width:40px;}
 .wh-title{font-size:11px;color:var(--text2);margin-bottom:3px;}
 .wh-box{display:flex;flex-wrap:wrap;gap:4px 10px;justify-content:center;}
 .wh-grp{position:relative;}
@@ -2374,7 +2378,7 @@ function wideRowHtml(o,v){
   const SH={pre:'선행예약',official:'정식예약',balance:'잔금',fullPayment:'전액결제',used:'중고거래',shipping:'배송비'};
   let fi=0;const es=payEntriesOf(o).map(e=>({...e,lb:e.field==='fee'?'수수료'+(++fi):(SH[e.field]||(e.field.startsWith('extra')?'기타'+(e.field==='extra'?1:e.field.slice(5)):e.label))}));
   return `<tr class="main-row wrow${o.released?' released':''}" data-oid="${o.id}">
-    <td style="padding:4px 0;text-align:center;vertical-align:middle;" onclick="event.stopPropagation()">
+    <td class="w-selc" style="padding:4px 0;text-align:center;vertical-align:middle;" onclick="event.stopPropagation()">
       <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span class="drag-grip" data-oid="${o.id}" title="드래그하여 순서 변경">⠿</span>
       <input type="checkbox" class="row-sel chk-blue" data-oid="${o.id}" ${selectedIds.has(o.id)?'checked':''} onclick="event.stopPropagation();toggleSelect(${o.id},this.checked)" style="display:block;margin:0 auto;"></div></td>
     <td class="w-thumb" onclick="event.stopPropagation()">${imgThumbHtml(o)}</td>
@@ -2389,10 +2393,10 @@ function wideRowHtml(o,v){
       <div class="w-maker">${o.maker?pcEsc(o.maker):'<span style="color:var(--text3)">상호명 없음</span>'}</div>
       ${o.subName?`<div class="w-subname">${pcEsc(o.subName)}</div>`:''}
       ${(o.memo||'').trim()?`<div class="w-memo" title="${pcEsc(o.memo)}">${pcEsc((o.memo||'').trim())}</div>`:''}</td>
-    <td class="w-attrs" onclick="event.stopPropagation()">
+    <td class="w-attrs" onclick="event.stopPropagation()"><div class="w-attrs-in">
       <div class="w-attr"><span>종류</span>${sel(v.FIG_TYPES_OPT,v.figSelColor,`const o=orders.find(i=>i.id===${o.id});if(o){o.figType=this.value;renderOrder();autoSave();}`)}</div>
       <div class="w-attr"><span>스케일</span><b class="w-scale" style="color:${o.scale?'var(--text)':'var(--text3)'};" onclick="scPick(event,'${o.scale||'(없음)'}',v=>{const ord=orders.find(i=>i.id===${o.id});if(ord){ord.scale=v==='(없음)'?'':v;autoSave();renderOrder();}})">${o.scale?scaleLabel(o.scale):'(없음)'}</b></div>
-      <div class="w-attr"><span>구매유형</span>${sel(v.PT_OPT,v.ptSelColor,`const o=orders.find(i=>i.id===${o.id});if(o){o.purchaseType=this.value;renderOrder();autoSave();}`)}</div></td>
+      <div class="w-attr"><span>구매유형</span>${sel(v.PT_OPT,v.ptSelColor,`const o=orders.find(i=>i.id===${o.id});if(o){o.purchaseType=this.value;renderOrder();autoSave();}`)}</div></div></td>
     <td class="w-money" onclick="event.stopPropagation()">
       <div class="w-brk">${es.length?es.map(e=>`<div class="${e.field==='fee'?'fee':''}"><span>${e.lb}</span><b class="mono">${e.amt.toLocaleString('ko-KR')}</b></div>`).join(''):'<div><span>결제 없음</span></div>'}</div>
       <div class="mono w-cost" onclick="openPriceModal(${o.id})" onmouseenter="showPricePop(event,${o.id})" onmouseleave="hidePricePop()" title="클릭 시 수정">${costCellHtml(o,v.tc)}</div></td>
