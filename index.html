@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta name="build" content="2026-11-10 02:05">
+<meta name="build" content="2026-11-12 00:55">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>피규어 구매 리스트 v125</title>
@@ -169,6 +169,17 @@ th{background:var(--surface2);color:var(--text);font-weight:600;font-size:13px;t
 th.sortable{cursor:pointer;user-select:none;}th.sortable:hover{color:var(--text);}
 th.sort-asc::after{content:' ▲';font-size:9px;color:var(--accent);}
 th.sort-desc::after{content:' ▼';font-size:9px;color:var(--accent);}
+#th-pdate{white-space:nowrap;}
+#th-pdate.pds-on{color:var(--accent);}
+#th-pdate .pds-arr{font-size:9px;margin-left:3px;}
+#pdate-sort-pop{position:fixed;z-index:3000;background:var(--surface2);border:1px solid var(--accent);border-radius:10px;padding:8px;box-shadow:0 8px 24px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:8px;min-width:230px;}
+#pdate-sort-pop .pds-tt{font-size:12px;font-weight:700;color:var(--text);margin:0 2px 4px;}
+#pdate-sort-pop .pds-tt span{font-weight:400;color:var(--text3);font-size:11px;margin-left:6px;}
+#pdate-sort-pop .pds-row{display:flex;gap:6px;}
+#pdate-sort-pop .pds-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:6px 10px;border-radius:7px;border:1px solid var(--border);background:var(--surface3);color:var(--text2);font-size:12px;cursor:pointer;white-space:nowrap;font-family:inherit;}
+#pdate-sort-pop .pds-btn i{font-style:normal;font-size:9px;opacity:.8;}
+#pdate-sort-pop .pds-btn:hover{border-color:var(--accent);color:var(--text);}
+#pdate-sort-pop .pds-btn.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;}
 td{padding:7px 9px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text);}
 /* 세그먼트 컨트롤 (좌우 슬라이드 토글) */
 .seg{position:relative;display:inline-flex;background:var(--surface3);border:1px solid var(--border);border-radius:999px;padding:3px;flex-shrink:0;}
@@ -1374,6 +1385,10 @@ body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-o
       <select id="m-sort" onchange="mSetSort(this.value)" aria-label="정렬">
         <option value="pdate:-1">결제일 최신순</option>
         <option value="pdate:1">결제일 오래된순</option>
+        <option value="ldate:-1">최근 결제일 최신순</option>
+        <option value="ldate:1">최근 결제일 오래된순</option>
+        <option value="added:-1">최신 입력순</option>
+        <option value="added:1">오래된 입력순</option>
         <option value="total:-1">총비용 높은순</option>
         <option value="total:1">총비용 낮은순</option>
         <option value="charName:1">이름순</option>
@@ -1390,7 +1405,7 @@ body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-o
           <th style="width:68px;background:var(--surface2);vertical-align:middle;"><span id="img-lock-btn" onclick="toggleImgLock()" title="썸네일 확대 팝업 잠금" style="cursor:pointer;font-size:15px;display:inline-block;line-height:1;user-select:none;"></span></th>
           <th style="width:95px;">
             <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
-              <span class="sortable" onclick="setSort('pdate')" id="th-pdate">결제일</span>
+              <span class="sortable" onclick="openPdateSortPop(event)" id="th-pdate" title="정렬 방식 선택">결제일</span>
               <span onclick="openColFilter('pdate')" title="필터" style="cursor:pointer;font-size:10px;opacity:.6;padding:1px 3px;border-radius:3px;" id="cf-btn-pdate">▼</span>
             </div>
             <div id="cf-pdate" style="display:none;position:absolute;top:100%;left:0;margin-top:2px;z-index:200;background:var(--surface2);border:1px solid var(--accent);border-radius:var(--rs);min-width:120px;max-height:200px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.4);"></div>
@@ -2479,7 +2494,7 @@ function costCellHtml(o,tc){
   let misH='';
   if(f){const by={};validCoupons(o).filter(c=>Number(c.amount)&&!isKRW(c.currency||'₩')&&curSym(c.currency)!==sym).forEach(c=>{const s2=curSym(c.currency);(by[s2]=by[s2]||{cur:c.currency,v:0}).v+=Math.abs(Number(c.amount));});
     misH=Object.entries(by).map(([s2,x])=>{const cc=curColor(x.cur)||'var(--text2)';
-      return `<div title="결제 통화(${sym})와 다른 ${s2} 쿠폰 — 총비용에는 반영되지 않아요" style="display:flex;justify-content:flex-end;margin-top:2px;line-height:1;"><span style="display:inline-flex;align-items:baseline;gap:3px;font-size:11px;font-weight:600;color:${cc};border:1px dashed ${cc};border-radius:4px;padding:1px 4px;opacity:.9;"><span style="font-size:9px;">▽</span>${s2} ${(Math.round(x.v*100)/100).toLocaleString('ko-KR',{maximumFractionDigits:2})}</span></div>`;}).join('');}
+      return `<div title="결제 통화(${sym})와 다른 ${s2} 쿠폰 — 총비용에는 반영되지 않아요" style="display:flex;justify-content:flex-end;margin-top:1px;line-height:1;"><span style="display:inline-flex;align-items:baseline;gap:3px;font-size:11px;font-weight:600;color:${cc};"><span style="font-size:9px;">▽</span>${s2} ${(Math.round(x.v*100)/100).toLocaleString('ko-KR',{maximumFractionDigits:2})}</span></div>`;}).join('');}
   // 포인트 획득금액 (초록색, 할인액과 동일 폰트 스타일)
   const pKrw=pointTotalKrw(o);
   const pStr=pKrw?pKrw.toLocaleString('ko-KR'):'';
@@ -4794,7 +4809,8 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.11.10',['구매목록 쿠폰 칸: 원화 쿠폰과 묶음 코드만 표시 — 외화(위안·달러 등) 쿠폰은 총비용 외화 보기에서 할인액(▼)으로','외화 보기 총비용: 결제 통화와 다른 외화 쿠폰은 총비용에서 빼지 않고 쿠폰 통화 그대로 액수만 따로 표시 (점선 테두리 + ▽, 예: 元 결제에 $ 쿠폰)','묶음 수수료 분배: 비율로 내림한 뒤 남는 1원을 소수점 아래가 큰 결제부터 나눔 — 같은 금액이면 같은 수수료 (예: 164원 → 82/82, 전에는 81/83)','묶음 마법사: 수정 창이 열린 상품은 수수료가 창에만 들어가 \'수정\'을 안 누르고 닫으면 빠지던 문제 수정 — 이제 상품에 바로 저장']],
+  ['26.11.12',['구매목록 결제일 정렬: 결제일 머리글을 누르면 정렬 창 — 최초 결제일 / 최근 결제일(결제 항목 중 가장 최근 날짜) / 입력순(목록에 추가한 순서), 각각 최신·오래된 순','머리글에 지금 정렬 방식 표시 (결제일 / 최근결제일 / 입력순 + ▲▼), 모바일 정렬 목록에도 추가']],
+  ['26.11.10',['구매목록 쿠폰 칸: 원화 쿠폰과 묶음 코드만 표시 — 외화(위안·달러 등) 쿠폰은 총비용 외화 보기에서 할인액(▼)으로','외화 보기 총비용: 결제 통화와 다른 외화 쿠폰은 총비용에서 빼지 않고 쿠폰 통화 그대로 액수만 따로 표시 (▽ + 쿠폰 통화 색, 예: 元 결제에 $ 쿠폰 — 같은 통화 쿠폰 ▼ 와 함께 표시)','묶음 수수료 분배: 비율로 내림한 뒤 남는 1원을 소수점 아래가 큰 결제부터 나눔 — 같은 금액이면 같은 수수료 (예: 164원 → 82/82, 전에는 81/83)','묶음 마법사: 수정 창이 열린 상품은 수수료가 창에만 들어가 \'수정\'을 안 누르고 닫으면 빠지던 문제 수정 — 이제 상품에 바로 저장']],
   ['26.11.05',['Wide 결제 내역: 항목이 많아 칸 높이를 넘기면 일부만 보이고 \'… 외 N개\' 표시 — 누르면 아래로 펼침 / 접기','Wide 보기: 열 구성 — 썸네일 / 결제일·발매일·상태 / 캐릭터명(크게)·상호명·피규어명·상세 / 종류·스케일·유형 / 결제 내역(항목별)·총비용 / 쿠폰 / 삭제 (정렬·필터 버튼은 그대로)','Wide 썸네일: 지정한 구간을 약 70% 배율로 넓게 (사진 밖으로는 안 나가고 반대쪽을 더 포함)','쿠폰·포인트·수수료 한도 4개 → 10개','수정 창 오른쪽 창: 결제상세(원화 환산) / 결제내역 전환 — 결제내역은 이 상품의 결제를 날짜순으로, 연동된 쿠폰·포인트·수수료·카드 혜택과 묶음으로 함께 결제한 상품(썸네일)까지 표시','설정: 구매목록 보기 Classic / Wide — Wide 는 행 높이 2배, 큰 썸네일, 발매·도착일, 구매처, 결제 내역, 메모를 함께 표시','구매목록 외화 보기: 통화가 다른 외화 할인 쿠폰을 상품 외화로 환산해 할인액 옆 ( ) 로 표시','외화 쿠폰: 쿠폰 통화가 결제 외화와 다르면 그 외화로, 같으면 원화로 환산 금액을 괄호로 함께 표시 (수정 창 · 구매목록 쿠폰 칸 · 쿠폰 창 · 할인 탭)','수정 창 연동 강조를 한 가지 색으로 — 쿠폰·포인트·수수료·카드 칸·결제칸 중 하나에 올리면 연결된 것 전부 함께','수정 창: 카드 할인·적립이 자동 적용된 뒤 쿠폰·포인트 + 버튼이 안 되던 문제 수정']],
   ['26.11.04',['헤더: 구글 연결 중이면 토큰 남은 시간과 만료 시각 표시 (5분 이하면 노란색)']],
   ['26.11.03',['통계 막대그래프와 결제달력의 합계가 다르던 문제 수정 — 같은 결제 항목(기타비용 3~6·중고 배송비·수수료 포함, 날짜 없는 칸은 상품 결제일)으로 계산','롯데카드 브랜드 수수료: 센트 반올림 → 센트 버림 (청구서로 확인) · 끝처리에 \'센트 버림\' 추가','수정 창: 기타비용 칸의 통화·현지가 입력 크기를 다른 결제칸과 같게']],
@@ -5732,14 +5748,49 @@ function setSortFixed(k,dir){
     const el=document.getElementById('th-'+x);if(!el)return;
     el.className='sortable'+(x===sortKey?' '+(sortDir===1?'sort-asc':'sort-desc'):'');
   });
+  pdateSortLabel();
   renderOrder();
 }
+// ── 결제일 정렬 팝업: 최초 결제일 / 최근 결제일 / 입력순 × 최신·오래된 ──
+const PDATE_SORTS=[
+  ['최초 결제일',[['pdate',-1,'최신순'],['pdate',1,'오래된순']]],
+  ['최근 결제일',[['ldate',-1,'최신순'],['ldate',1,'오래된순']],'결제 항목 중 가장 최근 날짜 기준'],
+  ['입력순',[['added',-1,'최신 입력순'],['added',1,'오래된 입력순']],'목록에 추가한 순서'],
+];
+function pdateSortLabel(){
+  const el=document.getElementById('th-pdate');if(!el)return;
+  const on=['pdate','ldate','added'].includes(sortKey);
+  const nm=sortKey==='ldate'?'최근결제일':sortKey==='added'?'입력순':'결제일';
+  el.innerHTML=nm+(on?`<span class="pds-arr">${sortDir===1?'▲':'▼'}</span>`:'');
+  el.classList.toggle('pds-on',on);
+}
+function closePdateSortPop(){const p=document.getElementById('pdate-sort-pop');if(p)p.remove();document.removeEventListener('mousedown',_pdsOut,true);document.removeEventListener('keydown',_pdsKey,true);}
+function _pdsOut(e){const p=document.getElementById('pdate-sort-pop');if(p&&!p.contains(e.target)&&e.target.id!=='th-pdate'&&!e.target.closest('#th-pdate'))closePdateSortPop();}
+function _pdsKey(e){if(e.key==='Escape'){e.stopPropagation();closePdateSortPop();}}
+function openPdateSortPop(e){
+  if(e)e.stopPropagation();
+  if(document.getElementById('pdate-sort-pop')){closePdateSortPop();return;}
+  const anchor=document.getElementById('th-pdate');const r=anchor.getBoundingClientRect();
+  const p=document.createElement('div');p.id='pdate-sort-pop';
+  p.innerHTML=PDATE_SORTS.map(([t,opts,hint])=>`<div class="pds-sec"><div class="pds-tt">${t}${hint?`<span>${hint}</span>`:''}</div><div class="pds-row">${
+    opts.map(([k,d,lbl])=>`<button type="button" class="pds-btn${sortKey===k&&sortDir===d?' on':''}" onclick="pickPdateSort('${k}',${d})">${lbl}<i>${d===1?'▲':'▼'}</i></button>`).join('')}</div></div>`).join('');
+  document.body.appendChild(p);
+  const w=p.offsetWidth;let x=r.left+r.width/2-w/2;x=Math.max(8,Math.min(x,innerWidth-w-8));
+  p.style.left=x+'px';p.style.top=(r.bottom+6)+'px';
+  setTimeout(()=>{document.addEventListener('mousedown',_pdsOut,true);document.addEventListener('keydown',_pdsKey,true);},0);
+}
+function pickPdateSort(k,d){closePdateSortPop();setSortFixedOnly(k,d);}
+// 정렬만 바꿈 (setSortFixed 와 달리 배송 상태 자동 전환 없음)
+function setSortFixedOnly(k,d){sortKey=k;sortDir=d;
+  ['date','pdate','price','total','maker','charName','purchaseType','figType','scale'].forEach(x=>{const el=document.getElementById('th-'+x);if(!el)return;el.className='sortable'+(x===sortKey?' '+(sortDir===1?'sort-asc':'sort-desc'):'');});
+  pdateSortLabel();renderOrder();}
 function setSort(k){
   if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1;}
   ['date','pdate','price','total','maker','charName','purchaseType','figType'].forEach(x=>{
     const el=document.getElementById('th-'+x);if(!el)return;
     el.className='sortable'+(x===sortKey?' '+(sortDir===1?'sort-asc':'sort-desc'):'');
   });
+  pdateSortLabel();
   renderOrder();
 }
 
@@ -6005,6 +6056,8 @@ function getSorted(){
   data.sort((a,b)=>{
     if(sortKey==='date')return(parseDate(a.date)-parseDate(b.date))*sortDir;
     if(sortKey==='pdate')return(parseDate(earliestPayDate(a))-parseDate(earliestPayDate(b)))*sortDir;
+    if(sortKey==='ldate')return(parseDate(latestPayDate(a))-parseDate(latestPayDate(b)))*sortDir;
+    if(sortKey==='added')return((Number(a.id)||0)-(Number(b.id)||0))*sortDir;
     if(sortKey==='price')return(mainPrice(a)-mainPrice(b))*sortDir;
     if(sortKey==='total')return(totalCost(a)-totalCost(b))*sortDir;
     // 문자열 ㄱㄴㄷ 정렬
@@ -6033,6 +6086,8 @@ function moveOrderRelative(dragId,targetId,after){
   const sameBucket=(a,b)=>{
     if(!a||!b)return false;
     if(sortKey==='pdate')return (earliestPayDate(a)||'')===(earliestPayDate(b)||'');
+    if(sortKey==='ldate')return (latestPayDate(a)||'')===(latestPayDate(b)||'');
+    if(sortKey==='added')return false; // 입력순은 순서가 정해져 있어 끌어서 바꾸지 않음
     if(sortKey==='date')return (a.date||'')===(b.date||'');
     return true; // 그 외 정렬은 자유 재배치 허용
   };
@@ -7004,7 +7059,7 @@ function mSyncBar(){
   const r=document.getElementById('m-filter-reset');
   if(r)r.style.display=Object.values(colFilters).some(Boolean)?'':'none';
 }
-function mSetSort(v){const [k,d]=v.split(':');sortKey=k;sortDir=Number(d)||1;renderOrder();}
+function mSetSort(v){const [k,d]=v.split(':');sortKey=k;sortDir=Number(d)||1;pdateSortLabel();renderOrder();}
 function mSetStatus(v){colFilters.status=v;renderOrder();}
 function mResetFilters(){Object.keys(colFilters).forEach(k=>colFilters[k]='');renderOrder();}
 // ☰ 메뉴
