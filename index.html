@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta name="build" content="2026-11-25 01:55">
+<meta name="build" content="2026-11-25 02:30">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>피규어 구매 리스트 v125</title>
@@ -263,6 +263,22 @@ body:not(.list-wide) .w-memo{display:none !important;}
 .lstyle-tog{display:inline-flex;border:1px solid var(--border2);border-radius:20px;overflow:hidden;flex-shrink:0;}
 .lstyle-tog button{border:none;background:transparent;color:var(--text3);font-family:inherit;font-size:12px;font-weight:700;padding:6px 14px;cursor:pointer;}
 .lstyle-tog button.on{background:var(--accent);color:#fff;}
+/* ── 애니메이션 부담 줄이기 ──
+   (기본·상시) 창이 비활성/숨김이면 모든 애니메이션 일시정지 → 게임 등 다른 프로그램을 쓰는 동안 화면을 다시 그리지 않음 */
+body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animation-play-state:paused !important;}
+/* (설정) 가벼움: 그림자·그라데이션 각도를 움직이는 대신 회전·투명도만 움직임 (그래픽 카드가 그린 그림을 옮기기만 함) */
+body.anim-lite .ship-glow{animation:none;box-shadow:0 0 0 1px rgba(78,207,207,.3),0 0 12px rgba(78,207,207,.45);}
+body.anim-lite .ship-glow::after{animation:shipFade 2.4s ease-in-out infinite;will-change:opacity;
+  background:linear-gradient(135deg,#ffffff 0%,#4ecfcf 22%,rgba(78,207,207,.2) 50%,#4ecfcf 78%,#ffffff 100%);}
+@keyframes shipFade{0%,100%{opacity:.35;}50%{opacity:1;}}
+body.anim-lite .gd-orb.on{animation:none;box-shadow:0 0 10px rgba(123,108,255,.45);}
+body.anim-lite .gd-orb.on::before{will-change:transform;}
+body.anim-lite .gd-orb.on svg{animation:none;filter:drop-shadow(0 0 3px rgba(123,108,255,.6));}
+/* (설정) 끄기: 움직임 없이 정지된 모양만 */
+body.anim-off .ship-glow,body.anim-off .ship-glow::after,body.anim-off .gd-orb.on,body.anim-off .gd-orb.on::before,body.anim-off .gd-orb.on svg,body.anim-off .gd-unsynced .gd-u-dot{animation:none !important;}
+body.anim-off .ship-glow{box-shadow:0 0 0 1px rgba(78,207,207,.35),0 0 12px rgba(78,207,207,.45);}
+body.anim-off .ship-glow::after{background:linear-gradient(135deg,#ffffff 0%,#4ecfcf 22%,rgba(78,207,207,.2) 50%,#4ecfcf 78%,#ffffff 100%);opacity:.8;}
+body.anim-off .gd-orb.on{box-shadow:0 0 10px rgba(123,108,255,.45);}
 /* 순서 변경 드래그 */
 .drag-grip{display:inline-block;color:var(--text3);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;font-size:14px;line-height:1;padding:2px 4px;border-radius:4px;}
 .drag-grip:hover{color:var(--accent);background:rgba(123,108,255,.12);}
@@ -1743,6 +1759,11 @@ body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-o
         <span style="font-size:12px;color:var(--text3);flex:1;">Wide = 행 높이 2배 · 큰 썸네일 · 발매/도착일·구매처·결제 내역·메모를 함께 표시</span>
         <div class="lstyle-tog"><button type="button" data-lstyle="classic" onclick="setListStyle('classic')">Classic</button><button type="button" data-lstyle="wide" onclick="setListStyle('wide')">Wide</button></div>
       </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+        <span style="font-size:13px;color:var(--text2);flex-shrink:0;">애니메이션</span>
+        <span id="anim-desc" style="font-size:12px;color:var(--text3);flex:1;"></span>
+        <div class="lstyle-tog"><button type="button" data-anim="full" onclick="setAnimMode('full')">기본</button><button type="button" data-anim="lite" onclick="setAnimMode('lite')">가벼움</button><button type="button" data-anim="off" onclick="setAnimMode('off')">끄기</button></div>
+      </div>
     </div>
     <div class="manage-grid" style="grid-template-columns:1fr 1fr 1fr;">
       <!-- 캐릭터명 관리 -->
@@ -2412,6 +2433,16 @@ function wideHeadApply(on){wideHeadLabels(on);
 }
 function applyListStyle(){document.body.classList.toggle('list-wide',_listStyle==='wide');wideHeadApply(_listStyle==='wide');
   document.querySelectorAll('[data-lstyle]').forEach(b=>b.classList.toggle('on',b.dataset.lstyle===_listStyle));}
+// ── 애니메이션 모드: full(기본) / lite(가벼움) / off(끄기) + 창 비활성 시 자동 일시정지(상시) ──
+let _animMode=(()=>{try{const v=localStorage.getItem('animMode');return v==='lite'||v==='off'?v:'full';}catch(e){return 'full';}})();
+const ANIM_DESC={full:'배송 중 테두리 회전·빛 맥동 그대로 · 다른 창을 쓰는 동안은 자동으로 멈춤',lite:'모양은 비슷하게, 회전·투명도만 움직여 그리기 부담을 줄임 · 다른 창을 쓰는 동안은 자동으로 멈춤',off:'움직임 없이 정지된 모양만 표시'};
+function applyAnimMode(){const b=document.body;if(!b)return;b.classList.toggle('anim-lite',_animMode==='lite');b.classList.toggle('anim-off',_animMode==='off');
+  document.querySelectorAll('[data-anim]').forEach(x=>x.classList.toggle('on',x.dataset.anim===_animMode));const d=document.getElementById('anim-desc');if(d)d.textContent=ANIM_DESC[_animMode];}
+function setAnimMode(v){_animMode=v==='lite'||v==='off'?v:'full';try{localStorage.setItem('animMode',_animMode);}catch(e){}applyAnimMode();
+  showToast(_animMode==='off'?'애니메이션을 껐어요':_animMode==='lite'?'애니메이션을 가벼운 방식으로 바꿨어요':'애니메이션을 기본으로 바꿨어요','success');}
+function animPauseSync(){const b=document.body;if(!b)return;b.classList.toggle('anim-paused',document.hidden||!document.hasFocus());}
+window.addEventListener('blur',animPauseSync);window.addEventListener('focus',animPauseSync);document.addEventListener('visibilitychange',animPauseSync);
+document.addEventListener('DOMContentLoaded',()=>{applyAnimMode();animPauseSync();});
 function setListStyle(v){_listStyle=v==='wide'?'wide':'classic';try{localStorage.setItem('listStyle',_listStyle);}catch(e){}applyListStyle();renderOrder();
   showToast(_listStyle==='wide'?'구매목록을 Wide 보기로 바꿨어요':'구매목록을 Classic 보기로 바꿨어요','success');}
 document.addEventListener('DOMContentLoaded',applyListStyle);
@@ -4847,7 +4878,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.11.25',['국제 브랜드에 \'비자 1.0%\' 추가 — 같은 비자라도 카드마다 브랜드율이 다름 (KB 굿데이 올림 1.0% · 롯데·삼성 1.1%)','KB 굿데이 올림(비자) 청구 사례 23·24 1원 단위 일치 확인 (브랜드·서비스 수수료 모두 센트 반올림)']],
+  ['26.11.25',['애니메이션 부담 줄이기: 브라우저 창이 비활성(게임 등 다른 프로그램 사용 중)이거나 숨겨지면 모든 애니메이션 자동 일시정지 — 다시 클릭하면 이어서','설정 > 앱 설정에 \'애니메이션\' 추가 — 기본 / 가벼움(회전·투명도만 움직여 그리기 부담↓) / 끄기(정지된 모양만)','국제 브랜드에 \'비자 1.0%\' 추가 — 같은 비자라도 카드마다 브랜드율이 다름 (KB 굿데이 올림 1.0% · 롯데·삼성 1.1%)','KB 굿데이 올림(비자) 청구 사례 23·24 1원 단위 일치 확인 (브랜드·서비스 수수료 모두 센트 반올림)']],
   ['26.11.21',['카드 혜택 한도: 같은 날 결제끼리는 먼저 카드 혜택을 넣은 결제가 한도를 먼저 다 씀 (전에는 코드 순이라 나중에 넣은 배송비가 앞서 한도를 나눠 가짐)','예전 기록(입력 시각 없음)은 같은 상품이면 결제칸 순서(예약→잔금→전액→중고거래→배송비→기타)로 — 불러올 때 한 번 다시 계산']],
   ['26.11.17',['삼성·농협: 브랜드 수수료가 표시 USD에 포함된 카드사로 지정 — 브랜드 수수료를 따로 붙이지 않고, 카드사 수수료 기준 = USD ÷ (1 + 카드의 국제 브랜드율): 삼성 비자 ÷1.011 · 삼성 유니온 ÷1.008 · 농협 유니온 ÷1.006 (카드에 브랜드를 정하면 자동)','카드사 수정에 \'브랜드 수수료가 표시 USD에 이미 포함\' 선택 추가 · 마법사 수수료 표시에 \'브랜드 결제금액에 포함\'','청구서 검증 사례 22건(KB·신한·삼성 비자/유니온·농협·롯데) 1원 단위 일치 확인']],
   ['26.11.14',['썸네일 위치 편집기: 미리보기에 가운데 십자선과 세로·가로 중간선(점선) 표시 — 밝은 사진에서도 보이게 어두운 테두리, 드래그·휠은 그대로']],
