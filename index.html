@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta name="build" content="2026-11-27 04:12">
+<meta name="build" content="2026-11-27 04:49">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>피규어 구매 리스트 v125</title>
@@ -1058,6 +1058,19 @@ td:hover>.pd-wrap.has-rel .pd-b{display:block;}
 .pc-feem button.fb{background:#b7791f;color:#fff;}
 .pc-feem button.fi{background:var(--accent,#7c5cff);color:#fff;}
 .pc-feem.need{outline:2px solid var(--yellow);outline-offset:1px;border-radius:20px;}
+#history-viewport::-webkit-scrollbar{height:16px;}
+#history-viewport::-webkit-scrollbar-track{background:var(--surface2);border-radius:8px;}
+#history-viewport::-webkit-scrollbar-thumb{background:var(--border2);border-radius:8px;border:3px solid var(--surface2);min-width:60px;}
+#history-viewport::-webkit-scrollbar-thumb:hover{background:var(--text3);}
+.pc-scope{white-space:nowrap;flex-wrap:nowrap;}
+.pc-scope button{min-width:0;padding:4px 8px;white-space:nowrap;}
+.pc-scope button.on.all{background:#5b6475;color:#fff;}
+.pc-scope button.on.dom{background:var(--green);color:#06210f;}
+.pc-scope button.on.ovs{background:var(--accent,#7c5cff);color:#fff;}
+.bmw-region{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin:0 0 12px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);}
+.bmw-region>span{font-size:15px;font-weight:700;color:var(--text2);}
+.bmw-region .pc-scope button{font-size:14px;padding:5px 14px;}
+.bmw-region small{font-size:12px;color:var(--text3);}
 .pc-tsum{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:12px;color:var(--text2);}
 .pc-tsum b{color:var(--text);}
 .pc-tsum em{flex-basis:100%;font-style:normal;color:var(--text3);font-size:11px;}
@@ -1379,7 +1392,7 @@ body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-o
     <button class="tab" onclick="switchTab('bundle',this)">할인</button>
     <button class="tab" onclick="switchTab('store',this)">구매처</button>
     <button class="tab" onclick="switchTab('stats',this)">통계</button>
-    <button class="tab" onclick="switchTab('ranking',this)">랭킹</button>
+    <button class="tab" onclick="switchTab('ranking',this)">결산</button>
     <button class="tab" onclick="switchTab('expbal',this)">잔금</button>
     <button class="tab" onclick="switchTab('paycard',this)">카드</button>
     <button class="tab tab-gear" onclick="switchTab('manage',this)" title="관리" style="padding-left:12px;padding-right:12px;"><span>⚙</span></button>
@@ -1549,6 +1562,8 @@ body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-o
       <span id="stats-expbal-total"></span>
     </div>
 
+    <!-- 구매유형 · 배송/방출 현황 (전체 폭 막대) -->
+    <div id="manage-bars" style="margin-top:20px;display:flex;flex-direction:column;gap:14px;"></div>
     <!-- 피규어 히스토리 슬라이더 -->
     <div style="margin-top:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -1557,7 +1572,7 @@ body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-o
       </div>
       <div style="position:relative;">
         <button onclick="historySlide(-1)" style="position:absolute;left:-14px;top:50%;transform:translateY(-50%);z-index:2;background:var(--surface2);border:1px solid var(--border);border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;line-height:1;">‹</button>
-        <div id="history-viewport" style="overflow-x:scroll;border-radius:var(--r);scrollbar-width:thin;scrollbar-color:var(--border2) transparent;" onwheel="event.preventDefault();historySlide(event.deltaY>0?1:-1);">
+        <div id="history-viewport" style="overflow-x:scroll;border-radius:var(--r);padding-bottom:4px;" onwheel="event.preventDefault();historySlide(event.deltaY>0?1:-1);">
           <div id="history-track" style="display:flex;gap:12px;"></div>
         </div>
         <button onclick="historySlide(1)" style="position:absolute;right:-14px;top:50%;transform:translateY(-50%);z-index:2;background:var(--surface2);border:1px solid var(--border);border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;line-height:1;">›</button>
@@ -1568,7 +1583,7 @@ body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-o
 
 
 
-  <!-- 랭킹 탭 -->
+  <!-- 결산 탭 (예전 랭킹) -->
   <div class="panel" id="panel-ranking">
     <div id="ranking-content" style="display:flex;flex-direction:column;gap:12px;"></div>
   </div>
@@ -1798,8 +1813,6 @@ body.am-linking #am-costs .cost-field{outline:1px dashed var(--accent);outline-o
         <div id="manage-stats" style="display:flex;flex-direction:column;gap:8px;"></div>
       </div>
     </div>
-    <!-- 구매유형 · 배송/방출 현황 (전체 폭 막대) -->
-    <div id="manage-bars" style="margin-top:16px;display:flex;flex-direction:column;gap:14px;"></div>
     <!-- 구글 드라이브 동기화 -->
     <div id="gd-sync-card" style="margin-top:16px;padding:14px;background:var(--surface2);border:1px solid var(--aborder);border-radius:var(--r);transition:box-shadow .3s;">
       <div class="manage-section-title" style="margin-bottom:10px;">구글 드라이브 동기화</div>
@@ -4203,11 +4216,11 @@ function bmwSplit(total,keys){const w=keys.map(k=>bmwKeyKrw(k)),ws=w.reduce((a,b
   let diff=total-keys.reduce((a,k)=>a+out[k],0);fr.sort((a,b)=>b[1]-a[1]||w[a[0]]-w[b[0]]);
   for(let j=0;diff>0&&fr.length;j=(j+1)%fr.length,diff--)out[keys[fr[j][0]]]++;return out;}
 function bmwPlanSum(){return bmwPayKeys().reduce((a,k)=>a+(Number((_bmw.feePlan||{})[k])||0),0);}
-function bmwPlanAuto(card){const keys=bmwPayKeys();const fe=bmwIsForeign()?bmwFormulaFee(card,bmwPayTotal(),false):{has:false,fee:0};
+function bmwPlanAuto(card){const keys=bmwPayKeys();const fe=bmwRegion()==='ovs'&&bmwIsForeign()?bmwFormulaFee(card,bmwPayTotal(),false):{has:false,fee:0};
   if(!(fe.has&&fe.fee>0)){_bmw.feePlanBrand={};return Object.fromEntries(keys.map(k=>[k,0]));}
   const plan=bmwSplit(fe.fee,keys);const pb=bmwSplit(fe.B||0,keys);keys.forEach(k=>{pb[k]=Math.min(pb[k],plan[k]);});_bmw.feePlanBrand=pb;return plan;}
 function bmwPlanInit(card){
-  if(_bmw.solo)return;const sig=card.id+'|'+bmwPayTotal()+'|'+bmwPayKeys().join(',');
+  if(_bmw.solo)return;const sig=card.id+'|'+bmwPayTotal()+'|'+bmwPayKeys().join(',')+'|'+bmwRegion();
   if(_bmw.feePlan&&(!_bmw.feePlanAuto||_bmw.feePlanSig===sig))return;
   const keys=bmwPayKeys();
   if(!_bmw.feePlan){const ex=Object.fromEntries(keys.map(k=>[k,bmwExistingFee(k)]));
@@ -4275,7 +4288,10 @@ function pcRateLabel(b){return (Array.isArray(b.tiers)&&b.tiers.length)?'구간 
 // 수수료 중 브랜드 수수료 몫 (따로 기록 없으면 카드 공식 비율로 나눔)
 function pcBrandShare(card,amt){amt=Number(amt)||0;if(!amt||!card)return 0;const c=pcFeeCfgOf(card);if(c.brandIn)return 0;const b=CARD_BRAND_FEES[c.brand]||0;if(!(b>0))return 0;const cf=(Number(c.cardFee)||0)/feeDivOf(c.mul);return Math.floor(amt*b/(b+cf)+1e-9);}
 function feeBrandOf(card,f){const a=Number(f.amount)||0;return f.brand!=null?Math.min(a,Number(f.brand)||0):pcBrandShare(card,a);}
-function pcCalc(card,base,month,off,exceptCode,beforeDate,feeAmt,modes,feeBrand){
+// 혜택 적용 범위: scope = all(모두, 기본) / dom(국내 결제만) / ovs(해외 결제만) · 결제 구분(region)이 없는 예전 기록은 모두 적용
+const PC_SCOPES=[['all','모두'],['dom','국내'],['ovs','해외']];
+function pcScopeOk(b,region){const s=b.scope||'all';return s==='all'||!region||s===region;}
+function pcCalc(card,base,month,off,exceptCode,beforeDate,feeAmt,modes,feeBrand,region){
   const active=pcMonthOn(card,month);
   const fa=Number(feeAmt)||0,fb=feeBrand!=null?Math.min(fa,Number(feeBrand)||0):pcBrandShare(card,fa);
   let disc=0,point=0;
@@ -4287,9 +4303,10 @@ function pcCalc(card,base,month,off,exceptCode,beforeDate,feeAmt,modes,feeBrand)
     const cap=Number(b.cap)||0;
     const used=pcUsed(card.id,b.id,month,exceptCode,beforeDate);
     const left=cap?Math.max(0,cap-used):Infinity;
-    const applied=(on&&active)?Math.min(calc,left):0;
+    const inScope=pcScopeOk(b,region);
+    const applied=(on&&active&&inScope)?Math.min(calc,left):0;
     if(b.type==='point')point+=applied;else disc+=applied;
-    return {b,on,rate,bb,calc,cap,used,left,applied,mode};
+    return {b,on,rate,bb,calc,cap,used,left,applied,mode,inScope};
   });
   return {rows,disc,point,active,feeAmt:fa,feeBrand:fb};
 }
@@ -4299,10 +4316,17 @@ function bmwCardCalc(){
   if(!_bmw.solo)bmwPlanInit(card);
   const base=bmwBase(),month=bmwMonth();
   const dd=String(_bmw.dd||'').replace(/\D/g,'');
-  const r=pcCalc(card,base,month,_bmw.pcOff,_bmw.code,dd,bmwFeeSum(),bmwModes(card),bmwFeeBrandSum(card));
+  const region=bmwRegion();
+  const r=pcCalc(card,base,month,_bmw.pcOff,_bmw.code,dd,region==='dom'?0:bmwFeeSum(),bmwModes(card),region==='dom'?0:bmwFeeBrandSum(card),region);
   const later=Object.entries(bundleCoupons||{}).filter(([c,bc])=>c!==_bmw.code&&pcBcLive(bc)&&bc.card&&bc.card.card===card.id&&bc.card.month===month&&(String(bc.card.date||'')>dd||(String(bc.card.date||'')===dd&&c.localeCompare(_bmw.code)>0))).length;
-  return {iss,card,base,month,later,...r};
+  return {iss,card,base,month,later,region,...r};
 }
+// 이 결제의 구분: 국내 / 해외 — 직접 고르지 않으면 외화 금액이 있으면 해외
+function bmwRegion(){if(!_bmw)return 'ovs';return _bmw.region||(bmwIsForeign()?'ovs':'dom');}
+function bmwSetRegion(v){_bmw.region=v;if(_bmw.feePlanAuto)_bmw.feePlanSig=null;bmwRender();}
+function bmwRegionHtml(){const r=bmwRegion(),auto=!_bmw.region;
+  return `<div class="bmw-region"><span>결제 구분</span><div class="pc-type pc-scope">${PC_SCOPES.filter(x=>x[0]!=='all').map(([k,l])=>`<button type="button" class="${r===k?'on '+k:''}" onclick="bmwSetRegion('${k}')">${l}</button>`).join('')}</div>
+    <small>${auto?'외화 금액 '+(r==='ovs'?'있음':'없음')+' — 자동 선택':'직접 선택'} · 국내는 수수료 없음 · 카드 탭에서 '${r==='ovs'?'국내':'해외'}'로 정한 혜택은 빠져요</small></div>`;}
 // 묶음에 카드 혜택 저장 + 상품별 배분 (원화 결제액 비율)
 // 카드 혜택이 추가·수정·삭제되면 그 카드·달 전체를 날짜순으로 다시 계산 (먼저 결제한 것부터 한도 차감)
 let _pcTouched=new Set(),_pcInRecalc=false;
@@ -4328,7 +4352,7 @@ function pcApplyToBundle(code,info){
   if(!info){delete bc.card;return;}
   // 처음 카드 혜택을 적용한 시각 — 다시 계산해도 유지 (같은 날 결제끼리 먼저 입력한 쪽이 한도를 먼저 씀)
   const _at=(bc.card&&bc.card.at)||info.at||Date.now();
-  bc.card={at:_at,iss:info.iss,card:info.card,month:info.month,base:info.base,off:(info.off||[]).slice(),skip:(info.skip||[]).slice(),feeInc:(info.feeInc||[]).slice(),feeAmt:Number(info.feeAmt)||0,...(info.feeBrand!=null?{feeBrand:Number(info.feeBrand)||0}:{}),...(info.feeModes&&Object.keys(info.feeModes).length?{feeModes:{...info.feeModes}}:{}),date:info.date||'',
+  bc.card={at:_at,iss:info.iss,card:info.card,month:info.month,base:info.base,off:(info.off||[]).slice(),skip:(info.skip||[]).slice(),feeInc:(info.feeInc||[]).slice(),feeAmt:Number(info.feeAmt)||0,...(info.feeBrand!=null?{feeBrand:Number(info.feeBrand)||0}:{}),...(info.feeModes&&Object.keys(info.feeModes).length?{feeModes:{...info.feeModes}}:{}),...(info.region?{region:info.region}:{}),date:info.date||'',
     applied:info.rows.filter(r=>r.on&&r.applied>0).map(r=>({bid:r.b.id,type:r.b.type==='point'?'point':'discount',title:r.b.title||'',amount:r.applied})),disc:info.disc,point:info.point};
   pcTouch(bc);
   if(!(info.disc||info.point))return;
@@ -4350,8 +4374,8 @@ function _pcRecalcMonth(cardId,month){
   const list=Object.entries(bundleCoupons||{}).filter(([c,bc])=>pcBcLive(bc)&&bc.card&&bc.card.card===cardId&&bc.card.month===month)
     .sort((a,b)=>pcBcCmp(pcBcKey(a[0],a[1]),pcBcKey(b[0],b[1])));
   list.forEach(([c,bc])=>{bc.card.applied=[];});
-  list.forEach(([code,bc])=>{const r=pcCalc(card,Number(bc.card.base)||0,month,bc.card.off,code,undefined,Number(bc.card.feeAmt)||0,bc.card.feeModes,bc.card.feeBrand);
-    pcApplyToBundle(code,{iss:iss.id,card:cardId,month,base:bc.card.base,off:bc.card.off,skip:bc.card.skip,feeInc:bc.card.feeInc,feeAmt:bc.card.feeAmt,feeModes:bc.card.feeModes,date:bc.card.date,...r,feeBrand:bc.card.feeBrand!=null?bc.card.feeBrand:r.feeBrand});});
+  list.forEach(([code,bc])=>{const r=pcCalc(card,Number(bc.card.base)||0,month,bc.card.off,code,undefined,Number(bc.card.feeAmt)||0,bc.card.feeModes,bc.card.feeBrand,bc.card.region);
+    pcApplyToBundle(code,{iss:iss.id,card:cardId,month,base:bc.card.base,off:bc.card.off,skip:bc.card.skip,feeInc:bc.card.feeInc,feeAmt:bc.card.feeAmt,feeModes:bc.card.feeModes,region:bc.card.region,date:bc.card.date,...r,feeBrand:bc.card.feeBrand!=null?bc.card.feeBrand:r.feeBrand});});
   return list.length;
 }
 function pcBundlesIn(cardId,month){return Object.values(bundleCoupons||{}).filter(bc=>pcBcLive(bc)&&bc.card&&bc.card.card===cardId&&bc.card.month===month);}
@@ -4420,7 +4444,7 @@ function bmwCardSelectHtml(){
 }
 // 이 결제의 최종 결제금액 = 결제금액 + 수수료(전부) − 카드 할인 — 혜택·포함/제외를 바꿀 때마다 다시 계산
 // 이 결제의 수수료 전부 → {all, brand} (브랜드 몫은 기록값, 없으면 카드 공식 비율)
-function bmwAllFees(card){if(!_bmw)return {all:0,brand:0};let all=0,brand=0;const add=(a,b)=>{all+=a;brand+=Math.min(a,b);};
+function bmwAllFees(card){if(!_bmw||bmwRegion()==='dom')return {all:0,brand:0};let all=0,brand=0;const add=(a,b)=>{all+=a;brand+=Math.min(a,b);};
   if(_bmw.solo){bmwFeeList().filter(x=>x.f.field===_bmw.solo.f).forEach(x=>add(Number(x.f.amount)||0,feeBrandOf(card,x.f)));return {all,brand};}
   bmwFeeInit();const inc=new Set(_bmw.feeInc||[]);
   if(_bmw.feePlan){const pb=_bmw.feePlanBrand||{};bmwPayKeys().forEach(k=>{const v=Number(_bmw.feePlan[k])||0;add(v,pb[k]!=null?pb[k]:pcBrandShare(card,v));});
@@ -4446,6 +4470,7 @@ function bmwCardStepHtml(){
   }
   h+=bmwCardPickerHtml();
   const r=bmwCardCalc();if(!r)return h;
+  h+=bmwRegionHtml();
   h+=bmwCardFeeBox(r.card);
   h+=bmwSkipHtml();
   h+=bmwFeeHtml();
@@ -4463,7 +4488,7 @@ function bmwCardStepHtml(){
       <input type="checkbox" ${x.on?'checked':''} onchange="bmwToggleBen('${x.b.id}',this.checked)" style="width:18px;height:18px;accent-color:${pt?'#4ecfcf':'#ffd166'};grid-row:1/3;">
       <span style="font-size:16px;font-weight:700;color:${x.on?col:'var(--text3)'};">${pt?'적립':'할인'} · ${pcEsc(x.b.title||'(이름 없음)')} <span style="font-weight:400;color:var(--text2);">${x.rate!=null?x.rate:(Number(x.b.rate)||0)}% <span style="font-size:12px;color:${x.mode==='incl'?'var(--red)':x.mode==='brand'?'#d69e2e':'var(--text3)'};">${x.mode==='incl'?'수수료 포함':x.mode==='brand'?'브랜드 수수료만 포함':'수수료 제외'}</span>${Array.isArray(x.b.tiers)&&x.b.tiers.length?' <span style="font-size:12px;">(구간)</span>':''}</span></span>
       <b class="mono" style="font-size:17px;color:${x.on?col:'var(--text3)'};">${pt?'':'▼ ￦ '}${x.applied.toLocaleString('ko-KR')}${pt?' P':''}</b>
-      <span style="font-size:12px;color:var(--text3);grid-column:2/4;">계산 ${x.calc.toLocaleString('ko-KR')} · ${x.cap?'월 한도 ￦ '+x.cap.toLocaleString('ko-KR'):'상시 (한도 없음)'}${x.cap?` · 이번 달 사용 ${x.used.toLocaleString('ko-KR')} · 남음 ${x.left.toLocaleString('ko-KR')}`:''}${x.b.cond?' · '+pcEsc(x.b.cond):''}${x.on&&x.cap&&x.calc>x.left?' · <span style="color:var(--red);">한도 초과분 제외</span>':''}</span>
+      <span style="font-size:12px;color:var(--text3);grid-column:2/4;">계산 ${x.calc.toLocaleString('ko-KR')} · ${x.cap?'월 한도 ￦ '+x.cap.toLocaleString('ko-KR'):'상시 (한도 없음)'}${x.cap?` · 이번 달 사용 ${x.used.toLocaleString('ko-KR')} · 남음 ${x.left.toLocaleString('ko-KR')}`:''}${x.b.cond?' · '+pcEsc(x.b.cond):''}${x.on&&x.cap&&x.calc>x.left?' · <span style="color:var(--red);">한도 초과분 제외</span>':''}${x.inScope===false?` · <span style="color:var(--red);">${x.b.scope==='dom'?'국내':'해외'} 결제 전용 — 이 결제엔 적용 안 됨</span>`:''}</span>
     </label>`;}).join('');
   h+=`<div style="display:flex;gap:10px;margin-top:10px;">
     <div style="flex:1;padding:11px 14px;border-radius:10px;background:var(--ydim);border:1px solid var(--yborder);display:flex;justify-content:space-between;align-items:baseline;"><span style="font-size:15px;color:var(--yellow);font-weight:700;">할인 합계</span><b class="mono" style="font-size:19px;color:var(--yellow);">▼ ￦ ${r.disc.toLocaleString('ko-KR')}</b></div>
@@ -4660,15 +4685,16 @@ function renderPayCards(){
     ${pcBenSectionsHtml(card,_m)}
     ${(card.benefits||[]).some(b=>!b.feeMode)?`<div class="pc-feewarn">수수료 <b>포함/제외</b>를 정하지 않은 혜택이 ${(card.benefits||[]).filter(b=>!b.feeMode).length}개 있어요 — 아래 표의 '수수료' 칸에서 꼭 골라주세요 (정하기 전엔 '제외'로 계산)</div>`:''}
     <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:2px;">혜택 <span style="font-weight:400;color:var(--text3);font-size:12px;">— 할인·적립마다 비율과 월 한도를 따로 정합니다</span></div>
-    <table class="pc-btable"><thead><tr><th style="width:118px;">구분</th><th>혜택 내용</th><th style="width:150px;">비율 % <span style="font-weight:400;">(구간)</span></th><th style="width:130px;">월 한도 ￦ <span style="font-weight:400;">(빈칸=상시)</span></th><th style="width:118px;">수수료</th><th style="width:18%;">조건</th><th style="width:30px;"></th></tr></thead><tbody>
+    <table class="pc-btable"><thead><tr><th style="width:118px;">구분</th><th>혜택 내용</th><th style="width:150px;">비율 % <span style="font-weight:400;">(구간)</span></th><th style="width:130px;">월 한도 ￦ <span style="font-weight:400;">(빈칸=상시)</span></th><th style="width:118px;">수수료</th><th style="width:112px;">적용</th><th style="width:16%;">조건</th><th style="width:30px;"></th></tr></thead><tbody>
     ${(card.benefits||[]).map(b=>`<tr>
       <td><div class="pc-type"><button type="button" class="d ${b.type!=='point'?'on':''}" onclick="pcSetB('${b.id}','type','discount')">할인</button><button type="button" class="p ${b.type==='point'?'on':''}" onclick="pcSetB('${b.id}','type','point')">적립</button></div></td>
       <td class="ti"><input value="${pcEsc(b.title)}" placeholder="예: 해외 결제, 온라인 쇼핑" onchange="pcSetB('${b.id}','title',this.value)"></td>
       <td class="ra"><div style="display:flex;gap:4px;align-items:center;">${b.tiers&&b.tiers.length?`<button type="button" class="pc-tierbtn on" onclick="pcTierToggle('${b.id}')" title="금액 구간별 비율 고치기">${pcRateLabel(b)}</button>`:`<input class="num" inputmode="decimal" value="${b.rate||''}" placeholder="5" onchange="pcSetB('${b.id}','rate',Number(this.value)||0)"><button type="button" class="pc-tierbtn" onclick="pcTierToggle('${b.id}')" title="결제금액 구간마다 비율을 다르게">구간</button>`}</div></td>
       <td class="ca"><input class="num" inputmode="numeric" value="${b.cap?Number(b.cap).toLocaleString('ko-KR'):''}" placeholder="비우면 상시" onchange="pcSetB('${b.id}','cap',Number(this.value.replace(/\\D/g,''))||0)"></td>
       <td><div class="pc-type pc-feem ${b.feeMode?'':'need'}" title="이 혜택이 수수료(브랜드·해외결제 수수료)까지 포함한 금액에 붙는지"><button type="button" class="${b.feeMode==='excl'?'on fx':''}" onclick="pcSetB('${b.id}','feeMode','excl')" title="원금만">제외</button><button type="button" class="${b.feeMode==='brand'?'on fb':''}" onclick="pcSetB('${b.id}','feeMode','brand')" title="원금 + 브랜드 수수료 (카드사 해외서비스수수료는 빼고) — 예: KB NEED Global">브랜드만</button><button type="button" class="${b.feeMode==='incl'?'on fi':''}" onclick="pcSetB('${b.id}','feeMode','incl')" title="원금 + 전체 수수료">포함</button></div></td>
+      <td><div class="pc-type pc-scope" title="이 혜택이 붙는 결제 — 국내 결제는 수수료가 없음">${PC_SCOPES.map(([k,l])=>`<button type="button" class="${(b.scope||'all')===k?'on '+k:''}" onclick="pcSetB('${b.id}','scope','${k}')">${l}</button>`).join('')}</div></td>
       <td class="co"><input value="${pcEsc(b.cond)}" placeholder="예: 건당 1만원 이상" onchange="pcSetB('${b.id}','cond',this.value)"></td>
-      <td><button type="button" class="del-btn" onclick="pcDelB('${b.id}')">✕</button></td></tr>${_pcTierOpen===b.id?`<tr class="pc-tier-row"><td colspan="7">${pcTierEditorHtml(b)}</td></tr>`:''}`).join('')}
+      <td><button type="button" class="del-btn" onclick="pcDelB('${b.id}')">✕</button></td></tr>${_pcTierOpen===b.id?`<tr class="pc-tier-row"><td colspan="8">${pcTierEditorHtml(b)}</td></tr>`:''}`).join('')}
     </tbody></table>
     <button type="button" class="pc-addb" onclick="pcAddB()">＋ 혜택 추가</button>
   </div>`;
@@ -4784,7 +4810,7 @@ function bmwCardFeeBox(card){
     </div>`;
   }
   bmwPlanInit(card);
-  const A=bmwPayTotal(),foreign=bmwIsForeign();const ff=bmwFormulaFee(card,A,false);const {B,C,D,fee}=ff;const want=foreign&&has?fee:0;
+  const A=bmwPayTotal(),foreign=bmwRegion()==='ovs'&&bmwIsForeign();const ff=bmwFormulaFee(card,A,false);const {B,C,D,fee}=ff;const want=foreign&&has?fee:0;
   const keys=bmwPayKeys(),sum=bmwPlanSum();
   let h=`<div class="bmw-feebox${has?'':' warn'}"><div class="t"><b>수수료</b> <span>${has?pcEsc(pcFeeCfgText(card)):'이 카드의 해외결제 수수료 공식이 아직 없어요 — 카드 탭에서 정해두면 자동으로 나눠 넣어요'}</span></div>`;
   if(has)h+=foreign?`<div class="r"><span>결제금액 ￦ ${A.toLocaleString('ko-KR')} 기준${bmwFeeBasisTxt(ff)}</span><b class="mono">${ff.brandIn?'<span title="브랜드 수수료가 결제금액(표시 USD)에 이미 들어 있어요">브랜드 결제금액에 포함</span>':'브랜드 ￦ '+B.toLocaleString('ko-KR')} + 해외결제 ￦ ${C.toLocaleString('ko-KR')}${D?` + 체크카드 ￦ ${D.toLocaleString('ko-KR')}`:''} = ￦ ${fee.toLocaleString('ko-KR')}</b></div>`
@@ -4800,7 +4826,7 @@ function bmwFeeSync(fee,brand){const f=_bmw.solo.f;let it=_amFees.find(x=>x.fiel
 function pcShiftMonth(dl){const m=_pcMonth||pcNowMonth();let [y,mm]=m.split('-').map(Number);mm+=dl;if(mm<1){mm=12;y--;}if(mm>12){mm=1;y++;}_pcMonth=y+'-'+String(mm).padStart(2,'0');renderPayCards();}
 function pcCur(){const iss=pcIssuer(_pcSel.iss);return {iss,card:pcCard(iss,_pcSel.card)};}
 function pcSet(f,v){const {card}=pcCur();if(!card)return;card[f]=v;autoSave();renderPayCards();}
-function pcSetB(bid,f,v){const {card}=pcCur();if(!card)return;const b=(card.benefits||[]).find(x=>x.id===bid);if(!b)return;b[f]=v;if(f==='rate'||f==='cap'||f==='type'||f==='feeMode')pcTouchCard(card.id);autoSave();renderPayCards();}
+function pcSetB(bid,f,v){const {card}=pcCur();if(!card)return;const b=(card.benefits||[]).find(x=>x.id===bid);if(!b)return;b[f]=v;if(f==='rate'||f==='cap'||f==='type'||f==='feeMode'||f==='scope')pcTouchCard(card.id);autoSave();renderPayCards();}
 function pcBeforeOrderDelete(id){const o=orders.find(x=>x.id===id);Object.keys((o&&o.cardBen)||{}).forEach(c=>pcTouch(bundleCoupons[c]));}
 function pcTouchCard(cid){Object.values(bundleCoupons||{}).forEach(bc=>{if(pcBcLive(bc)&&bc.card&&bc.card.card===cid)_pcTouched.add(cid+'|'+bc.card.month);});if(pcSettle()){renderOrder();if(typeof renderBundle==='function')renderBundle();}}
 function pcAddB(){const {card}=pcCur();if(!card)return;if(!card.benefits)card.benefits=[];card.benefits.push({id:pcId(),type:'discount',title:'',rate:0,cap:0,cond:''});autoSave();renderPayCards();}
@@ -4883,7 +4909,7 @@ function pcDelCard(issId,cardId){
 }
 // ── 패치노트 (최신순, 짧게) ──
 const PATCH_NOTES=[
-  ['26.11.27',['묶음 마법사 수수료 분배: 외화가 같은 상품은 (결제금액 + 수수료) 총액이 같게 나눔 — 한화 총액이 홀수라 생긴 1원 차이를 수수료에서 메움 (전에는 1원 많은 쪽이 수수료도 1원 더 받아 2원 차이)']],
+  ['26.11.27',['묶음 마법사 수수료 분배: 외화가 같은 상품은 (결제금액 + 수수료) 총액이 같게 나눔 — 한화 총액이 홀수라 생긴 1원 차이를 수수료에서 메움 (전에는 1원 많은 쪽이 수수료도 1원 더 받아 2원 차이)','카드 혜택 적용 범위: 카드 탭 혜택 표에 \x27적용\x27 칸 추가 — 모두 / 국내 / 해외 (기본 모두)','카드·묶음 마법사 카드 단계에 결제 구분 국내 / 해외 선택 — 외화 금액이 있으면 해외로 자동 선택, 국내는 수수료 0 · 다른 구분 전용 혜택은 빠짐','위시 썸네일 보기: 열이 적을수록 썸네일 크게 (5열 기본 · 4열 1.5배 · 3열 2배)','방출 탭 썸네일 보기: 카드를 누르면 카드보기 대신 수정 창 · 2열이면 썸네일 2배','구매 유형 · 배송·방출 현황 막대를 설정에서 통계 탭 구매 히스토리 바로 위로 옮김','랭킹 탭 이름을 결산으로 바꾸고 항목 제목의 이모지 제거','통계 구매 히스토리 가로 스크롤바를 굵게']],
   ['26.11.25',['애니메이션 부담 줄이기: 브라우저 창이 비활성(게임 등 다른 프로그램 사용 중)이거나 숨겨지면 모든 애니메이션 자동 일시정지 — 다시 클릭하면 이어서','설정 > 앱 설정에 \'애니메이션\' 추가 — 기본 / 가벼움(회전·투명도만 움직여 그리기 부담↓) / 끄기(정지된 모양만)','국제 브랜드에 \'비자 1.0%\' 추가 — 같은 비자라도 카드마다 브랜드율이 다름 (KB 굿데이 올림 1.0% · 롯데·삼성 1.1%)','KB 굿데이 올림(비자) 청구 사례 23·24 1원 단위 일치 확인 (브랜드·서비스 수수료 모두 센트 반올림)']],
   ['26.11.21',['카드 혜택 한도: 같은 날 결제끼리는 먼저 카드 혜택을 넣은 결제가 한도를 먼저 다 씀 (전에는 코드 순이라 나중에 넣은 배송비가 앞서 한도를 나눠 가짐)','예전 기록(입력 시각 없음)은 같은 상품이면 결제칸 순서(예약→잔금→전액→중고거래→배송비→기타)로 — 불러올 때 한 번 다시 계산']],
   ['26.11.17',['삼성·농협: 브랜드 수수료가 표시 USD에 포함된 카드사로 지정 — 브랜드 수수료를 따로 붙이지 않고, 카드사 수수료 기준 = USD ÷ (1 + 카드의 국제 브랜드율): 삼성 비자 ÷1.011 · 삼성 유니온 ÷1.008 · 농협 유니온 ÷1.006 (카드에 브랜드를 정하면 자동)','카드사 수정에 \'브랜드 수수료가 표시 USD에 이미 포함\' 선택 추가 · 마법사 수수료 표시에 \'브랜드 결제금액에 포함\'','청구서 검증 사례 22건(KB·신한·삼성 비자/유니온·농협·롯데) 1원 단위 일치 확인']],
@@ -5164,7 +5190,7 @@ function amCardSyncPlan(o,f){
   codes.forEach(code=>{
     const bc=bundleCoupons[code];const iss=pcIssuer(bc.card.iss),card=pcCard(iss,bc.card.card);if(!card)return;
     const nb=pcCodeBase(code,true),ob=Number(bc.card.base)||0,nf=pcCodeFee(code,true);if(nb===ob&&nf===(Number(bc.card.feeAmt)||0))return;
-    const r=pcCalc(card,nb,bc.card.month,bc.card.off,code,undefined,nf,bc.card.feeModes,pcCodeFeeBrand(code,true,card));
+    const r=pcCalc(card,nb,bc.card.month,bc.card.off,code,undefined,nf,bc.card.feeModes,pcCodeFeeBrand(code,true,card),bc.card.region);
     // 이 상품 몫 (묶음이면 이 상품의 포함된 결제 비율)
     let mine=nb;if(!bc.solo){const skip=new Set(bc.card.skip||[]);mine=0;Object.entries(o.costGroups||{}).forEach(([ff,c])=>{if(String(c)===code&&!skip.has(o.id+':'+ff)&&!amFieldFee(o,ff))mine+=amFieldKrw(o,ff);});}
     const ratio=nb>0?mine/nb:0;const cur=(o.cardBen||{})[code]||{};
@@ -6523,7 +6549,7 @@ function bmwStart(code,keys,removed,dd){
   const couponRate=(typeof bundleCoupons!=='undefined'&&bundleCoupons[code])?(Number(bundleCoupons[code].couponRate)||0):0;
   const _pc=(typeof bundleCoupons!=='undefined'&&bundleCoupons[code]&&bundleCoupons[code].card)||null;
   _bmw={code,dd,keys,removed:removed||[],cur,foreign,couponForeign,couponRate,totalKrw:(typeof bundleCoupons!=='undefined'&&bundleCoupons[code]&&Number(bundleCoupons[code].totalKrw))||0,alias,step:1,
-    pcIss:_pc?_pc.iss:null,pcCard:_pc?_pc.card:null,pcOff:_pc?(_pc.off||[]):[],pcSkip:_pc?(_pc.skip||[]).filter(k=>keys.includes(k)):[],feeInc:_pc&&_pc.feeInc?_pc.feeInc.slice():null,feeModes:_pc&&_pc.feeModes?{..._pc.feeModes}:{}};
+    pcIss:_pc?_pc.iss:null,pcCard:_pc?_pc.card:null,pcOff:_pc?(_pc.off||[]):[],pcSkip:_pc?(_pc.skip||[]).filter(k=>keys.includes(k)):[],feeInc:_pc&&_pc.feeInc?_pc.feeInc.slice():null,feeModes:_pc&&_pc.feeModes?{..._pc.feeModes}:{},region:_pc&&_pc.region||null};
   document.getElementById('bmw-modal').classList.add('show');
   bmwRender();
 }
@@ -6578,13 +6604,13 @@ function bmwApplyCardOnly(){
   if(_bmw.solo){
     if(!cr){if(bundleCoupons[code]){pcApplyToBundle(code,null);delete bundleCoupons[code];}}
     else{bmwSoloPersist();if(!bundleCoupons[code])bundleCoupons[code]={solo:{..._bmw.solo}};bundleCoupons[code].solo={..._bmw.solo};
-      pcApplyToBundle(code,{iss:cr.iss.id,card:cr.card.id,month:cr.month,base:cr.base,off:_bmw.pcOff,skip:(_bmw.pcSkip||[]).slice(),feeInc:(_bmw.feeInc||[]).slice(),feeAmt:cr.feeAmt||0,feeBrand:cr.feeBrand||0,feeModes:bmwModeOverrides(cr.card),date:String(_bmw.dd||''),rows:cr.rows,disc:cr.disc,point:cr.point});}
+      pcApplyToBundle(code,{iss:cr.iss.id,card:cr.card.id,month:cr.month,base:cr.base,off:_bmw.pcOff,skip:(_bmw.pcSkip||[]).slice(),feeInc:(_bmw.feeInc||[]).slice(),feeAmt:cr.feeAmt||0,feeBrand:cr.feeBrand||0,feeModes:bmwModeOverrides(cr.card),region:cr.region,date:String(_bmw.dd||''),rows:cr.rows,disc:cr.disc,point:cr.point});}
     pcSettle();bmwClose();renderOrder();if(typeof renderBundle==='function')renderBundle();autoSave();amCardRefresh();
     showToast(cr?`${cr.card.name} 카드 혜택을 적용했어요`:'카드 혜택을 해제했어요','success');return;
   }
   if(!bundleCoupons[code])bundleCoupons[code]={totalForeign:0,couponForeign:0,currency:'₩',couponCurrency:'₩'};
   if(cr){bmwWriteFees();Object.assign(cr,bmwCardCalc());}
-  pcApplyToBundle(code,cr?{iss:cr.iss.id,card:cr.card.id,month:cr.month,base:cr.base,off:_bmw.pcOff,skip:(_bmw.pcSkip||[]).slice(),feeInc:(_bmw.feeInc||[]).slice(),feeAmt:cr.feeAmt||0,feeBrand:cr.feeBrand||0,feeModes:bmwModeOverrides(cr.card),date:String(_bmw.dd||''),rows:cr.rows,disc:cr.disc,point:cr.point}:null);
+  pcApplyToBundle(code,cr?{iss:cr.iss.id,card:cr.card.id,month:cr.month,base:cr.base,off:_bmw.pcOff,skip:(_bmw.pcSkip||[]).slice(),feeInc:(_bmw.feeInc||[]).slice(),feeAmt:cr.feeAmt||0,feeBrand:cr.feeBrand||0,feeModes:bmwModeOverrides(cr.card),region:cr.region,date:String(_bmw.dd||''),rows:cr.rows,disc:cr.disc,point:cr.point}:null);
   pcSettle();bmwClose();renderOrder();renderBundle();autoSave();amCardRefresh();showToast(cr?`${cr.card.name} 카드를 설정했어요`:'카드 설정을 해제했어요','success');
 }
 // 1페이지 → 2페이지: 계산한 구매금액은 결제칸 한화로, 수수료는 수수료 칸으로
@@ -6761,7 +6787,7 @@ function bmwApply(){
     // 결제 카드 혜택 (저장 + 상품별 배분) — 분배한 수수료를 먼저 각 결제의 수수료 칸에 기록
     if(bmwCardCalc())bmwWriteFees();
     const cr=bmwCardCalc();
-    pcApplyToBundle(code,cr?{iss:cr.iss.id,card:cr.card.id,month:cr.month,base:cr.base,off:_bmw.pcOff,skip:(_bmw.pcSkip||[]).slice(),feeInc:(_bmw.feeInc||[]).slice(),feeAmt:cr.feeAmt||0,feeBrand:cr.feeBrand||0,feeModes:bmwModeOverrides(cr.card),date:String(_bmw.dd||''),rows:cr.rows,disc:cr.disc,point:cr.point}:null);
+    pcApplyToBundle(code,cr?{iss:cr.iss.id,card:cr.card.id,month:cr.month,base:cr.base,off:_bmw.pcOff,skip:(_bmw.pcSkip||[]).slice(),feeInc:(_bmw.feeInc||[]).slice(),feeAmt:cr.feeAmt||0,feeBrand:cr.feeBrand||0,feeModes:bmwModeOverrides(cr.card),region:cr.region,date:String(_bmw.dd||''),rows:cr.rows,disc:cr.disc,point:cr.point}:null);
   }
   _bmChecked=new Set();_bmDate='';_bmCode='';
   bmwSyncModal(keys);
@@ -7788,10 +7814,11 @@ function renderWishCards(data){
   if(!el)return;
   if(!data.length){el.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--text2);font-size:13px;padding:24px;">위시 항목이 없습니다</div>';return;}
   const MONO="font-family:'Space Mono',monospace;";
+  const TS={5:96,4:144,3:192}[_wishCols]||96;   // 열이 적을수록 썸네일 크게 (3열 = 2배)
   el.innerHTML=data.map(w=>{
     const thumb=w.imageUrl
-      ? figThumb(w,96,6)
-      : `<span onclick="event.stopPropagation();openImgUrlModal(${w.id},'wish')" style="display:inline-block;width:96px;height:96px;border-radius:6px;background:var(--surface);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;">🎁</span>`;
+      ? figThumb(w,TS,6)
+      : `<span onclick="event.stopPropagation();openImgUrlModal(${w.id},'wish')" style="display:inline-block;width:${TS}px;height:${TS}px;border-radius:6px;background:var(--surface);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;">🎁</span>`;
     const tc=FIG_COL[w.figType]||'var(--text2)';
     return`<div data-gdrag="wish:${w.id}" style="position:relative;display:flex;gap:11px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;align-items:center;min-width:0;"
         onclick="openWishEdit(${w.id})">
@@ -8021,12 +8048,13 @@ function renderSellCards(data){
     const p=sellNet(s)-buyLive,sc=sellCostOf(s);
     const pc=p>0?'var(--green)':p<0?'var(--red)':'var(--text2)';
     const buyDate=o?earliestPayDate(o):'';
+    const TS=_sellCols===2?192:96;   // 2열 = 썸네일 2배
     const thumb=(o&&o.imageUrl)
-      ? figThumb(o,96,6)
-      : '<span style="display:inline-block;width:96px;height:96px;border-radius:6px;background:var(--surface);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:34px;">🎁</span>';
+      ? figThumb(o,TS,6)
+      : '<span style="display:inline-block;width:'+TS+'px;height:'+TS+'px;border-radius:6px;background:var(--surface);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:34px;">🎁</span>';
     const MONO="font-family:'Space Mono',monospace;";
     return _hd+`<div style="display:flex;gap:11px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;align-items:center;min-width:0;"
-        onclick="${s.fromOrder?`goToCard(${s.fromOrder})`:''}">
+        onclick="${s.fromOrder?`openAddModal(${s.fromOrder})`:''}">
       ${thumb}
       <div style="flex:1;min-width:0;">
         <div style="font-size:15px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;">${s.name||'-'}</div>
@@ -8402,6 +8430,26 @@ async function ghUploadRun(t){
   ghRenderUpCard(msg);
   showToast('깃헙 사진 옮기기 — '+msg,fail?'warn':'success');
 }
+// 구매유형 · 배송/방출 현황 막대 — 통계 탭 구매 히스토리 위
+function renderManageBars(){
+  const barsEl=document.getElementById('manage-bars');if(!barsEl)return;
+  const _sumTC=arr=>arr.reduce((a,o)=>a+totalCost(o),0);
+  const oResv=orders.filter(o=>o.purchaseType==='예약구매'),oFull=orders.filter(o=>o.purchaseType==='전액구매'),oUsed=orders.filter(o=>o.purchaseType==='중고거래');
+  const ptypeSegs=[
+    {label:'예약',count:oResv.length,amount:_sumTC(oResv),color:'var(--yellow)',fg:'#1a1a22'},
+    {label:'전액',count:oFull.length,amount:_sumTC(oFull),color:'var(--accent)',fg:'#fff'},
+    {label:'중고',count:oUsed.length,amount:_sumTC(oUsed),color:'var(--text3)',fg:'#fff'}
+  ];
+  const oShip=orders.filter(isShipping);
+  const oNot=orders.filter(o=>!o.released&&o.deliveryState!=='delivered'&&o.deliveryState!=='shipping'),oDel=orders.filter(o=>o.deliveryState==='delivered'&&!o.released),oRel=orders.filter(o=>o.released);
+  const delSegs=[
+    {label:'미도착',count:oNot.length,amount:_sumTC(oNot),color:'var(--text3)',fg:'#fff'},
+    {label:'배송중',count:oShip.length,amount:_sumTC(oShip),color:'#4ecfcf',fg:'#0b1f1f'},
+    {label:'배송완료',count:oDel.length,amount:_sumTC(oDel),color:'var(--green)',fg:'#0f2417'},
+    {label:'방출',count:oRel.length,amount:_sumTC(oRel),color:'var(--red)',fg:'#fff'}
+  ];
+  barsEl.innerHTML=manageStackBar('구매 유형',ptypeSegs)+manageStackBar('배송·방출 현황',delSegs);
+}
 function renderManage(){
   // 캐릭터명 목록 (등록된 피규어에서 수집 + 수동 추가)
   const allChars=[...new Set([...orders.map(o=>o.charName).filter(Boolean),...(window._manualChars||[])])].sort((a,b)=>a.localeCompare(b,'ko'));
@@ -8424,26 +8472,10 @@ function renderManage(){
       <button class="del-btn" onclick="if(confirm('삭제?')){makers.splice(${i},1);renderManage();}">✕</button>
     </div>`).join('');
 
-  const _sumTC=arr=>arr.reduce((a,o)=>a+totalCost(o),0);
-  const oResv=orders.filter(o=>o.purchaseType==='예약구매'),oFull=orders.filter(o=>o.purchaseType==='전액구매'),oUsed=orders.filter(o=>o.purchaseType==='중고거래');
-  const ptypeSegs=[
-    {label:'예약',count:oResv.length,amount:_sumTC(oResv),color:'var(--yellow)',fg:'#1a1a22'},
-    {label:'전액',count:oFull.length,amount:_sumTC(oFull),color:'var(--accent)',fg:'#fff'},
-    {label:'중고',count:oUsed.length,amount:_sumTC(oUsed),color:'var(--text3)',fg:'#fff'}
-  ];
-  const oShip=orders.filter(isShipping);
-  const oNot=orders.filter(o=>!o.released&&o.deliveryState!=='delivered'&&o.deliveryState!=='shipping'),oDel=orders.filter(o=>o.deliveryState==='delivered'&&!o.released),oRel=orders.filter(o=>o.released);
-  const delSegs=[
-    {label:'미도착',count:oNot.length,amount:_sumTC(oNot),color:'var(--text3)',fg:'#fff'},
-    {label:'배송중',count:oShip.length,amount:_sumTC(oShip),color:'#4ecfcf',fg:'#0b1f1f'},
-    {label:'배송완료',count:oDel.length,amount:_sumTC(oDel),color:'var(--green)',fg:'#0f2417'},
-    {label:'방출',count:oRel.length,amount:_sumTC(oRel),color:'var(--red)',fg:'#fff'}
-  ];
   document.getElementById('manage-stats').innerHTML=`
     <div id="mc-sel" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;"></div>
     <div id="mc-chart"></div>`;
-  const barsEl=document.getElementById('manage-bars');
-  if(barsEl)barsEl.innerHTML=manageStackBar('구매 유형',ptypeSegs)+manageStackBar('배송·방출 현황',delSegs);
+  renderManageBars();
   renderManageChart();
   ghRenderCard();ghRenderUpCard();
 }
@@ -9501,7 +9533,7 @@ function pcCostChanged(o,after){
     const iss=pcIssuer(bc.card.iss),card=pcCard(iss,bc.card.card);if(!card)return;
     const nb=pcCodeBase(code,false),ob=Number(bc.card.base)||0,nf=pcCodeFee(code,false),sig=nb+'/'+nf;
     if((nb===ob&&nf===(Number(bc.card.feeAmt)||0))||sig===bc.card.ignoreBase)return;
-    const nfb=pcCodeFeeBrand(code,false,card);const r=pcCalc(card,nb,bc.card.month,bc.card.off,code,String(bc.card.date||''),nf,bc.card.feeModes,nfb);
+    const nfb=pcCodeFeeBrand(code,false,card);const r=pcCalc(card,nb,bc.card.month,bc.card.off,code,String(bc.card.date||''),nf,bc.card.feeModes,nfb,bc.card.region);
     cards.push({code,bc,card,nb,ob,nf,nfb,fromD:Number(bc.card.disc)||0,fromP:Number(bc.card.point)||0,toD:r.disc,toP:r.point});
   });
   [['쿠폰',couponsOf(o)],['포인트',pointsOf(o)]].forEach(([lab,arr])=>(arr||[]).forEach((c,i)=>{
@@ -10031,6 +10063,7 @@ function renderBundle(){
 
 // ── 통계 탭 ────────────────────────────────────────────────────
 function renderStats(){
+  renderManageBars();
   // 연도 목록 구성
   const allYears=[...new Set(orders.map(o=>{
     const d=earliestPayDate(o);
@@ -10527,16 +10560,16 @@ function renderRanking(){
   const s6=maxGap?row('📅',`${gapFrom} ~ ${gapTo}`,maxGap+'일'):'<div style="font-size:13px;color:var(--text3);">데이터 부족</div>';
 
   el.innerHTML=
-    sec('💰 가장 비싼 피규어 TOP5',s1||'-')+
+    sec('가장 비싼 피규어 TOP5',s1||'-')+
     `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      ${sec('🏪 많이 구매한 상호명 TOP5',s2||'-')}
-      ${sec('⭐ 많이 구매한 캐릭터 TOP5',s3||'-')}
+      ${sec('많이 구매한 상호명 TOP5',s2||'-')}
+      ${sec('많이 구매한 캐릭터 TOP5',s3||'-')}
     </div>`+
     `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      ${sec('🕰 가장 오래된 피규어 TOP5',s4||'-')}
-      ${sec('📅 최다 지출 월 TOP5',s5||'-')}
+      ${sec('가장 오래된 피규어 TOP5',s4||'-')}
+      ${sec('최다 지출 월 TOP5',s5||'-')}
     </div>`+
-    sec('⏳ 가장 긴 미결제 기간',s6);
+    sec('가장 긴 미결제 기간',s6);
 }
 
 let _calYear=new Date().getFullYear(), _calMonth=new Date().getMonth();
